@@ -55,9 +55,6 @@ app.layout = dbc.Container([
     dcc.Graph(id = "graph", figure=fig)
 ])
 
-
-
-
 @app.callback(
     Output("graph", "figure"),
     [
