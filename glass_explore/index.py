@@ -38,7 +38,7 @@ modal_popup = dbc.Modal(
             [
                 dbc.ModalHeader(dbc.ModalTitle("Welcome to Glass Explore")),
                 dbc.ModalBody([
-                    html.P("Data from Lawrence Berkeley National Laboratory IDGB database."),
+                    html.P("Data from Lawrence Berkeley National Laboratory IGDB database."),
                     html.P(["Chart plots Solar Transmittance (T",html.Sub("sol"),") and Visible Light Transmittance  (T",html.Sub("vis"),") of 6mm and 8mm glasses in the database."]),
                     html.P(["Note:  Solar and visilble light transmission properties will depend on what glazing buildup these products are included in. The charted (T",html.Sub("vis"),") and (T",html.Sub("sol"),") are only indicative of the VLT and g-factor/SHGC of the buildup performance."])
                 ]),
