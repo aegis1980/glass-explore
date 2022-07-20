@@ -5,7 +5,6 @@ from dash import dcc,html, Input, Output, State
 import dash_bootstrap_components as dbc
 import numpy as np
 import plotly.graph_objects as go
-import plotly.express as px
 import pandas as pd
 from glass_explore import utils
 
