@@ -6,7 +6,7 @@ import dash_bootstrap_components as dbc
 import numpy as np
 import plotly.graph_objects as go
 import pandas as pd
-from glass_explore import utils
+from glass_explore import utils, layout
 
 DATA_SOURCE = 'csv'
 
@@ -32,23 +32,7 @@ fig.update_layout(
     height = 800,
 )
 
-modal_popup = dbc.Modal(
-            [
-                dbc.ModalHeader(dbc.ModalTitle("Welcome to Glass Explore")),
-                dbc.ModalBody([
-                    html.P("Data from Lawrence Berkeley National Laboratory IGDB database."),
-                    html.P(["Chart plots Solar Transmittance (T",html.Sub("sol"),") and Visible Light Transmittance  (T",html.Sub("vis"),") of 6mm and 8mm glasses in the database."]),
-                    html.P(["Note:  Solar and visilble light transmission properties will depend on what glazing buildup these products are included in. The charted (T",html.Sub("vis"),") and (T",html.Sub("sol"),") are only indicative of the VLT and g-factor/SHGC of the buildup performance."])
-                ]),
-                dbc.ModalFooter(
-                    dbc.Button(
-                        "Close", id="close", className="ms-auto", n_clicks=0
-                    )
-                ),
-            ],
-            id="modal",
-            is_open=True,
-        )
+
 
 select_manufacturer = html.Div([
     dbc.Label("Manufacturer:"),
@@ -74,19 +58,24 @@ radio_thickness = html.Div([
 
 
 app = dash.Dash(
+    __name__,
     external_stylesheets=[dbc.themes.BOOTSTRAP],
     meta_tags=[
         {"name": "viewport", "content": "width=device-width, initial-scale=1"},
     ],
 )
-app.layout = dbc.Container([
-    dbc.Row([
-        dbc.Col(select_manufacturer),
-        dbc.Col(radio_thickness)
-    ]),
-    dcc.Graph(id = "graph", figure = fig),
-    modal_popup
-])
+
+app.layout = html.Div([
+    layout.navbar,
+    dbc.Container([
+        dbc.Row([
+            dbc.Col(select_manufacturer),
+            dbc.Col(radio_thickness)
+        ]),
+        dcc.Graph(id = "graph", figure = fig),
+        layout.modal_popup
+    ])]
+    )
 
 @app.callback(
     Output("graph", "figure"),Output("formtext-manufacturer","children"),Output("formtext-manufacturer","color"),
