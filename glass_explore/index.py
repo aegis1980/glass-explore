@@ -206,6 +206,6 @@ def toggle_modal(n, is_open):
         return not is_open
     return is_open
 
-
+app.title = "Glass explore (using Plotly Dash)"
 if __name__ == "__main__":
     app.run_server(debug=True, use_reloader=True)  
