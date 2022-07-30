@@ -4,3 +4,7 @@ nav {
     padding-left: 2%;
     padding-right: 2%;
 }
+
+nav img {
+    margin-right: 10px;
+}

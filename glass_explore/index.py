@@ -19,7 +19,7 @@ if DATA_SOURCE == 'sql':
 elif DATA_SOURCE == 'csv':
     path = os.path.join('data', 'igdb.csv')
     raw_df = pd.read_csv(path, encoding='ISO-8859-1')
-    raw_df = raw_df[raw_df['Thickness'].between(5.5, 8.5)]
+    #raw_df = raw_df[raw_df['Thickness'].between(5.5, 8.5)]
 
 manufacturers = np.sort(raw_df.Manufacturer.unique())
 manufacturers = np.insert(manufacturers,0,ALL)
@@ -47,8 +47,10 @@ radio_thickness = html.Div([
     dbc.Label("Substrate thickness:"),
      dbc.RadioItems(
             options=[
+                {"label": "4mm", "value": 4},
                 {"label": "6mm", "value": 6},
                 {"label": "8mm", "value": 8},
+                {"label": "10mm", "value": 10},
             ],
             value=6,
             id="radio-thickness",
@@ -66,7 +68,7 @@ app = dash.Dash(
 )
 
 app.layout = html.Div([
-    layout.navbar,
+    layout.navbar(app),
     dbc.Container([
         dbc.Row([
             dbc.Col(select_manufacturer),
@@ -86,7 +88,7 @@ app.layout = html.Div([
 )
 def on_filter_change(manufacturer, thickness):
 
-    df = raw_df[raw_df['Thickness'].between(thickness - 0.5, thickness + 0.5)]
+    df = raw_df[raw_df['Thickness'].between(thickness - 0.75, thickness + 0.75)]
 
     fig = go.Figure()
     if manufacturer == ALL:

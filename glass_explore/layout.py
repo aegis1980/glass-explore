@@ -1,21 +1,22 @@
-from dash import dcc,html, Input, Output, State
+from dash import html
 import dash_bootstrap_components as dbc
 
-PLOTLY_LOGO = "https://images.plot.ly/logo/new-branding/plotly-logomark.png"
+FITC_LOGO = 'balloon_white_h30px.png'
 
-navbar = dbc.Navbar(
+def navbar(app):
+    return dbc.Navbar(
     [
         html.A(
             # Use row and col to control vertical alignment of logo / brand
             dbc.Row(
                 [
-                    dbc.Col(html.Img(src=PLOTLY_LOGO, height="30px")),
+                    dbc.Col(html.Img(src=app.get_asset_url(FITC_LOGO), height="30px")),
                     dbc.Col(dbc.NavbarBrand("GLASS EXPLORE", className="ms-2")),
                 ],
                 align="center",
                 className="g-0",
             ),
-            href="https://plotly.com",
+            href="https://floatingintheclouds.com",
             style={"textDecoration": "none"},
         )
     ],
