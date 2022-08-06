@@ -17,7 +17,7 @@ if DATA_SOURCE == 'pyodbc':
     if os.name == 'nt':
         cxn_str = f'Driver={{Microsoft Access Driver (*.mdb, *.accdb)}};DBQ={path};'
     else:
-        cxn_str = f'DRIVER={{MDBTools}};DBQ={path};'
+        cxn_str = f'DRIVER={{mdb-sql}};DBQ={path};'
 
     cxn = pyodbc.connect(cxn_str)
     sql = 'select * from Glass' # where thickness > 5.5 and thickness < 6.5'
