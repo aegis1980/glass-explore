@@ -8,14 +8,20 @@ import plotly.graph_objects as go
 import pandas as pd
 from glass_explore import utils, layout
 
-DATA_SOURCE = 'csv'
+DATA_SOURCE = 'pyodbc'
 
 ALL = '[ALL]'
 
-if DATA_SOURCE == 'sql':
-    cxn = pyodbc.connect(r'Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=F:\dev\glass-explore\.venv\data\test.mdb;')
-    sql = 'select * from Glass where thickness > 5.5 and thickness < 6.5'
-    df = pd.read_sql(sql,cxn)
+if DATA_SOURCE == 'pyodbc':
+    path = os.path.join('data','igdb.mdb')
+    if os.name == 'nt':
+        cxn_str = f'Driver={{Microsoft Access Driver (*.mdb, *.accdb)}};DBQ={path};'
+    else:
+        cxn_str = f'DRIVER={{MDBTools}};DBQ={path};'
+
+    cxn = pyodbc.connect(cxn_str)
+    sql = 'select * from Glass' # where thickness > 5.5 and thickness < 6.5'
+    raw_df = pd.read_sql(sql,cxn)
 elif DATA_SOURCE == 'csv':
     path = os.path.join('data', 'igdb.csv')
     raw_df = pd.read_csv(path, encoding='ISO-8859-1')
