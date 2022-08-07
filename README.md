@@ -1,6 +1,8 @@
 # Glass explore
 
-## For dev
+## For dev (local dev)
+
+**NOTE** Uses LFS for large IGDB file. If something not working, git-wise, check not hit storage limit on account.
 
 1. right click on project root folder > select **open in terminal**
 2. `python -m venv .venv` to setup python virtual environment for this project. TIP: copy from here and right click in terminal to paste-and-execute.
@@ -13,10 +15,9 @@
 
 ## IGDB
 
-IGDB database file in a Microsoft Access file (*.mdb).
+From LBNL the IGDB database file in a Microsoft Access file (*.mdb).
 
 `igdb.csv` only includes glass data - good enough for basic visualisation.
-
 
 ### Converting database for Heroku env
 
@@ -25,3 +26,8 @@ Issues with getting linux-based heroku app environment reading Access mdb file. 
 ``` bash
 python mdb2sqlite.py data/igdb.mdb data/igdb.sqlite
 ```
+
+## Heroku deployment
+
+Auto deploys from `main`.
+Uses this [Heroku buildpack](https://github.com/radian-software/heroku-buildpack-git-lfs) for LFS.
