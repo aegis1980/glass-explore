@@ -10,3 +10,18 @@
 6. `pip install -r requirements.txt` to install packages
 7. `pip install -e .` to make editable
 8. Run `./glass_explore/index.py` to run with **dev server**. (Running `./production.py` runs using `gunicorn` in production environment)
+
+## IGDB
+
+IGDB database file in a Microsoft Access file (*.mdb).
+
+`igdb.csv` only includes glass data - good enough for basic visualisation.
+
+
+### Converting database for Heroku env
+
+Issues with getting linux-based heroku app environment reading Access mdb file. Solution is to convert with `mdb2sqlite.py` script:
+
+``` bash
+python mdb2sqlite.py data/igdb.mdb data/igdb.sqlite
+```
