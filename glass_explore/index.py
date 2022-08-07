@@ -1,4 +1,5 @@
 import pyodbc
+import sqlite3
 import os
 import dash
 from dash import dcc,html, Input, Output, State
@@ -8,7 +9,7 @@ import plotly.graph_objects as go
 import pandas as pd
 from glass_explore import utils, layout
 
-DATA_SOURCE = 'pyodbc'
+DATA_SOURCE = 'sqlite'
 
 ALL = '[ALL]'
 
@@ -22,6 +23,13 @@ if DATA_SOURCE == 'pyodbc':
     cxn = pyodbc.connect(cxn_str)
     sql = 'select * from Glass' # where thickness > 5.5 and thickness < 6.5'
     raw_df = pd.read_sql(sql,cxn)
+elif DATA_SOURCE == 'sqlite':
+    path = os.path.join('data', 'igdb.sqlite')
+    # Create a SQL connection to our SQLite database
+    cxn = sqlite3.connect(path)
+    sql = 'select * from Glass' # where thickness > 5.5 and thickness < 6.5'
+    raw_df = pd.read_sql(sql,cxn)
+
 elif DATA_SOURCE == 'csv':
     path = os.path.join('data', 'igdb.csv')
     raw_df = pd.read_csv(path, encoding='ISO-8859-1')
