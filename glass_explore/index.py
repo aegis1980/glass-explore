@@ -24,8 +24,6 @@ if DATA_SOURCE == 'pyodbc':
     sql = 'select * from Glass' # where thickness > 5.5 and thickness < 6.5'
     raw_df = pd.read_sql(sql,cxn)
 elif DATA_SOURCE == 'sqlite':
-    if os.name == 'nt':
-        print('sqlite')
     path = os.path.join('data', 'igdb.sqlite')
     # Create a SQL connection to our SQLite database
     cxn = sqlite3.connect(path)
