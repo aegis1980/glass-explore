@@ -1,32 +1,29 @@
 
 
-def create_file(id:int, temp = True):
-    thickness = 0
-    structure = []
-
+def create_dat(**data):
     s = f"""
         {{ Units, Wavelength Units }} SI Microns
-        {{ Thickness }}  {thickness}
-        {{ Conductivity }} {conductivity}
-        {{ IR Transmittance }} TIR=0
-        {{ Emissivity, front back }} Emis= 0.84 0.84
+        {{ Thickness }}  {data['thickness']}
+        {{ Conductivity }} {data['conductivity']}
+        {{ IR Transmittance }} TIR= {data['tir']}
+        {{ Emissivity, front back }} Emis= {data['emissivity_f']} {data['emissivity_b']}
         {{ }}
-        {{ Ef_Source: Material }}
-        {{ Eb_Source: Material }}
-        {{ IGDB_Checksum: -1717699038 }}
-        {{ Product Name: Generic Clear Glass }}
-        {{ Manufacturer: Generic }}
-        {{ NFRC ID: 102 }}
-        {{ Type: Monolithic }}
-        {{ Material: Glass }}
-        {{ Coating Name: N/A }}
-        {{ Coated Side: Neither }}
-        {{ Substrate Filename: N/A }}
-        {{ Appearance: Clear }}
-        {{ Acceptance: # }}
+        {{ Ef_Source: {data['ef_source'] or 'Material'} }}
+        {{ Eb_Source: {data['eb_source'] or 'Material'}  }}
+        {{ IGDB_Checksum: {data['igdb_checksum']} }}
+        {{ Product Name: {data['product_name']} }}
+        {{ Manufacturer: {data['manufacturer']} }}
+        {{ NFRC ID: {data['id']} }}
+        {{ Type: {data['type']} }}
+        {{ Material: {data['material'] or 'Glass'} }}
+        {{ Coating Name: {data['coating_name'] or 'N/A'} }}
+        {{ Coated Side: {data['coated_side'] or 'Neither'} }}
+        {{ Substrate Filename: {data['substrate_filename'] or 'N/A'}  }}
+        {{ Appearance: {data['appearance']}}}
+        {{ Acceptance: {data['coated_side'] or '#'} }}
         {{ Uses:  }}
         {{ Availability:   }}
         {{ Structure:  }}
-        {structure}
+        {data['structure']}
 
     """
