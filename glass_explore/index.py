@@ -1,4 +1,4 @@
-import pyodbc
+import sqlite3
 import os
 import dash
 from dash import dcc,html, Input, Output, State
@@ -8,20 +8,28 @@ import plotly.graph_objects as go
 import pandas as pd
 from glass_explore import utils, layout
 
-DATA_SOURCE = 'pyodbc'
+DATA_SOURCE = 'sqlite'
 
 ALL = '[ALL]'
 
 if DATA_SOURCE == 'pyodbc':
+    import pyodbc
     path = os.path.join('data','igdb.mdb')
     if os.name == 'nt':
         cxn_str = f'Driver={{Microsoft Access Driver (*.mdb, *.accdb)}};DBQ={path};'
     else:
-        cxn_str = f'DRIVER={{MDBTools}};DBQ={path};'
+        cxn_str = f'DRIVER={{mdb-sql}};DBQ={path};' #nb This doent actaully work in linux (on Heruko)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
 
     cxn = pyodbc.connect(cxn_str)
     sql = 'select * from Glass' # where thickness > 5.5 and thickness < 6.5'
     raw_df = pd.read_sql(sql,cxn)
+elif DATA_SOURCE == 'sqlite':
+    path = os.path.join('data', 'igdb.sqlite')
+    # Create a SQL connection to our SQLite database
+    cxn = sqlite3.connect(path)
+    sql = 'select * from Glass' # where thickness > 5.5 and thickness < 6.5'
+    raw_df = pd.read_sql(sql,cxn)
+
 elif DATA_SOURCE == 'csv':
     path = os.path.join('data', 'igdb.csv')
     raw_df = pd.read_csv(path, encoding='ISO-8859-1')
@@ -212,6 +220,6 @@ def toggle_modal(n, is_open):
         return not is_open
     return is_open
 
-
+app.title = "Glass explore (using Plotly Dash)"
 if __name__ == "__main__":
     app.run_server(debug=True, use_reloader=True)  
