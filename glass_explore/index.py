@@ -1,3 +1,4 @@
+from re import L
 import sqlite3
 import os
 import dash
@@ -6,7 +7,7 @@ import dash_bootstrap_components as dbc
 import numpy as np
 import plotly.graph_objects as go
 import pandas as pd
-from glass_explore import utils, layout
+from glass_explore import LayoutID, utils, layout, wincalc
 
 DATA_SOURCE = 'sqlite'
 
@@ -46,7 +47,16 @@ fig.update_layout(
     height = 800,
 )
 
-
+# select_type = html.Div([
+#     dbc.Label("Glazing type:"),
+#     dbc.Select(
+#         id="select-type", value = 'dgu',
+#         options=[
+#             {"label": "Single-glazed", "value": "sgu"},
+#             {"label": "Double-glazed", "value": "dgu"},
+#         ]
+#     ),
+# ])
 
 select_manufacturer = html.Div([
     dbc.Label("Manufacturer:"),
@@ -84,12 +94,18 @@ app = dash.Dash(
 app.layout = html.Div([
     layout.navbar(app),
     dbc.Container([
+        # dbc.Row([
+        #     dbc.Col(select_type),
+        #     dbc.Col()
+        # ]),
         dbc.Row([
             dbc.Col(select_manufacturer),
             dbc.Col(radio_thickness)
         ]),
         dcc.Graph(id = "graph", figure = fig),
-        layout.modal_popup
+        html.Div(id="click"),
+        layout.modal_splash,
+        layout.modal_analysis
     ])]
     )
 
@@ -211,15 +227,55 @@ def on_filter_change(manufacturer, thickness):
     return fig, msg, color
 
 @app.callback(
-    Output("modal", "is_open"),
-    [Input("close", "n_clicks")],
-    [State("modal", "is_open")],
+    Output(LayoutID.MODAL_SPLASH, "is_open"),
+    [Input(LayoutID.MODAL_SPLASH_CLOSE, "n_clicks")],
+    [State(LayoutID.MODAL_SPLASH, "is_open")],
 )
 def toggle_modal(n, is_open):
-    if n:
+    if n :
         return not is_open
     return is_open
 
-app.title = "Glass explore (using Plotly Dash)"
+
+@app.callback(
+    Output(LayoutID.MODAL_ANALYSIS, "is_open"),
+    [Input("graph", "clickData"),Input(LayoutID.MODAL_ANALYSIS_CLOSE, "n_clicks")],
+    [State(LayoutID.MODAL_ANALYSIS, "is_open")]
+)
+def analysis_modal_control(pt_data, n , is_open):
+    if n or pt_data:
+        return not is_open
+        
+    return is_open
+
+
+@app.callback(
+    Output(LayoutID.MODAL_ANALYSIS_DIV_RESULTS, "children"),
+    [
+        Input(LayoutID.GRAPH_TS_TV, "clickData"),
+        Input(LayoutID.MODAL_ANALYSIS_SELECT_GAS,"value"),
+        Input(LayoutID.MODAL_ANALYSIS_INPUT_GAP,"value")
+    ]
+)
+def on_buildup_change(pt_data, gas, gap_thickness):
+    if pt_data:
+        id = pt_data['points'][0]['customdata'][0]
+        if id:
+            gap_layer = wincalc.gap_layer(gas, gap_thickness)
+            other_layer = wincalc.generic_uncoated_glass(thickness = 5, super_clear = False)
+            u_result, shgc_result = wincalc.run_sim(id, gap_layer, other_layer)
+        else:
+            return dash.no_update, 'no glass id'
+
+
+    
+
+
+
+
 if __name__ == "__main__":
     app.run_server(debug=True, use_reloader=True)  
+
+
+
+app.title = "Glass explore (using Plotly Dash)"
