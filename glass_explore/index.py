@@ -8,6 +8,7 @@ import numpy as np
 import plotly.graph_objects as go
 import pandas as pd
 from glass_explore import LayoutID, utils, layout, wincalc
+from glass_explore.results_printer import print_system_optical_results_side
 
 DATA_SOURCE = 'sqlite'
 
@@ -94,23 +95,26 @@ app = dash.Dash(
 app.layout = html.Div([
     layout.navbar(app),
     dbc.Container([
-        # dbc.Row([
-        #     dbc.Col(select_type),
-        #     dbc.Col()
-        # ]),
         dbc.Row([
-            dbc.Col(select_manufacturer),
-            dbc.Col(radio_thickness)
+            dbc.Col([
+                dbc.Row([
+                    dbc.Col(select_manufacturer),
+                    dbc.Col(radio_thickness)
+                ]),
+                dcc.Graph(id = LayoutID.GRAPH_TS_TV, figure = fig)
+            ], width = 8),
+            dbc.Col([
+                dbc.Row(layout.card_selected_layer),
+                dbc.Row(layout.card_gas_layer),
+                dbc.Row(layout.card_other_layer),
+                dbc.Row(layout.results_table)
+            ],width = 4)
         ]),
-        dcc.Graph(id = "graph", figure = fig),
-        html.Div(id="click"),
         layout.modal_splash,
-        layout.modal_analysis
-    ])]
-    )
+    ], fluid=True )])
 
 @app.callback(
-    Output("graph", "figure"),Output("formtext-manufacturer","children"),Output("formtext-manufacturer","color"),
+    Output(LayoutID.GRAPH_TS_TV, "figure"),Output("formtext-manufacturer","children"),Output("formtext-manufacturer","color"),
     [
         Input("select-manufacturer", "value"),
         Input("radio-thickness", "value"),
@@ -237,45 +241,39 @@ def toggle_modal(n, is_open):
     return is_open
 
 
-@app.callback(
-    Output(LayoutID.MODAL_ANALYSIS, "is_open"),
-    [Input("graph", "clickData"),Input(LayoutID.MODAL_ANALYSIS_CLOSE, "n_clicks")],
-    [State(LayoutID.MODAL_ANALYSIS, "is_open")]
-)
-def analysis_modal_control(pt_data, n , is_open):
-    if n or pt_data:
-        return not is_open
-        
-    return is_open
-
 
 @app.callback(
-    Output(LayoutID.MODAL_ANALYSIS_DIV_RESULTS, "children"),
+    Output(LayoutID.TABLE_CELL_UVALUE, "children"),
+    Output(LayoutID.TABLE_CELL_SHGC,"children"),
     [
         Input(LayoutID.GRAPH_TS_TV, "clickData"),
-        Input(LayoutID.MODAL_ANALYSIS_SELECT_GAS,"value"),
-        Input(LayoutID.MODAL_ANALYSIS_INPUT_GAP,"value")
+        Input(LayoutID.SELECT_GAS,"value"),
+        Input(LayoutID.INPUT_GAP,"value")
     ]
 )
 def on_buildup_change(pt_data, gas, gap_thickness):
+    
     if pt_data:
         id = pt_data['points'][0]['customdata'][0]
         if id:
             gap_layer = wincalc.gap_layer(gas, gap_thickness)
+            
             other_layer = wincalc.generic_uncoated_glass(thickness = 5, super_clear = False)
-            u_result, shgc_result = wincalc.run_sim(id, gap_layer, other_layer)
+            glazing_system_u_environment, glazing_system_shgc_environment = wincalc.run_sim(id, gap_layer, other_layer)
         else:
             return dash.no_update, 'no glass id'
+
+        return f'{glazing_system_u_environment.u(0,0):.1f}',f'{glazing_system_shgc_environment.shgc(0,0):.2f}'
 
 
     
 
 
 
+app.title = "Glass explore (using Plotly Dash)"
 
 if __name__ == "__main__":
     app.run_server(debug=True, use_reloader=True)  
 
 
 
-app.title = "Glass explore (using Plotly Dash)"

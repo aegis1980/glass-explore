@@ -45,45 +45,108 @@ modal_splash = dbc.Modal(
             is_open=True,
         )
 
-form_gap = dbc.Form(
-    dbc.Row(
-        [
-            dbc.Label("Gas", width="auto"),
-            dbc.Col(
-                dbc.Select(
-                    id=LayoutID.MODAL_ANALYSIS_SELECT_GAS, 
-                    value = 'air',
-                    options=[{"label": k, "value": k} for k in igdb.GASES],
-                ),
-                className="me-3",
-            ),
-            dbc.Label("Gap width (mm)", width="auto"),
-            dbc.Col(
-                dbc.Input(
-                    id=LayoutID.MODAL_ANALYSIS_INPUT_GAP,
-                    type="number", 
-                    value="12"
-                ),
-                
-                className="me-3",
-            )
-        ],
-        className="g-2",
-    )
-)
-
-modal_analysis = dbc.Modal(
-            [
-                dbc.ModalBody([
-                    form_gap
-                ]),
-                dbc.ModalFooter(
-                    dbc.Button(
-                        "Close", id=LayoutID.MODAL_ANALYSIS_CLOSE, className="ms-auto", n_clicks=0
+card_gas_layer = dbc.Card([
+    dbc.CardHeader("Gas layer"),
+    dbc.CardBody(   
+        dbc.Form(
+            dbc.Row(
+                [
+                    dbc.Label("Gas", width="auto"),
+                    dbc.Col(
+                        dbc.Select(
+                            id=LayoutID.SELECT_GAS, 
+                            value = 'air',
+                            options=[{"label": k, "value": k} for k in igdb.GASES],
+                        ),
+                        className="me-3",
+                    ),
+                    dbc.Label("Gap width (mm)", width="auto"),
+                    dbc.Col(
+                        dbc.Input(
+                            id=LayoutID.INPUT_GAP,
+                            type="number", 
+                            value="12"
+                        ),
+                        
+                        className="me-3",
                     )
-                ),
-            ],
-            id=LayoutID.MODAL_ANALYSIS,
-            size="xl",
-            is_open=False,
+                ],
+                className="g-2"
+            )
         )
+    )])
+
+card_selected_layer = dbc.Card([
+        dbc.CardHeader("Outer lite (user selected)"),
+        dbc.CardBody()
+    ])
+
+
+card_other_layer = dbc.Card([
+    dbc.CardHeader("Inner lite"),
+    dbc.CardBody(   
+        dbc.Form(
+            dbc.Row(
+                [
+                    dbc.Label("Thickness", width="auto"),
+                    dbc.Col(
+                        dbc.Select(
+                            id=LayoutID.SELECT_INNERLAYER_THICKNESS, 
+                            value = 6,
+                            options=[
+                                {"label": "4mm", "value": 4},
+                                {"label": "6mm", "value": 6},
+                                {"label": "8mm", "value": 8},
+                                {"label": "10mm", "value": 10},
+                            ],
+                        ),
+                        className="me-3",
+                    ),
+                    dbc.Label("Substrate", width="auto"),
+                    dbc.Col(
+                        dbc.Select(
+                            id=LayoutID.SELECT_INNERLAYER_SUBSTRATE, 
+                            value = 'clear',
+                            options=[
+                                {"label": "clear", "value": "clear"},
+                                {"label": "super-clear (low iron)", "value": "super-clear"},
+                            ],
+                        ),
+                        className="me-3",
+                    )
+                ],
+                className="g-2"
+            )
+        )
+    )])
+
+
+table_header = [
+    html.Thead(html.Tr([html.Th("Parameter"), html.Th("Value")]))
+]
+
+row_u = html.Tr([html.Td("U-value"), html.Td(id = LayoutID.TABLE_CELL_UVALUE)])
+row_shgc = html.Tr([html.Td("SHGC"), html.Td(id = LayoutID.TABLE_CELL_SHGC)])
+
+row_vlt = html.Tr([html.Td("U-value"), html.Td(id = LayoutID.TABLE_CELL_UVALUE)])
+row_rint = html.Tr([html.Td("U-value"), html.Td(id = LayoutID.TABLE_CELL_UVALUE)])
+row_rext = html.Tr([html.Td("U-value"), html.Td(id = LayoutID.TABLE_CELL_UVALUE)])
+row_color = html.Tr([html.Td("U-value"), html.Td(id = LayoutID.TABLE_CELL_UVALUE)])
+
+table_body = [html.Tbody([row_u, row_shgc,])]
+
+results_table = dbc.Table(
+    table_header + table_body, 
+    bordered=True)
+
+
+
+
+
+
+graph_tabs = dbc.Tabs(
+    [
+        dbc.Tab(tab1_content, label="Tab 1"),
+        dbc.Tab(tab2_content, label="Tab 2"),
+    ]
+)

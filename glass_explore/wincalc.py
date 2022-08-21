@@ -22,7 +22,7 @@ def generic_uncoated_glass(thickness : int , super_clear : bool):
 
 
 def gap_layer(gas : str, thickness: float):
-    return  pywincalc.Gap(igdb.GASES[gas], thickness/1000)
+    return  pywincalc.Gap(igdb.GASES[gas], float(thickness)/1000)
 
 def convert_wavelength_data(raw_wavelength_data):
     # Whatever format your raw wavelength data is it will need to be converted to a list of pywincalc.WavelengthData
@@ -52,6 +52,7 @@ def run_sim(
         gap_layer,
         other_layer,
     ):
+    print("running sim")
     # Create optical data for the glass layer
 
     # Make sure to select the approriate material type for the layer.
@@ -59,7 +60,6 @@ def run_sim(
     # APPLIED_FILM, COATED, ELECTROCHROMIC, FILM, INTERLAYER, LAMINATE, MONOLITHIC, THERMOCHROMIC
 
     props = igdb.lookup_glass_props(id)
-
     glass_material_type = pywincalc.MaterialType.MONOLITHIC
     glass_material_thickness =  props['Thickness']/1000  # in metres
     glass_wavelength_measurements = convert_wavelength_data(igdb.lookup_wavelength_data(props['GlazingID']))
@@ -102,7 +102,8 @@ def run_sim(
     # The NFRC U and SHGC environments are provided as already constructed environments and Glazing_System
     # defaults to using the NFRC U environments
     glazing_system_u_environment = pywincalc.GlazingSystem(optical_standard=optical_standard,
-                                                        solid_layers=[coated_layer],
+                                                        solid_layers=[coated_layer,other_layer],
+                                                        gap_layers=[gap_layer],
                                                         width_meters=glazing_system_width,
                                                         height_meters=glazing_system_height,
                                                         environment=pywincalc.nfrc_u_environments())
@@ -117,7 +118,6 @@ def run_sim(
 
 
     #results_printer.print_results(glazing_system_u_environment, glazing_system_shgc_environment)
-    print('done')
     return glazing_system_u_environment, glazing_system_shgc_environment
 
 if __name__ == "__main__":
