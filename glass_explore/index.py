@@ -1,18 +1,22 @@
-from re import L
 import sqlite3
 import os
+
+import pandas as pd
+import numpy as np
+
+
 import dash
 from dash import dcc,html, Input, Output, State
 import dash_bootstrap_components as dbc
-import numpy as np
+
 import plotly.graph_objects as go
-import pandas as pd
-from glass_explore import LayoutID, utils, layout, wincalc
+
+
+from glass_explore import LayoutID, svg_glass, utils, layout, wincalc, callback_helpers, ALL_MANUFACTURERS   ,GRAPHTYPE_TS_TV,GRAPHTYPE_LAB,GRAPHTYPE_RGB
 from glass_explore.results_printer import print_system_optical_results_side
 
 DATA_SOURCE = 'sqlite'
 
-ALL = '[ALL]'
 
 if DATA_SOURCE == 'pyodbc':
     import pyodbc
@@ -38,16 +42,15 @@ elif DATA_SOURCE == 'csv':
     #raw_df = raw_df[raw_df['Thickness'].between(5.5, 8.5)]
 
 manufacturers = np.sort(raw_df.Manufacturer.unique())
-manufacturers = np.insert(manufacturers,0,ALL)
+manufacturers = np.insert(manufacturers,0,ALL_MANUFACTURERS)
 
-# IGDB uses nnumber for color, we waht CSS hex value.
+# IGDB uses number for color, we what CSS hex value.
 raw_df['CssColor'] = raw_df['Color'].map(lambda x:utils.base10color_to_csshex(x))
-
-fig = go.Figure()
-fig.update_layout(
-    height = 800,
-)
-
+raw_df['rgb'] = raw_df['CssColor'].map(lambda x:utils.csshex_to_rgb(x))
+raw_df[['RColor','GColor','BColor']] = raw_df['rgb'].apply(pd.Series)
+raw_df['lab'] = raw_df['rgb'].map(lambda x:utils.rgb_to_lab(x))
+raw_df[['lColor','aColor','bColor']] = raw_df['lab'].apply(pd.Series)
+raw_df.drop(columns=['rgb', 'lab'])
 # select_type = html.Div([
 #     dbc.Label("Glazing type:"),
 #     dbc.Select(
@@ -62,7 +65,7 @@ fig.update_layout(
 select_manufacturer = html.Div([
     dbc.Label("Manufacturer:"),
     dbc.Select(
-        id="select-manufacturer", value = ALL,
+        id="select-manufacturer", value = ALL_MANUFACTURERS,
         options=[{"label": m, "value": m} for m in manufacturers]
     ),
     dbc.FormText(id = 'formtext-manufacturer',color='red'),
@@ -101,134 +104,42 @@ app.layout = html.Div([
                     dbc.Col(select_manufacturer),
                     dbc.Col(radio_thickness)
                 ]),
-                dcc.Graph(id = LayoutID.GRAPH_TS_TV, figure = fig)
+                layout.buttongroup_graphs,
+                layout.graphs()
             ], width = 8),
             dbc.Col([
-                dbc.Row(layout.card_selected_layer),
-                dbc.Row(layout.card_gas_layer),
-                dbc.Row(layout.card_other_layer),
-                dbc.Row(layout.results_table)
+                dbc.Row(dbc.Col(svg_glass.generate_buildup())),
+                dbc.Row(dbc.Col(layout.card_selected_layer)),
+                dbc.Row(dbc.Col(layout.card_gas_layer)),
+                dbc.Row(dbc.Col(layout.card_other_layer)),
+                dbc.Row(dbc.Col(layout.results_table))
             ],width = 4)
         ]),
         layout.modal_splash,
     ], fluid=True )])
 
+
 @app.callback(
-    Output(LayoutID.GRAPH_TS_TV, "figure"),Output("formtext-manufacturer","children"),Output("formtext-manufacturer","color"),
+    Output(LayoutID.GRAPH, "figure"),Output("formtext-manufacturer","children"),Output("formtext-manufacturer","color"),
     [
+        Input(LayoutID.BUTTONGROUP_GRAPHTYPE, "value"),
         Input("select-manufacturer", "value"),
         Input("radio-thickness", "value"),
     ]
 )
-def on_filter_change(manufacturer, thickness):
+def update_graphing(graph_type, manufacturer, thickness):
 
     df = raw_df[raw_df['Thickness'].between(thickness - 0.75, thickness + 0.75)]
 
-    fig = go.Figure()
-    if manufacturer == ALL:
-
-        msg = f'{len(df.index)} glasses'
-        color = 'darkgrey'
-        fig.add_trace(
-            go.Scatter(
-                mode='markers',
-                x=df["Tsol"],
-                y=df["Tvis"],
-                customdata=df,
-                marker=dict(
-                    color=df['CssColor'],
-                    size=10,
-                ),
-
-                showlegend=False,
-                hovertemplate = 
-                    '<b>id</b>: %{customdata[0]}' + 
-                    '<br>(<b>T_v</b>: %{y:.2f}' + ' <b>T_s</b>: %{x:.2f})'+
-                    '<br>%{customdata[17]}' + 
-                    '<br>%{customdata[18]}'
-            )
-        )
-       
+    if graph_type == GRAPHTYPE_TS_TV:
+        fig, msg, color = callback_helpers.graphing_ts_tv(df, manufacturer,thickness)
     else:
-        mask_na = (df['Manufacturer'] != manufacturer)
-        mask = (df['Manufacturer'] == manufacturer)
-
-        if len(df[mask].index)==0:
-            msg = f'No glasses from {manufacturer} with thickness, {thickness}mm'
-            color = 'red'
-        else:
-            msg = f'{len(df[mask].index)} glasses'
-            color = 'darkgrey'
-
-        fig.add_trace(
-            go.Scatter(
-                mode='markers',
-                x=df[mask_na]["Tsol"],
-                y=df[mask_na]["Tvis"],
-                marker=dict(
-                    color=df[mask_na]['CssColor'],
-                    opacity = 0.4,
-                    size=10,
-                ),
-                showlegend=False,
-                hoverinfo='skip'
-            )
-        )
-        fig.add_trace(
-            go.Scatter(
-                mode='markers',
-                x=df[mask]["Tsol"],
-                y=df[mask]["Tvis"],
-                customdata=df[mask],
-                marker=dict(
-                    color=df[mask]['CssColor'],
-                    size=20,
-                    line=dict(
-                        color='Red',
-                        width=1
-                    )
-                ),
-                showlegend=False,
-                hovertemplate = 
-                    '<b>id</b>: %{customdata[0]}' + 
-                    '<br>(<b>T_v</b>: %{y:.2f}' + ' <b>T_s</b>: %{x:.2f})'+
-                    '<br>%{customdata[17]}' + 
-                    '<br>%{customdata[18]}'
-            )
-        )
-        
-        
-      #  fig = px.scatter(df[mask], x="Tsol", y="Tvis",  hover_data= ["ID","Manufacturer", "ProductName"])
-    
-    fig.update_layout(
-        xaxis_title="T_solar",
-        yaxis_title="T_visible",
-        plot_bgcolor = "white",
-        hovermode = 'closest'
-    )
-
-    fig.update_xaxes(
-        dtick=0.1, 
-        range=[0, 1],
-        zeroline = False,
-        fixedrange=True,
-        showgrid = True,
-        gridcolor='LightGrey',
-        minor=dict(showgrid=True)
-      #  autorange="reversed",
-      #  constrain="domain",  # meanwhile compresses the xaxis by decreasing its "domain"
-    ) 
-    fig.update_yaxes(
-        dtick=0.1, 
-        range=[0, 1],
-        zeroline = False,
-        fixedrange=True,
-        showgrid = True,
-        gridcolor='LightGrey',
-        minor=dict(showgrid=True)
-    )
+        fig, msg, color = callback_helpers.graphing_3d_colorspace(df, manufacturer,thickness, graph_type)
 
     return fig, msg, color
+
+
+
 
 @app.callback(
     Output(LayoutID.MODAL_SPLASH, "is_open"),
@@ -241,17 +152,22 @@ def toggle_modal(n, is_open):
     return is_open
 
 
-
 @app.callback(
+    Output(LayoutID.DIV_OUTERLITE_PRODUCT,"children"),
     Output(LayoutID.TABLE_CELL_UVALUE, "children"),
     Output(LayoutID.TABLE_CELL_SHGC,"children"),
+    Output(LayoutID.TABLE_CELL_TVIS,"children"),
+    Output(LayoutID.TABLE_CELL_ROUT,"children"),
+    Output(LayoutID.TABLE_CELL_RIN,"children"),
+
     [
-        Input(LayoutID.GRAPH_TS_TV, "clickData"),
+        Input(LayoutID.GRAPH, "clickData"),
         Input(LayoutID.SELECT_GAS,"value"),
-        Input(LayoutID.INPUT_GAP,"value")
+        Input(LayoutID.INPUT_GAP,"value"),
+        Input(LayoutID.CHECKBOX_FLIP_OUTERLAYER, "value"),
     ]
 )
-def on_buildup_change(pt_data, gas, gap_thickness):
+def on_buildup_change(pt_data, gas, gap_thickness,flipped):
     
     if pt_data:
         id = pt_data['points'][0]['customdata'][0]
@@ -259,15 +175,24 @@ def on_buildup_change(pt_data, gas, gap_thickness):
             gap_layer = wincalc.gap_layer(gas, gap_thickness)
             
             other_layer = wincalc.generic_uncoated_glass(thickness = 5, super_clear = False)
-            glazing_system_u_environment, glazing_system_shgc_environment = wincalc.run_sim(id, gap_layer, other_layer)
+            props,glazing_system_u_environment, glazing_system_shgc_environment = wincalc.run_sim(id,flipped, gap_layer, other_layer)
         else:
             return dash.no_update, 'no glass id'
+        
+        optical = glazing_system_u_environment.optical_method_results("PHOTOPIC").system_results
+        
+        outer_layer_info = f"""
+            {props['ProductName']}
+            ({props['Manufacturer']})
+        """
 
-        return f'{glazing_system_u_environment.u(0,0):.1f}',f'{glazing_system_shgc_environment.shgc(0,0):.2f}'
-
-
-    
-
+        uvalue = f'{glazing_system_u_environment.u(0,0):.1f}'
+        shgc = f'{glazing_system_shgc_environment.shgc(0,0):.2f}'
+        tvis = f'{optical.front.transmittance.direct_hemispherical:.2f}'
+        rout = f'{optical.front.reflectance.direct_hemispherical:.2f}'
+        rin = f'{optical.back.reflectance.direct_hemispherical:.2f}'
+      
+        return outer_layer_info, uvalue,shgc,tvis,rout,rin
 
 
 app.title = "Glass explore (using Plotly Dash)"

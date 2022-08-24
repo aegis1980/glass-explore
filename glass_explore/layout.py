@@ -1,8 +1,7 @@
-import imp
-from dash import html
+from dash import html, dcc
 import dash_bootstrap_components as dbc
-
-from glass_explore import LayoutID, igdb
+import plotly.graph_objects as go
+from glass_explore import GRAPHTYPE_RGB, GRAPHTYPE_TS_TV,GRAPHTYPE_LAB, LayoutID, igdb
 
 FITC_LOGO = 'balloon_white_h30px.png'
 
@@ -78,9 +77,25 @@ card_gas_layer = dbc.Card([
 
 card_selected_layer = dbc.Card([
         dbc.CardHeader("Outer lite (user selected)"),
-        dbc.CardBody()
+        dbc.CardBody([
+            dbc.Form(
+                dbc.Row(
+                    [
+                        dbc.Col(
+                           html.Div(id=LayoutID.DIV_OUTERLITE_PRODUCT)
+                        ),
+                        dbc.Col(
+                            dbc.Checkbox(
+                                id=LayoutID.CHECKBOX_FLIP_OUTERLAYER,
+                                label="Flip layer",
+                                value=False,
+                            )
+                        )
+                    ]
+                )
+            )
+        ])
     ])
-
 
 card_other_layer = dbc.Card([
     dbc.CardHeader("Inner lite"),
@@ -99,8 +114,7 @@ card_other_layer = dbc.Card([
                                 {"label": "8mm", "value": 8},
                                 {"label": "10mm", "value": 10},
                             ],
-                        ),
-                        className="me-3",
+                        )
                     ),
                     dbc.Label("Substrate", width="auto"),
                     dbc.Col(
@@ -114,8 +128,7 @@ card_other_layer = dbc.Card([
                         ),
                         className="me-3",
                     )
-                ],
-                className="g-2"
+                ]
             )
         )
     )])
@@ -128,25 +141,72 @@ table_header = [
 row_u = html.Tr([html.Td("U-value"), html.Td(id = LayoutID.TABLE_CELL_UVALUE)])
 row_shgc = html.Tr([html.Td("SHGC"), html.Td(id = LayoutID.TABLE_CELL_SHGC)])
 
-row_vlt = html.Tr([html.Td("U-value"), html.Td(id = LayoutID.TABLE_CELL_UVALUE)])
-row_rint = html.Tr([html.Td("U-value"), html.Td(id = LayoutID.TABLE_CELL_UVALUE)])
-row_rext = html.Tr([html.Td("U-value"), html.Td(id = LayoutID.TABLE_CELL_UVALUE)])
-row_color = html.Tr([html.Td("U-value"), html.Td(id = LayoutID.TABLE_CELL_UVALUE)])
+row_vlt = html.Tr([html.Td(["T",html.Sub("vis")]), html.Td(id = LayoutID.TABLE_CELL_TVIS)])
+row_rout = html.Tr([html.Td(["R",html.Sub("out")]), html.Td(id = LayoutID.TABLE_CELL_ROUT)])
+row_rin = html.Tr([html.Td(["R",html.Sub("in")]), html.Td(id = LayoutID.TABLE_CELL_RIN)])
 
-table_body = [html.Tbody([row_u, row_shgc,])]
+table_body = [html.Tbody([row_u, row_shgc,row_vlt,row_rout,row_rin])]
 
 results_table = dbc.Table(
     table_header + table_body, 
     bordered=True)
 
+def graphs():
+
+    fig1 = go.Figure()
+    fig1.update_layout(
+        height = 800,
+    )
+
+    graph_ts_tv  = dcc.Graph(id = LayoutID.GRAPH, figure = fig1)
+
+    return html.Div(graph_ts_tv)
 
 
 
+def tabs():
+
+    
+
+    fig1 = go.Figure()
+    fig1.update_layout(
+        height = 800,
+    )
+
+    fig2 = go.Figure()
+    fig2.update_layout(
+        height = 800,
+    )
+
+    graph_ts_tv  = dcc.Graph(id = LayoutID.GRAPH, figure = fig1)
+    graph_lab = dcc.Graph(id = LayoutID.GRAPH_LAB, figure = fig2)
+
+    tabs = dbc.Tabs(
+        [
+            dbc.Tab(graph_ts_tv, label="Graph: Tsolar vs Tvis"),
+            dbc.Tab(graph_lab, label="Graph: Colour space"),
+        ]
+    )
+
+    return tabs
 
 
-graph_tabs = dbc.Tabs(
+buttongroup_graphs = html.Div(
     [
-        dbc.Tab(tab1_content, label="Tab 1"),
-        dbc.Tab(tab2_content, label="Tab 2"),
-    ]
+        dbc.RadioItems(
+            id=LayoutID.BUTTONGROUP_GRAPHTYPE,
+            className="btn-group",
+            inputClassName="btn-check",
+            labelClassName="btn btn-outline-primary",
+            labelCheckedClassName="active",
+            options=[
+                {"label": "Graph: Ts vs Tv", "value": GRAPHTYPE_TS_TV},
+                {"label": "Graph: l*a*b* color space", "value": GRAPHTYPE_LAB},
+                {"label": "Graph: RGB color space", "value": GRAPHTYPE_RGB},
+            ],
+            value=1,
+        ),
+        html.Div(id="output"),
+    ],
+    className="radio-group",
 )

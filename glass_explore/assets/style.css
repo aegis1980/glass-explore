@@ -1,3 +1,10 @@
+body {
+    font-size: 14px
+}
+
+.form-select {
+    font-size: 14px;
+}
 
 nav {
     margin-bottom: 20px;
@@ -8,3 +15,20 @@ nav {
 nav img {
     margin-right: 10px;
 }
+
+
+/* restyle radio items for button group (graphs) */
+.radio-group .form-check {
+    padding-left: 0;
+  }
+  
+  .radio-group .btn-group > .form-check:not(:last-child) > .btn {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+  
+  .radio-group .btn-group > .form-check:not(:first-child) > .btn {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    margin-left: -1px;
+  }

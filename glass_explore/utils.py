@@ -1,3 +1,7 @@
+from typing import Tuple
+
+from skimage.color import rgb2lab
+
 HEX_LETTER = ['a','b','c','d','e','f']
 LITTLE_ENDIAN_ORDER = [1,0,3,2,5,4]
 
@@ -23,5 +27,27 @@ def base10color_to_csshex(x: int) -> str:
     return '#' + ''.join(h)
 
 
+def csshex_to_rgb(csshex: str) -> Tuple[int,int,int]:
+    """ Convert a CSS hex string to rgb tuple
+
+    Args:
+        csshex (str): css hex color in format '#rrggbb
+
+    Returns:
+        Tuple[int,int,int]: Tuple red, green, blue (0..255)
+    """
+    h = csshex.lstrip('#')
+    (r,g,b) = tuple(int(h[i:i+2], 16) for i in (0, 2, 4))
+    return (r,g,b) 
+
+
+def rgb_to_lab(rgb : Tuple[int,int,int]):
+    lab = rgb2lab([x / 256.0 for x in rgb])
+    return  tuple(lab)
+
+
 if __name__ == "__main__":
-    print(base10color_to_csshex(628991))
+    color_code = 628991
+    csshex = base10color_to_csshex(color_code)
+    print(csshex)
+    print(csshex_to_rgb(csshex))

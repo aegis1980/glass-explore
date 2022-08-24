@@ -1,4 +1,5 @@
 import os
+from unittest import result
 import pywincalc
 from glass_explore import PATH_PRODUCTS, PATH_STANDARDS, igdb,results_printer
 
@@ -49,6 +50,7 @@ def convert_wavelength_data(raw_wavelength_data):
 
 def run_sim(
         id,
+        flipped : bool,
         gap_layer,
         other_layer,
     ):
@@ -71,7 +73,6 @@ def run_sim(
     glass_ir_transmittance_front = props['Tir']
     glass_ir_transmittance_back = props['Tir']
     glass_coated_side = props['Coated_Side']
-    flipped = False
 
     glass_n_band_optical_data = pywincalc.ProductDataOpticalNBand(glass_material_type,
                                                                 glass_material_thickness,
@@ -118,7 +119,15 @@ def run_sim(
 
 
     #results_printer.print_results(glazing_system_u_environment, glazing_system_shgc_environment)
-    return glazing_system_u_environment, glazing_system_shgc_environment
+    #results_printer.print_optical_method_results(glazing_system_u_environment, "SOLAR", 0, 0, '')
+    return props,glazing_system_u_environment, glazing_system_shgc_environment
+
 
 if __name__ == "__main__":
-    run_sim(id = 11594)
+    gap = gap_layer("air", "12")
+            
+    other = generic_uncoated_glass(thickness = 5, super_clear = False)
+    props,glazing_system_u_environment, glazing_system_shgc_environment = run_sim(11594,False,gap,other)
+
+    print (dir(glazing_system_u_environment))
+
