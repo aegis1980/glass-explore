@@ -1,11 +1,20 @@
+from typing import Dict
 import dash
-from dash import html
 from dash_svg import Svg, G, Rect,Line
 
 
 VIEW_HEIGHT = 20
 
-def generate_buildup(buildup):
+def generate_buildup(buildup : Dict) -> Svg:
+    """
+    Generates a little thumbnail of glass buildup (as an dash_svg.Svg) with layers, gas layers, coatings and colour.
+
+    Args:
+        buildup (Dict): Dictionary describing glass buildup
+
+    Returns:
+        Svg: dash_svg.Svg represent of buildup.
+    """
 
     x=0
     children = []
@@ -15,13 +24,13 @@ def generate_buildup(buildup):
         lite= Rect(width = t, height = VIEW_HEIGHT, x=x, fill=gl['color'])
         children.append(lite)
 
-        if gl['coating'] and gl['coating'] != 'NONE':
-
-            if gl['coating'] == 'BOTH':
+        if gl['coating'] and gl['coating'].upper() != 'NEITHER':
+            print(gl['coating'])
+            if gl['coating'].upper() == 'BOTH':
                 children.append(Line(x1 = x,y1=0,x2=x,y2=VIEW_HEIGHT, stroke= 'red', strokeWidth=0.5 ,strokeDasharray='1,1'))
                 children.append(Line(x1 = x+t,y1=0,x2=x+t,y2=VIEW_HEIGHT, stroke= 'red', strokeWidth=0.5 ,strokeDasharray='1,1'))
             else:
-                ff = gl['flipped'] + (gl['coating'] == 'FRONT')
+                ff = gl['flipped'] + (gl['coating'].upper() == 'FRONT')
                 if ff == 1:
                     xl = x
                 else:
@@ -30,7 +39,7 @@ def generate_buildup(buildup):
 
 
         if i < len(buildup['gas_layers']):
-            x= t + buildup['gas_layers'][i]['thickness']
+            x= t + float(buildup['gas_layers'][i]['thickness'])
         
     total_t = t+x
 
@@ -39,7 +48,8 @@ def generate_buildup(buildup):
         ,
         viewBox=f"0 0 {total_t} {VIEW_HEIGHT}", width = '100%', height = '100')
 
-    return html.Div(svg)
+    return svg
+
 
 
 if __name__ == "__main__":
@@ -49,6 +59,8 @@ if __name__ == "__main__":
         'layers': [
             {
                 'thickness' : 6,
+                'id' : 12345,
+                'props' : {},
                 'color' : '#1320ff',
                 'flipped' : True,
                 'coating' : 'BACK'
@@ -57,7 +69,7 @@ if __name__ == "__main__":
                 'thickness' : 6,
                 'color' : '#666666',
                 'flipped' : False,
-                'coating' : 'NONE'
+                'coating' : 'NEITHER'
             }
         
         ],
@@ -70,7 +82,7 @@ if __name__ == "__main__":
 
     app = dash.Dash(__name__)
     app.layout = generate_buildup(buildup)
-    app.run_server(debug=True, use_reloader=True)  
+    app.run_server(debug=True, use_reloader=True)
 
 
 

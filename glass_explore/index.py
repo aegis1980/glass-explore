@@ -1,5 +1,6 @@
 import sqlite3
 import os
+import json
 
 import pandas as pd
 import numpy as np
@@ -7,12 +8,12 @@ import numpy as np
 
 import dash
 from dash import dcc,html, Input, Output, State
+from dash.exceptions import PreventUpdate
+
 import dash_bootstrap_components as dbc
 
-import plotly.graph_objects as go
 
-
-from glass_explore import LayoutID, svg_glass, utils, layout, wincalc, callback_helpers, ALL_MANUFACTURERS   ,GRAPHTYPE_TS_TV,GRAPHTYPE_LAB,GRAPHTYPE_RGB
+from glass_explore import LayoutID, svg_glass, utils, layout, wincalc, callback_helpers, ALL_MANUFACTURERS   ,GRAPHTYPE_TS_TV,GRAPHTYPE_LAB,GRAPHTYPE_RGB, igdb
 from glass_explore.results_printer import print_system_optical_results_side
 
 DATA_SOURCE = 'sqlite'
@@ -44,7 +45,9 @@ elif DATA_SOURCE == 'csv':
 manufacturers = np.sort(raw_df.Manufacturer.unique())
 manufacturers = np.insert(manufacturers,0,ALL_MANUFACTURERS)
 
-# IGDB uses number for color, we what CSS hex value.
+raw_df.set_index('ID', inplace=True, drop=False)
+
+# IGDB uses number for color, we want CSS hex value.
 raw_df['CssColor'] = raw_df['Color'].map(lambda x:utils.base10color_to_csshex(x))
 raw_df['rgb'] = raw_df['CssColor'].map(lambda x:utils.csshex_to_rgb(x))
 raw_df[['RColor','GColor','BColor']] = raw_df['rgb'].apply(pd.Series)
@@ -71,20 +74,7 @@ select_manufacturer = html.Div([
     dbc.FormText(id = 'formtext-manufacturer',color='red'),
 ])
 
-radio_thickness = html.Div([
-    dbc.Label("Substrate thickness:"),
-     dbc.RadioItems(
-            options=[
-                {"label": "4mm", "value": 4},
-                {"label": "6mm", "value": 6},
-                {"label": "8mm", "value": 8},
-                {"label": "10mm", "value": 10},
-            ],
-            value=6,
-            id="radio-thickness",
-        ),
-    ]
-)
+
 
 
 app = dash.Dash(
@@ -96,19 +86,20 @@ app = dash.Dash(
 )
 
 app.layout = html.Div([
+    dcc.Store(LayoutID.STORE_BUILDUP_IN_SESSION,  storage_type = "session"),
     layout.navbar(app),
     dbc.Container([
         dbc.Row([
             dbc.Col([
                 dbc.Row([
                     dbc.Col(select_manufacturer),
-                    dbc.Col(radio_thickness)
+                    dbc.Col(layout.radio_thickness)
                 ]),
                 layout.buttongroup_graphs,
                 layout.graphs()
             ], width = 8),
             dbc.Col([
-                dbc.Row(dbc.Col(svg_glass.generate_buildup())),
+                dbc.Row(dbc.Col(html.Div(id=LayoutID.DIV_BUILDUP_SVG_CONTAINER))),
                 dbc.Row(dbc.Col(layout.card_selected_layer)),
                 dbc.Row(dbc.Col(layout.card_gas_layer)),
                 dbc.Row(dbc.Col(layout.card_other_layer)),
@@ -153,6 +144,61 @@ def toggle_modal(n, is_open):
 
 
 @app.callback(
+    Output(LayoutID.STORE_BUILDUP_IN_SESSION, 'data'),
+    [
+        Input(LayoutID.GRAPH, "clickData"),
+        Input(LayoutID.CHECKBOX_FLIP_OUTERLAYER, "value"),
+        Input(LayoutID.SELECT_GAS,"value"),
+        Input(LayoutID.INPUT_GAP,"value"),
+        Input(LayoutID.SELECT_INNERLAYER_SUBSTRATE,"value"), # clear or ultraclear
+        Input(LayoutID.SELECT_INNERLAYER_THICKNESS,"value")
+    ]
+)
+def glass_to_store(pt_data,flipped, gas, gap_thickness, inner_substrate, inner_thickness):
+    buildup = {}
+    buildup['layers'] = [{},{}]
+    buildup['gas_layers'] = [{}]
+    if pt_data:
+        id = pt_data['points'][0]['customdata'][0]
+    else:
+        return dash.no_update, 'no glass id'
+    print(raw_df.loc[id])
+    props_outer = igdb.lookup_glass_props(id)
+    
+    buildup['layers'][0]['color'] = raw_df.loc[int(id)]['CssColor']
+    buildup['layers'][0]['flipped'] = flipped
+    utils.populate_buildup_with_glass_props(buildup,props_outer,0)
+
+    
+    props_inner = wincalc.generic_uncoated_glass_props(int(inner_thickness),inner_substrate == 'ultraclear')
+    buildup['layers'][1]['color'] = raw_df.loc[props_inner['NFRC_ID']]['CssColor']
+    buildup['layers'][1]['flipped'] = False
+    utils.populate_buildup_with_glass_props(buildup,props_inner,1)
+
+    buildup['gas_layers'][0]['gas'] = gas
+    buildup['gas_layers'][0]['thickness'] = gap_thickness
+    #print(buildup)
+
+    return json.dumps(buildup)
+
+
+@app.callback(
+    Output(LayoutID.DIV_BUILDUP_SVG_CONTAINER,"children"),
+    Input(LayoutID.STORE_BUILDUP_IN_SESSION,"modified_timestamp"),
+    State(LayoutID.STORE_BUILDUP_IN_SESSION,"data")
+)
+def update_buildup_svg(ts, buildup):
+    if ts is None or buildup is None:
+        raise PreventUpdate
+
+    return svg_glass.generate_buildup(json.loads(buildup))
+
+    
+
+    
+
+
+@app.callback(
     Output(LayoutID.DIV_OUTERLITE_PRODUCT,"children"),
     Output(LayoutID.TABLE_CELL_UVALUE, "children"),
     Output(LayoutID.TABLE_CELL_SHGC,"children"),
@@ -174,7 +220,7 @@ def on_buildup_change(pt_data, gas, gap_thickness,flipped):
         if id:
             gap_layer = wincalc.gap_layer(gas, gap_thickness)
             
-            other_layer = wincalc.generic_uncoated_glass(thickness = 5, super_clear = False)
+            other_layer = wincalc.generic_uncoated_glass(thickness = 5, ultraclear = False)
             props,glazing_system_u_environment, glazing_system_shgc_environment = wincalc.run_sim(id,flipped, gap_layer, other_layer)
         else:
             return dash.no_update, 'no glass id'

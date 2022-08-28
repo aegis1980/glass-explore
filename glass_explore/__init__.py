@@ -25,9 +25,12 @@ class LayoutID:
     CHECKBOX_FLIP_OUTERLAYER = "checkbox-flip-outerlayer"
 
     DIV_OUTERLITE_PRODUCT = "div-outerlite-product"
+    DIV_BUILDUP_SVG_CONTAINER = "div-buildup-svg-container"
 
     SELECT_INNERLAYER_THICKNESS = "select-innerlayer-thickness"
     SELECT_INNERLAYER_SUBSTRATE = "select-innerlayer-substrate"
+
+    STORE_BUILDUP_IN_SESSION = "store-session"
 
     TABLE_CELL_UVALUE = "table-cell-uvalue"
     TABLE_CELL_SHGC = "table-cell-shgc"

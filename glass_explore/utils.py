@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Dict, Tuple
 
 from skimage.color import rgb2lab
 
@@ -45,6 +45,14 @@ def rgb_to_lab(rgb : Tuple[int,int,int]):
     lab = rgb2lab([x / 256.0 for x in rgb])
     return  tuple(lab)
 
+
+def populate_buildup_with_glass_props(buildup: Dict, props:Dict, i : int) -> Dict:
+    buildup['layers'][i]['id'] = props['NFRC_ID']
+    buildup['layers'][i]['props'] = props
+    buildup['layers'][i]['thickness'] = float(props['Thickness']) #is in mm
+
+    buildup['layers'][i]['coating'] = props['Coated_Side']
+    return buildup
 
 if __name__ == "__main__":
     color_code = 628991

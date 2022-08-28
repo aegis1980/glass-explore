@@ -26,6 +26,22 @@ def navbar(app):
     dark=True,
 )
 
+
+radio_thickness = html.Div([
+    dbc.Label("Substrate thickness:"),
+     dbc.RadioItems(
+            options=[
+                {"label": "4mm", "value": 4},
+                {"label": "6mm", "value": 6},
+                {"label": "8mm", "value": 8},
+                {"label": "10mm", "value": 10},
+            ],
+            value=6,
+            id="radio-thickness",
+        ),
+    ]
+)
+
 modal_splash = dbc.Modal(
             [
                 dbc.ModalHeader(dbc.ModalTitle("Welcome to Glass Explore")),
@@ -108,12 +124,7 @@ card_other_layer = dbc.Card([
                         dbc.Select(
                             id=LayoutID.SELECT_INNERLAYER_THICKNESS, 
                             value = 6,
-                            options=[
-                                {"label": "4mm", "value": 4},
-                                {"label": "6mm", "value": 6},
-                                {"label": "8mm", "value": 8},
-                                {"label": "10mm", "value": 10},
-                            ],
+                            options=[{"label" : f"{t}mm", "value" : t} for t in igdb.CLEAR_LOOKUP]
                         )
                     ),
                     dbc.Label("Substrate", width="auto"),
@@ -122,8 +133,8 @@ card_other_layer = dbc.Card([
                             id=LayoutID.SELECT_INNERLAYER_SUBSTRATE, 
                             value = 'clear',
                             options=[
-                                {"label": "clear", "value": "clear"},
-                                {"label": "super-clear (low iron)", "value": "super-clear"},
+                                {"label": "clear", "value": 'clear'},
+                                {"label": "ultraclear (low iron)", "value": 'ultraclear'},
                             ],
                         ),
                         className="me-3",

@@ -16,11 +16,18 @@ optical_standard = pywincalc.load_standard(optical_standard_path)
 glazing_system_width = 1.0  # width of the glazing system in meters
 glazing_system_height = 1.0  # height of the glazing system in meters
 
+def coated_side(side : str):
+    
+    s = pywincalc.CoatedSide.NEITHER
 
-def generic_uncoated_glass(thickness : int , super_clear : bool):
-    clear_6_path = os.path.join(PATH_PRODUCTS, "CLEAR_6.DAT")
-    return pywincalc.parse_optics_file(clear_6_path)
+    if side.upper() == 'BACK':
+        s = pywincalc.CoatedSide.BACK
+    elif side.upper() == 'FRONT':
+        s = pywincalc.CoatedSide.FRONT
+    elif side.upper() == 'BOTH':
+        s = pywincalc.CoatedSide.BOTH
 
+    return s
 
 def gap_layer(gas : str, thickness: float):
     return  pywincalc.Gap(igdb.GASES[gas], float(thickness)/1000)
@@ -46,24 +53,14 @@ def convert_wavelength_data(raw_wavelength_data):
 
     return pywincalc_wavelength_measured_data
 
-
-
-def run_sim(
-        id,
-        flipped : bool,
-        gap_layer,
-        other_layer,
-    ):
-    print("running sim")
+def glass_layer_from_props(props, flipped = False):
     # Create optical data for the glass layer
 
     # Make sure to select the approriate material type for the layer.
     # Current supported options are: 
     # APPLIED_FILM, COATED, ELECTROCHROMIC, FILM, INTERLAYER, LAMINATE, MONOLITHIC, THERMOCHROMIC
-
-    props = igdb.lookup_glass_props(id)
     glass_material_type = pywincalc.MaterialType.MONOLITHIC
-    glass_material_thickness =  props['Thickness']/1000  # in metres
+    glass_material_thickness =  props['Thickness']/1000  # in mm in db. pywincalc wants meters.
     glass_wavelength_measurements = convert_wavelength_data(igdb.lookup_wavelength_data(props['GlazingID']))
     # Since the measurements do not extend to the IR range emissivity and IR transmittances should be provided
     # If there are measurements that extend to the IR range these values can be provided but result calculated
@@ -72,7 +69,7 @@ def run_sim(
     glass_emissivity_back = props['emis2']
     glass_ir_transmittance_front = props['Tir']
     glass_ir_transmittance_back = props['Tir']
-    glass_coated_side = props['Coated_Side']
+    glass_coated_side = coated_side(props['Coated_Side'])
 
     glass_n_band_optical_data = pywincalc.ProductDataOpticalNBand(glass_material_type,
                                                                 glass_material_thickness,
@@ -96,7 +93,37 @@ def run_sim(
                                                 glass_opening_bottom, glass_opening_left, glass_opening_right)
 
     # Create a glass layer from both the optical and thermal data
-    coated_layer = pywincalc.ProductDataOpticalAndThermal(glass_n_band_optical_data, glass_thermal)
+    return pywincalc.ProductDataOpticalAndThermal(glass_n_band_optical_data, glass_thermal)
+
+
+def generic_uncoated_glass_props(thickness : int , ultraclear : bool):
+    if ultraclear:
+        id = igdb.ULTRACLEAR_LOOKUP[thickness]
+    else:
+        id = igdb.CLEAR_LOOKUP[thickness]
+    props = igdb.lookup_glass_props(id)
+    return props
+
+
+def generic_uncoated_glass(thickness : int , ultraclear : bool):
+    if ultraclear:
+        id = igdb.ULTRACLEAR_LOOKUP[thickness]
+    else:
+        id = igdb.CLEAR_LOOKUP[thickness]
+    props = igdb.lookup_glass_props(id)
+    return glass_layer_from_props(props)
+
+
+def run_sim(
+        id,
+        flipped : bool,
+        gap_layer,
+        other_layer,
+    ):
+    print("running sim")
+
+    props = igdb.lookup_glass_props(id)
+    coated_layer = glass_layer_from_props(props, flipped)
 
     # Create a glazing system using the NFRC U environment in order to get NFRC U results
     # U and SHGC can be caculated for any given environment but in order to get results
@@ -126,7 +153,7 @@ def run_sim(
 if __name__ == "__main__":
     gap = gap_layer("air", "12")
             
-    other = generic_uncoated_glass(thickness = 5, super_clear = False)
+    other = generic_uncoated_glass(thickness = 5, ultraclear = False)
     props,glazing_system_u_environment, glazing_system_shgc_environment = run_sim(11594,False,gap,other)
 
     print (dir(glazing_system_u_environment))
