@@ -1,6 +1,18 @@
+import functools
+
 import plotly.graph_objects as go
+import glass_explore
 from glass_explore import ALL_MANUFACTURERS, GRAPHTYPE_RGB
 
+
+def populate_standards(include_interesting):
+    standards = glass_explore.standards()
+    if include_interesting:
+        options = [{"label" : s['description'], "value" : s['filename']} for s in standards]
+    else:
+        options = [{"label" : s['description'], "value" : s['filename']} for s in standards if s['interesting'] == False]
+    return options
+    
 
 def graphing_ts_tv(df, manufacturer, thickness):
     """
@@ -195,6 +207,7 @@ def graphing_3d_colorspace(df, manufacturer, thickness, colorspace : int):
                     '<br>%{customdata[18]}'
             )
         )
-        
+
+    fig.update_layout(clickmode='event+select')    
 
     return fig, msg, color  

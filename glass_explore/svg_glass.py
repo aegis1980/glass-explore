@@ -1,9 +1,11 @@
 from typing import Dict
 import dash
-from dash_svg import Svg, G, Rect,Line
+from dash_svg import Svg, Rect,Line,Text
 
 
 VIEW_HEIGHT = 20
+COATING_COLOR = '#404040'
+COATING_STROKE = 0.3
 
 def generate_buildup(buildup : Dict) -> Svg:
     """
@@ -27,15 +29,15 @@ def generate_buildup(buildup : Dict) -> Svg:
         if gl['coating'] and gl['coating'].upper() != 'NEITHER':
             print(gl['coating'])
             if gl['coating'].upper() == 'BOTH':
-                children.append(Line(x1 = x,y1=0,x2=x,y2=VIEW_HEIGHT, stroke= 'red', strokeWidth=0.5 ,strokeDasharray='1,1'))
-                children.append(Line(x1 = x+t,y1=0,x2=x+t,y2=VIEW_HEIGHT, stroke= 'red', strokeWidth=0.5 ,strokeDasharray='1,1'))
+                children.append(Line(x1 = x,y1=0,x2=x,y2=VIEW_HEIGHT, stroke= COATING_COLOR, strokeWidth=COATING_STROKE ,strokeDasharray='1,1'))
+                children.append(Line(x1 = x+t,y1=0,x2=x+t,y2=VIEW_HEIGHT, stroke= COATING_COLOR, strokeWidth=COATING_STROKE ,strokeDasharray='1,1'))
             else:
                 ff = gl['flipped'] + (gl['coating'].upper() == 'FRONT')
                 if ff == 1:
                     xl = x
                 else:
                     xl = x+t
-                children.append(Line(x1 = xl,y1=0,x2=xl,y2=VIEW_HEIGHT, stroke= 'red', strokeWidth=0.5 ,strokeDasharray='1,1'))
+                children.append(Line(x1 = xl,y1=0,x2=xl,y2=VIEW_HEIGHT, stroke= COATING_COLOR, strokeWidth=COATING_STROKE ,strokeDasharray='1,1'))
 
 
         if i < len(buildup['gas_layers']):

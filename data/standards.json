@@ -1,0 +1,80 @@
+[
+    {
+        "description": "NFRC 300-2003 + emittance calcs",
+        "filename": "NFRC_300_2003.std",
+        "interesting": false,
+        "notes": ""
+    },
+    {
+        "description": "Standard for calculating colour rendering index and correlated colour temperature",
+        "filename": "CRI.std",
+        "interesting": true,
+        "notes": ""
+    },
+    {
+        "description": "ISO 9050:1990 (e)",
+        "filename": "ISO_9050.std",
+        "interesting": false,
+        "notes": ""
+    },
+    {
+        "description": "prEN 410:1998",
+        "filename": "prEN_410.std",
+        "interesting": false,
+        "notes": ""
+    },
+    {
+        "description": "Colour averages for Radiance export",
+        "filename": "Radiance.std",
+        "interesting": true,
+        "notes": ""
+    },
+    {
+        "description": " NFRC 300-2003 - default for WINDOW5",
+        "filename": "W5_NFRC_2003.std",
+        "interesting": true,
+        "notes": ""
+    },
+    {
+        "description": "SMARTS spectrum ASTM g 173, air mass 1.5, 37 degree tilt, direct",
+        "filename": "W7_G173_37Tilt_Direct.std",
+        "interesting": true,
+        "notes": ""
+    },
+    {
+        "description": "SMARTS spectrum ASTM g 173, air mass 1.5, 37 degree tilt, global",
+        "filename": "W7_G173_37Tilt_Global.std",
+        "interesting": true,
+        "notes": ""
+    },
+    {
+        "description": "SMARTS spectrum ASTM g 197, air mass 1.5, 20 degree tilt, direct",
+        "filename": "W7_G197_20Tilt_Direct.std",
+        "interesting": true,
+        "notes": ""
+    },
+    {
+        "description": "SMARTS spectrum ASTM g 197, air mass 1.5, 20 degree tilt, global",
+        "filename": "W7_G197_20Tilt_Global.std",
+        "interesting": true,
+        "notes": ""
+    },
+    {
+        "description": "SMARTS spectrum ASTM g 197, air mass 1.5, 90 degree tilt (vertical), direct",
+        "filename": "W7_G197_90Tilt_Direct.std",
+        "interesting": true,
+        "notes": ""
+    },
+    {
+        "description": "SMARTS spectrum ASTM g 197, air mass 1.5, 90 degree tilt (vertical), global",
+        "filename": "W7_G197_90Tilt_Global.std",
+        "interesting": true,
+        "notes": ""
+    },
+    {
+        "description": "Closest approx to WINDOW 4.1 methods",
+        "filename": "WINDOW4.std",
+        "interesting": true,
+        "notes": ""
+    }
+]

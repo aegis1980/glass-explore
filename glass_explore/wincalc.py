@@ -1,17 +1,21 @@
+import functools
 import os
-from unittest import result
+from typing import Dict
+
 import pywincalc
+
 from glass_explore import PATH_PRODUCTS, PATH_STANDARDS, igdb,results_printer
+import glass_explore
 
-
-
-# Path to the optical standard file.  All other files referenced by the standard file must be in the same directory
-# Note:  While all optical standards packaged with WINDOW should work with optical calculations care should be
-# taken to use NFRC standards if NFRC thermal results are desired.  This is because for thermal calculations currently
-# only ISO 15099 is supported.  While it is possible to use EN optical standards and create thermal results
-# those results will not be based on EN 673
-optical_standard_path = os.path.join(PATH_STANDARDS, "W5_NFRC_2003.std")
-optical_standard = pywincalc.load_standard(optical_standard_path)
+@functools.cache
+def load_optical_standard(filename):
+    # Path to the optical standard file.  All other files referenced by the standard file must be in the same directory
+    # Note:  While all optical standards packaged with WINDOW should work with optical calculations care should be
+    # taken to use NFRC standards if NFRC thermal results are desired.  This is because for thermal calculations currently
+    # only ISO 15099 is supported.  While it is possible to use EN optical standards and create thermal results
+    # those results will not be based on EN 673
+    optical_standard_path = os.path.join(PATH_STANDARDS, filename or glass_explore.DEFAULT_OPTICAL_STANDARD)
+    return pywincalc.load_standard(optical_standard_path)
 
 glazing_system_width = 1.0  # width of the glazing system in meters
 glazing_system_height = 1.0  # height of the glazing system in meters
@@ -114,13 +118,21 @@ def generic_uncoated_glass(thickness : int , ultraclear : bool):
     return glass_layer_from_props(props)
 
 
+
+def run_analysis(buildup : Dict):
+    pass
+
+
+
 def run_sim(
         id,
         flipped : bool,
         gap_layer,
         other_layer,
+        optical_standard_file = glass_explore.DEFAULT_OPTICAL_STANDARD
     ):
-    print("running sim")
+
+    optical_standard = load_optical_standard(optical_standard_file)
 
     props = igdb.lookup_glass_props(id)
     coated_layer = glass_layer_from_props(props, flipped)

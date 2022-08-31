@@ -1,9 +1,17 @@
 from dash import html, dcc
 import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
-from glass_explore import GRAPHTYPE_RGB, GRAPHTYPE_TS_TV,GRAPHTYPE_LAB, LayoutID, igdb
+import glass_explore
+from glass_explore import LayoutID, callback_helpers, igdb
 
 FITC_LOGO = 'balloon_white_h30px.png'
+
+nav = dbc.Nav(
+    [
+        dbc.NavItem(dbc.NavLink( "About",id = LayoutID.NAVLINK_ABOUT)),
+        dbc.NavItem(dbc.NavLink("Settings",disabled=True,id = LayoutID.NAVLINK_SETTINGS)),
+    ]
+)
 
 def navbar(app):
     return dbc.Navbar(
@@ -20,7 +28,14 @@ def navbar(app):
             ),
             href="https://floatingintheclouds.com",
             style={"textDecoration": "none"},
-        )
+        ),
+        dbc.NavbarToggler(id="navbar-toggler", n_clicks=0),
+            dbc.Collapse(
+                nav,
+                id="navbar-collapse",
+                is_open=False,
+                navbar=True,
+            ),
     ],
     color="dark",
     dark=True,
@@ -42,23 +57,54 @@ radio_thickness = html.Div([
     ]
 )
 
-modal_splash = dbc.Modal(
+modal_about = dbc.Modal(
             [
                 dbc.ModalHeader(dbc.ModalTitle("Welcome to Glass Explore")),
                 dbc.ModalBody([
-                    html.P("Data from Lawrence Berkeley National Laboratory IGDB database."),
-                    html.P(["Chart plots Solar Transmittance (T",html.Sub("sol"),") and Visible Light Transmittance  (T",html.Sub("vis"),") of 6mm and 8mm glasses in the database."]),
-                    html.P(["Note:  Solar and visible light transmission properties will depend on what glazing buildup these products are included in. The charted (T",html.Sub("vis"),") and (T",html.Sub("sol"),") are only indicative of the VLT and g-factor/SHGC of the buildup performance."])
+                    html.P("I wote this web app as playgrou"),
+                    html.P(["Running website comes at a personal cost and if it beomes too costly it'll be lights out. So, if you find useful please consider the following:"]),
+                    html.P(["Passing through? Click on the advertising banner above"]),
+                    html.P(["You find useful? Consider a dinatoin thghh. "]),
                 ]),
                 dbc.ModalFooter(
                     dbc.Button(
-                        "Close", id=LayoutID.MODAL_SPLASH_CLOSE, className="ms-auto", n_clicks=0
+                        "Close", id=LayoutID.MODAL_ABOUT_CLOSE, className="ms-auto", n_clicks=0
                     )
                 ),
             ],
-            id=LayoutID.MODAL_SPLASH,
+            id=LayoutID.MODAL_ABOUT,
             is_open=True,
         )
+
+
+
+
+modal_settings = dbc.Modal(
+            [
+                dbc.ModalHeader(dbc.ModalTitle("Settings")),
+                dbc.ModalBody([
+                    dbc.Label("Optical standard"),
+                    dbc.Select(
+                        id=LayoutID.SELECT_OPTICAL_STANDARD,
+                        options = callback_helpers.populate_standards(False),
+                        value=glass_explore.DEFAULT_OPTICAL_STANDARD
+                    ),
+                    dbc.Checkbox(
+                        id=LayoutID.CHECKBOX_ADVANCED_OPTICAL_STANDARD,
+                        label="Show some other optical setups",
+                        value=False,
+                    )                            
+                 ]),
+                dbc.ModalFooter(
+                    dbc.Button(
+                        "Done with settings", id=LayoutID.MODAL_SETTINGS_CLOSE, className="ms-auto", n_clicks=0
+                    )
+                ),
+            ],
+            id=LayoutID.MODAL_SETTINGS,
+            is_open=False,
+        )
+
 
 card_gas_layer = dbc.Card([
     dbc.CardHeader("Gas layer"),
@@ -88,8 +134,9 @@ card_gas_layer = dbc.Card([
                 ],
                 className="g-2"
             )
-        )
-    )])
+        ))],
+        className="mb-2",
+    )
 
 card_selected_layer = dbc.Card([
         dbc.CardHeader("Outer lite (user selected)"),
@@ -110,39 +157,42 @@ card_selected_layer = dbc.Card([
                     ]
                 )
             )
-        ])
-    ])
+        ])],
+        className="mb-2",
+    )
 
 card_other_layer = dbc.Card([
-    dbc.CardHeader("Inner lite"),
-    dbc.CardBody(   
-        dbc.Form(
-            dbc.Row(
-                [
-                    dbc.Label("Thickness", width="auto"),
-                    dbc.Col(
-                        dbc.Select(
-                            id=LayoutID.SELECT_INNERLAYER_THICKNESS, 
-                            value = 6,
-                            options=[{"label" : f"{t}mm", "value" : t} for t in igdb.CLEAR_LOOKUP]
-                        )
-                    ),
-                    dbc.Label("Substrate", width="auto"),
-                    dbc.Col(
-                        dbc.Select(
-                            id=LayoutID.SELECT_INNERLAYER_SUBSTRATE, 
-                            value = 'clear',
-                            options=[
-                                {"label": "clear", "value": 'clear'},
-                                {"label": "ultraclear (low iron)", "value": 'ultraclear'},
-                            ],
+        dbc.CardHeader("Inner lite"),
+        dbc.CardBody(   
+            dbc.Form(
+                dbc.Row(
+                    [
+                        dbc.Label("Thickness", width="auto"),
+                        dbc.Col(
+                            dbc.Select(
+                                id=LayoutID.SELECT_INNERLAYER_THICKNESS, 
+                                value = 6,
+                                options=[{"label" : f"{t}mm", "value" : t} for t in igdb.CLEAR_LOOKUP]
+                            )
                         ),
-                        className="me-3",
-                    )
-                ]
+                        dbc.Label("Substrate", width="auto"),
+                        dbc.Col(
+                            dbc.Select(
+                                id=LayoutID.SELECT_INNERLAYER_SUBSTRATE, 
+                                value = 'clear',
+                                options=[
+                                    {"label": "clear", "value": 'clear'},
+                                    {"label": "ultraclear (low iron)", "value": 'ultraclear'},
+                                ],
+                            ),
+                            className="me-3",
+                        )
+                    ]
+                )
             )
-        )
-    )])
+        )],
+        className="mb-2",
+    )
 
 
 table_header = [
@@ -175,34 +225,8 @@ def graphs():
 
 
 
-def tabs():
 
-    
-
-    fig1 = go.Figure()
-    fig1.update_layout(
-        height = 800,
-    )
-
-    fig2 = go.Figure()
-    fig2.update_layout(
-        height = 800,
-    )
-
-    graph_ts_tv  = dcc.Graph(id = LayoutID.GRAPH, figure = fig1)
-    graph_lab = dcc.Graph(id = LayoutID.GRAPH_LAB, figure = fig2)
-
-    tabs = dbc.Tabs(
-        [
-            dbc.Tab(graph_ts_tv, label="Graph: Tsolar vs Tvis"),
-            dbc.Tab(graph_lab, label="Graph: Colour space"),
-        ]
-    )
-
-    return tabs
-
-
-buttongroup_graphs = html.Div(
+nav_graphs = html.Div(
     [
         dbc.RadioItems(
             id=LayoutID.BUTTONGROUP_GRAPHTYPE,
@@ -211,13 +235,22 @@ buttongroup_graphs = html.Div(
             labelClassName="btn btn-outline-primary",
             labelCheckedClassName="active",
             options=[
-                {"label": "Graph: Ts vs Tv", "value": GRAPHTYPE_TS_TV},
-                {"label": "Graph: l*a*b* color space", "value": GRAPHTYPE_LAB},
-                {"label": "Graph: RGB color space", "value": GRAPHTYPE_RGB},
+                {"label": "Graph: Ts vs Tv", "value": glass_explore.GRAPHTYPE_TS_TV},
+                {"label": "Graph: l*a*b* color space", "value": glass_explore.GRAPHTYPE_LAB},
+                {"label": "Graph: RGB color space", "value": glass_explore.GRAPHTYPE_RGB},
             ],
             value=1,
         ),
         html.Div(id="output"),
     ],
     className="radio-group",
+)
+
+nav_graphs = dbc.Nav(
+    [
+        dbc.NavItem(dbc.NavLink("Graph: Ts vs Tv", active=True)),
+        dbc.NavItem(dbc.NavLink("Graph: l*a*b* color space")),
+        dbc.NavItem(dbc.NavLink("Graph: RGB color space")),
+    ],
+    id=LayoutID.NAV_GRAPHTYPE
 )

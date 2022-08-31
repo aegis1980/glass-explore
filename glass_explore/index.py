@@ -13,7 +13,8 @@ from dash.exceptions import PreventUpdate
 import dash_bootstrap_components as dbc
 
 
-from glass_explore import LayoutID, svg_glass, utils, layout, wincalc, callback_helpers, ALL_MANUFACTURERS   ,GRAPHTYPE_TS_TV,GRAPHTYPE_LAB,GRAPHTYPE_RGB, igdb
+from glass_explore import standards, LayoutID, svg_glass, utils, layout, wincalc, callback_helpers, ALL_MANUFACTURERS ,GRAPHTYPE_TS_TV,GRAPHTYPE_LAB,GRAPHTYPE_RGB, igdb
+import glass_explore
 from glass_explore.results_printer import print_system_optical_results_side
 
 DATA_SOURCE = 'sqlite'
@@ -87,6 +88,7 @@ app = dash.Dash(
 
 app.layout = html.Div([
     dcc.Store(LayoutID.STORE_BUILDUP_IN_SESSION,  storage_type = "session"),
+    dcc.Store(LayoutID.STORE_SETTINGS_IN_LOCAL,  storage_type = "local"),
     layout.navbar(app),
     dbc.Container([
         dbc.Row([
@@ -95,18 +97,19 @@ app.layout = html.Div([
                     dbc.Col(select_manufacturer),
                     dbc.Col(layout.radio_thickness)
                 ]),
-                layout.buttongroup_graphs,
+                layout.nav_graphs,
                 layout.graphs()
             ], width = 8),
             dbc.Col([
-                dbc.Row(dbc.Col(html.Div(id=LayoutID.DIV_BUILDUP_SVG_CONTAINER))),
+                dbc.Row(dbc.Col(html.Div(id=LayoutID.DIV_BUILDUP_SVG_CONTAINER),className="mb-2")),
                 dbc.Row(dbc.Col(layout.card_selected_layer)),
                 dbc.Row(dbc.Col(layout.card_gas_layer)),
                 dbc.Row(dbc.Col(layout.card_other_layer)),
                 dbc.Row(dbc.Col(layout.results_table))
             ],width = 4)
         ]),
-        layout.modal_splash,
+        layout.modal_about,
+        layout.modal_settings,
     ], fluid=True )])
 
 
@@ -130,15 +133,36 @@ def update_graphing(graph_type, manufacturer, thickness):
     return fig, msg, color
 
 
+@app.callback(
+    Output(LayoutID.SELECT_OPTICAL_STANDARD,"options"),
+    [Input(LayoutID.MODAL_SETTINGS, "is_open"),Input(LayoutID.CHECKBOX_ADVANCED_OPTICAL_STANDARD, "value")],
+    [State(LayoutID.STORE_SETTINGS_IN_LOCAL,'data')]
+)
+def populate_standards_select(settings_open,inc_advanced,stored_settings):
+    return callback_helpers.populate_standards(include_interesting=inc_advanced)
+
+@app.callback(
+    Output(LayoutID.MODAL_ABOUT, "is_open"),
+    [Input(LayoutID.MODAL_ABOUT_CLOSE, "n_clicks"),Input(LayoutID.NAVLINK_ABOUT, "n_clicks")],
+    [State(LayoutID.MODAL_ABOUT, "is_open")],
+)
+def toggle_about_modal(n1, n2, is_open):
+    if n1 :
+        return not is_open
+    if n2 :
+        return not is_open
+    return is_open
 
 
 @app.callback(
-    Output(LayoutID.MODAL_SPLASH, "is_open"),
-    [Input(LayoutID.MODAL_SPLASH_CLOSE, "n_clicks")],
-    [State(LayoutID.MODAL_SPLASH, "is_open")],
+    Output(LayoutID.MODAL_SETTINGS, "is_open"),
+    [Input(LayoutID.MODAL_SETTINGS_CLOSE, "n_clicks"),Input(LayoutID.NAVLINK_SETTINGS, "n_clicks")],
+    [State(LayoutID.MODAL_SETTINGS, "is_open")],
 )
-def toggle_modal(n, is_open):
-    if n :
+def toggle_settings_modal(n1, n2, is_open):
+    if n1 :
+        return not is_open
+    if n2 :
         return not is_open
     return is_open
 
@@ -155,6 +179,9 @@ def toggle_modal(n, is_open):
     ]
 )
 def glass_to_store(pt_data,flipped, gas, gap_thickness, inner_substrate, inner_thickness):
+    """
+    Stores current user selected buildup in session storage.
+    """
     buildup = {}
     buildup['layers'] = [{},{}]
     buildup['gas_layers'] = [{}]
@@ -162,7 +189,7 @@ def glass_to_store(pt_data,flipped, gas, gap_thickness, inner_substrate, inner_t
         id = pt_data['points'][0]['customdata'][0]
     else:
         return dash.no_update, 'no glass id'
-    print(raw_df.loc[id])
+
     props_outer = igdb.lookup_glass_props(id)
     
     buildup['layers'][0]['color'] = raw_df.loc[int(id)]['CssColor']
@@ -177,7 +204,6 @@ def glass_to_store(pt_data,flipped, gas, gap_thickness, inner_substrate, inner_t
 
     buildup['gas_layers'][0]['gas'] = gas
     buildup['gas_layers'][0]['thickness'] = gap_thickness
-    #print(buildup)
 
     return json.dumps(buildup)
 
@@ -193,13 +219,28 @@ def update_buildup_svg(ts, buildup):
 
     return svg_glass.generate_buildup(json.loads(buildup))
 
-    
 
+@app.callback(
+    Output(LayoutID.DIV_OUTERLITE_PRODUCT,"children"),
+    Input(LayoutID.STORE_BUILDUP_IN_SESSION,"modified_timestamp"),
+    State(LayoutID.STORE_BUILDUP_IN_SESSION,"data")
+)
+def update_outer_lite_productdata(ts, buildup):
+    if ts is None or buildup is None:
+        raise PreventUpdate
+
+    props = buildup['layers'][0]['props']
+
+    outer_layer_info = f"""
+            {props['ProductName']}
+            ({props['Manufacturer']})
+        """ 
+
+    return outer_layer_info   
     
 
 
 @app.callback(
-    Output(LayoutID.DIV_OUTERLITE_PRODUCT,"children"),
     Output(LayoutID.TABLE_CELL_UVALUE, "children"),
     Output(LayoutID.TABLE_CELL_SHGC,"children"),
     Output(LayoutID.TABLE_CELL_TVIS,"children"),
@@ -211,9 +252,10 @@ def update_buildup_svg(ts, buildup):
         Input(LayoutID.SELECT_GAS,"value"),
         Input(LayoutID.INPUT_GAP,"value"),
         Input(LayoutID.CHECKBOX_FLIP_OUTERLAYER, "value"),
+        Input(LayoutID.SELECT_OPTICAL_STANDARD,"value")
     ]
 )
-def on_buildup_change(pt_data, gas, gap_thickness,flipped):
+def on_buildup_change(pt_data, gas, gap_thickness,flipped,optical_standard):
     
     if pt_data:
         id = pt_data['points'][0]['customdata'][0]
@@ -221,7 +263,7 @@ def on_buildup_change(pt_data, gas, gap_thickness,flipped):
             gap_layer = wincalc.gap_layer(gas, gap_thickness)
             
             other_layer = wincalc.generic_uncoated_glass(thickness = 5, ultraclear = False)
-            props,glazing_system_u_environment, glazing_system_shgc_environment = wincalc.run_sim(id,flipped, gap_layer, other_layer)
+            props,glazing_system_u_environment, glazing_system_shgc_environment = wincalc.run_sim(id,flipped, gap_layer, other_layer,optical_standard)
         else:
             return dash.no_update, 'no glass id'
         
@@ -232,13 +274,28 @@ def on_buildup_change(pt_data, gas, gap_thickness,flipped):
             ({props['Manufacturer']})
         """
 
-        uvalue = f'{glazing_system_u_environment.u(0,0):.1f}'
+        uvalue = f'{glazing_system_u_environment.u(90,90):.1f}'
         shgc = f'{glazing_system_shgc_environment.shgc(0,0):.2f}'
         tvis = f'{optical.front.transmittance.direct_hemispherical:.2f}'
         rout = f'{optical.front.reflectance.direct_hemispherical:.2f}'
         rin = f'{optical.back.reflectance.direct_hemispherical:.2f}'
       
-        return outer_layer_info, uvalue,shgc,tvis,rout,rin
+        return uvalue,shgc,tvis,rout,rin
+
+
+
+
+# add callback for toggling the collapse on small screens
+@app.callback(
+    Output("navbar-collapse", "is_open"),
+    [Input("navbar-toggler", "n_clicks")],
+    [State("navbar-collapse", "is_open")],
+)
+def toggle_navbar_collapse(n, is_open):
+    if n:
+        return not is_open
+    return is_open
+
 
 
 app.title = "Glass explore (using Plotly Dash)"
