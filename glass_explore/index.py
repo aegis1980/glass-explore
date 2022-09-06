@@ -130,7 +130,11 @@ def update_graphing(graph_type, manufacturer, thickness):
     else:
         fig, msg, color = callback_helpers.graphing_3d_colorspace(df, manufacturer,thickness, graph_type)
 
+    fig.update_layout(clickmode='event+select')
+
     return fig, msg, color
+
+
 
 
 @app.callback(
@@ -262,7 +266,7 @@ def on_buildup_change(pt_data, gas, gap_thickness,flipped,optical_standard):
         if id:
             gap_layer = wincalc.gap_layer(gas, gap_thickness)
             
-            other_layer = wincalc.generic_uncoated_glass(thickness = 5, ultraclear = False)
+            other_layer = wincalc.generic_uncoated_glass(thickness = 6, ultraclear = False)
             props,glazing_system_u_environment, glazing_system_shgc_environment = wincalc.run_sim(id,flipped, gap_layer, other_layer,optical_standard)
         else:
             return dash.no_update, 'no glass id'
@@ -274,11 +278,11 @@ def on_buildup_change(pt_data, gas, gap_thickness,flipped,optical_standard):
             ({props['Manufacturer']})
         """
 
-        uvalue = f'{glazing_system_u_environment.u(90,90):.1f}'
-        shgc = f'{glazing_system_shgc_environment.shgc(0,0):.2f}'
-        tvis = f'{optical.front.transmittance.direct_hemispherical:.2f}'
-        rout = f'{optical.front.reflectance.direct_hemispherical:.2f}'
-        rin = f'{optical.back.reflectance.direct_hemispherical:.2f}'
+        uvalue = f'{glazing_system_u_environment.u(0,90):.3f}'
+        shgc = f'{glazing_system_shgc_environment.shgc(0,90):.3f}'
+        tvis = f'{optical.front.transmittance.direct_hemispherical:.3f}'
+        rout = f'{optical.front.reflectance.direct_hemispherical:.3f}'
+        rin = f'{optical.back.reflectance.direct_hemispherical:.3f}'
       
         return uvalue,shgc,tvis,rout,rin
 

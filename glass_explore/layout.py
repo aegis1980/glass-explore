@@ -139,7 +139,7 @@ card_gas_layer = dbc.Card([
     )
 
 card_selected_layer = dbc.Card([
-        dbc.CardHeader("Outer lite (user selected)"),
+        dbc.CardHeader("Outer glass layer (user selected)"),
         dbc.CardBody([
             dbc.Form(
                 dbc.Row(
@@ -162,7 +162,7 @@ card_selected_layer = dbc.Card([
     )
 
 card_other_layer = dbc.Card([
-        dbc.CardHeader("Inner lite"),
+        dbc.CardHeader("Inner glass layer"),
         dbc.CardBody(   
             dbc.Form(
                 dbc.Row(
@@ -205,8 +205,10 @@ row_shgc = html.Tr([html.Td("SHGC"), html.Td(id = LayoutID.TABLE_CELL_SHGC)])
 row_vlt = html.Tr([html.Td(["T",html.Sub("vis")]), html.Td(id = LayoutID.TABLE_CELL_TVIS)])
 row_rout = html.Tr([html.Td(["R",html.Sub("out")]), html.Td(id = LayoutID.TABLE_CELL_ROUT)])
 row_rin = html.Tr([html.Td(["R",html.Sub("in")]), html.Td(id = LayoutID.TABLE_CELL_RIN)])
+row_color1 = html.Tr([html.Td(["Colour",html.Sub("trans")]), html.Td(id = LayoutID.TABLE_CELL_COLOR_TRANS)])
+row_color2 = html.Tr([html.Td(["Colour",html.Sub("refl")]), html.Td(id = LayoutID.TABLE_CELL_COLOR_REFL)])
 
-table_body = [html.Tbody([row_u, row_shgc,row_vlt,row_rout,row_rin])]
+table_body = [html.Tbody([row_u, row_shgc,row_vlt,row_rout,row_rin,row_color1,row_color2])]
 
 results_table = dbc.Table(
     table_header + table_body, 
@@ -246,11 +248,12 @@ nav_graphs = html.Div(
     className="radio-group",
 )
 
-nav_graphs = dbc.Nav(
-    [
-        dbc.NavItem(dbc.NavLink("Graph: Ts vs Tv", active=True)),
-        dbc.NavItem(dbc.NavLink("Graph: l*a*b* color space")),
-        dbc.NavItem(dbc.NavLink("Graph: RGB color space")),
-    ],
-    id=LayoutID.NAV_GRAPHTYPE
-)
+# nav_graphs = dbc.Nav(
+#     [
+#         dbc.NavItem(dbc.NavLink("Graph: Ts vs Tv", active=True)),
+#         dbc.NavItem(dbc.NavLink("Graph: l*a*b* color space")),
+#         dbc.NavItem(dbc.NavLink("Graph: RGB color space")),
+#     ],
+#     pills=True,
+#     id=LayoutID.NAV_GRAPHTYPE
+# )

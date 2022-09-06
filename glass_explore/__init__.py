@@ -8,6 +8,8 @@ PATH_DATA = os.path.join('data')
 PATH_STANDARDS = os.path.join('data','standards')
 PATH_PRODUCTS = os.path.join('data','products')
 
+DEVTEMP = os.path.join(os.getcwd(),'temp') 
+
 
 
 ALL_MANUFACTURERS = '[ALL]'
@@ -59,15 +61,15 @@ class LayoutID:
     TABLE_CELL_TVIS = "table-cell-tvis"
     TABLE_CELL_ROUT = "table-cell-rout"
     TABLE_CELL_RIN  = "table-cell-rin"
+    TABLE_CELL_COLOR_TRANS = "table-cell-color_trans"
+    TABLE_CELL_COLOR_REFL = "table-cell-color_refl"
     
-
-
     BUTTONGROUP_GRAPHTYPE = "buttongroup-graphtype"
 
 
 
 
-DEFAULT_OPTICAL_STANDARD = "NFRC_300_2003.std"
+DEFAULT_OPTICAL_STANDARD = "W5_NFRC_2003.std"
 
 @functools.cache    
 def standards():

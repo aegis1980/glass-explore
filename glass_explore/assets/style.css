@@ -16,6 +16,9 @@ nav img {
     margin-right: 10px;
 }
 
+.radio-group {
+   font-size: 14px;
+}
 
 /* restyle radio items for button group (graphs) */
 .radio-group .form-check {

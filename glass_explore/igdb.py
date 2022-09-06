@@ -37,27 +37,26 @@ GASES = {
 
 path = os.path.join('data', 'igdb.sqlite')
 
-def lookup_wavelength_data(id : int) -> Dict:
-    """
-        Return spectral data for given product (id)
+def lookup_wavelength_data(id : int) -> pd.DataFrame:
+    """_summary_
 
     Args:
-        id (int): igdb GlazingID
+        id (int): Glazing id (note this is not the same as the NFRC id)
 
     Returns:
-        Dict: _description_
+        pd.DataFrame: spectral data
     """
+
     # Create a SQL connection to our SQLite database
     cxn = sqlite3.connect(path)
 
     sql = f'select * from SpectralData where GlazingID = {id}'
-    raw_df = pd.read_sql(sql,cxn)
-    return raw_df.to_dict()
+    return pd.read_sql(sql,cxn)
 
 
 
     
-functools.cache
+#functools.cache
 def lookup_glass_props(nfrc_id : int) -> Dict:
     """
     Performs an SQL (inner) join on data in 'glass' and glazingproperties' tables in IGDB database.
@@ -74,5 +73,7 @@ def lookup_glass_props(nfrc_id : int) -> Dict:
 
     raw_df = pd.read_sql(sql,cxn)
     props =  raw_df.to_dict('records')[0]
+
+
 
     return props
