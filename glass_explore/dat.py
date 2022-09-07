@@ -5,6 +5,7 @@ import pywincalc
 import pandas as pd
 import shutil
 
+# TODO Should get from database GlazingTypes table
 _TYPES = {
     1 : "Unknown",
     2 : "Monolithic",
@@ -27,7 +28,6 @@ def _convert_wavelength_data_dat(raw_wavelength_df : pd.DataFrame):
         tb = float(row["Tb"])
         rf = float(row["Rf"])
         rb = float(row["Rb"])
-        #data.append(f'{w:.3f}    {t:.4f}    {rf:.4f}    {rb:.4f}')
         data.append(f'{w}    {t}    {rf}    {rb}')
     return "\n".join(data)
 
@@ -74,13 +74,13 @@ def make_datfile(props, raw_wavelength_df : pd.DataFrame, write_to_path = None):
 
 
 
+if __name__ == "__main__":
+    from glass_explore import igdb
 
-from glass_explore import igdb
+    CLEAR_6 = 103
+    LOW_E = 9923
 
-CLEAR_6 = 103
-LOW_E = 9923
-
-props = igdb.lookup_glass_props(LOW_E)
-wavelength_df = igdb.lookup_wavelength_data(props['GlazingID'])
-path = os.path.join(os.getcwd(),'c1.dat')
-clear_6 = make_datfile(props,wavelength_df, path)
+    props = igdb.lookup_glass_props(LOW_E)
+    wavelength_df = igdb.lookup_wavelength_data(props['GlazingID'])
+    path = os.path.join(os.getcwd(),'c1.dat')
+    clear_6 = make_datfile(props,wavelength_df, path)

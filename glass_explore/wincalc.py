@@ -62,6 +62,9 @@ def _convert_wavelength_data(raw_wavelength_df : pd.DataFrame):
 
     return pywincalc_wavelength_measured_data
 
+
+
+
 def glass_layer_from_props(props, flipped = False):
     # Create optical data for the glass layer
 
@@ -92,7 +95,6 @@ def glass_layer_from_props(props, flipped = False):
 
     # Next create the thermal data for the glass layer
     glass_conductivity = props['Conductivity']
-    print(glass_conductivity)
     # Since thermal openings in this case are all zero they can be omitted.  They are included he for example purposes.
     glass_opening_top = 0
     glass_opening_bottom = 0
