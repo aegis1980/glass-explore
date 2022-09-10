@@ -197,8 +197,8 @@ def print_results(glazing_system_u_env, glazing_system_shgc_env):
     leading_tabs = "\t\t"
     print_thermal_results(glazing_system_shgc_env, leading_tabs=leading_tabs)
 
-    print("\tResults at incidence of theta = 15° and phi = 270° for system with NFRC SHGC environmental conditions")
-    theta = 15
-    phi = 270
-    print_optical_results(glazing_system_shgc_env, theta, phi, leading_tabs=leading_tabs)
-    print_thermal_results(glazing_system_shgc_env, theta, phi, leading_tabs=leading_tabs)
+    #print("\tResults at incidence of theta = 15° and phi = 270° for system with NFRC SHGC environmental conditions")
+   # theta = 15
+   # phi = 270
+    #print_optical_results(glazing_system_shgc_env, theta, phi, leading_tabs=leading_tabs)
+    #print_thermal_results(glazing_system_shgc_env, theta, phi, leading_tabs=leading_tabs)

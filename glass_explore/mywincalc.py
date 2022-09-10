@@ -5,7 +5,7 @@ from typing import Dict
 import pandas as pd
 import pywincalc
 
-from glass_explore import PATH_PRODUCTS, PATH_STANDARDS, igdb,results_printer
+from glass_explore import PATH_PRODUCTS, PATH_STANDARDS, igdb,results_printer, dat
 import glass_explore
 
 #@functools.cache
@@ -122,7 +122,10 @@ def generic_uncoated_glass(thickness : int , ultraclear : bool):
     else:
         id = igdb.CLEAR_LOOKUP[thickness]
     props = igdb.lookup_glass_props(id)
-    return glass_layer_from_props(props)
+    wavelength_df = igdb.lookup_wavelength_data(props['GlazingID'])
+    return dat.make_datfile(props,wavelength_df)
+
+    #return glass_layer_from_props(props)
 
 
 
@@ -142,7 +145,10 @@ def run_sim(
     optical_standard = load_optical_standard(optical_standard_file)
 
     props = igdb.lookup_glass_props(id)
-    coated_layer = glass_layer_from_props(props, flipped)
+    #coated_layer = glass_layer_from_props(props, flipped)
+    wavelength_df = igdb.lookup_wavelength_data(props['GlazingID'])
+    coated_layer = dat.make_datfile(props,wavelength_df)
+
 
     # Create a glazing system using the NFRC U environment in order to get NFRC U results
     # U and SHGC can be caculated for any given environment but in order to get results
@@ -171,10 +177,13 @@ def run_sim(
 if __name__ == "__main__":
     gap = pywincalc.Gap(pywincalc.PredefinedGasType.AIR, .0127)  # .0127 is gap thickness in meters
     #gap = gap_layer("air", "12")
+
             
     other = generic_uncoated_glass(thickness = 6, ultraclear = False)
+
+    print(dir(other))
     props,glazing_system_u_environment, glazing_system_shgc_environment = run_sim(103,False,gap,other)
 
-    results_printer.print_results(glazing_system_u_environment, glazing_system_shgc_environment)
+   # results_printer.print_results(glazing_system_u_environment, glazing_system_shgc_environment)
 
 

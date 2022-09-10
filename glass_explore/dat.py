@@ -80,7 +80,7 @@ if __name__ == "__main__":
     CLEAR_6 = 103
     LOW_E = 9923
 
-    props = igdb.lookup_glass_props(LOW_E)
+    props = igdb.lookup_glass_props(CLEAR_6)
     wavelength_df = igdb.lookup_wavelength_data(props['GlazingID'])
     path = os.path.join(os.getcwd(),'c1.dat')
     clear_6 = make_datfile(props,wavelength_df, path)

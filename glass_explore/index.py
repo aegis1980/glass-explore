@@ -13,7 +13,7 @@ from dash.exceptions import PreventUpdate
 import dash_bootstrap_components as dbc
 
 
-from glass_explore import standards, LayoutID, svg_glass, utils, layout, wincalc, callback_helpers, ALL_MANUFACTURERS ,GRAPHTYPE_TS_TV,GRAPHTYPE_LAB,GRAPHTYPE_RGB, igdb
+from glass_explore import mywincalc, standards, LayoutID, svg_glass, utils, layout, callback_helpers, ALL_MANUFACTURERS ,GRAPHTYPE_TS_TV,GRAPHTYPE_LAB,GRAPHTYPE_RGB, igdb
 import glass_explore
 from glass_explore.results_printer import print_system_optical_results_side
 
@@ -201,7 +201,7 @@ def glass_to_store(pt_data,flipped, gas, gap_thickness, inner_substrate, inner_t
     utils.populate_buildup_with_glass_props(buildup,props_outer,0)
 
     
-    props_inner = wincalc.generic_uncoated_glass_props(int(inner_thickness),inner_substrate == 'ultraclear')
+    props_inner = mywincalc.generic_uncoated_glass_props(int(inner_thickness),inner_substrate == 'ultraclear')
     buildup['layers'][1]['color'] = raw_df.loc[props_inner['NFRC_ID']]['CssColor']
     buildup['layers'][1]['flipped'] = False
     utils.populate_buildup_with_glass_props(buildup,props_inner,1)
@@ -232,6 +232,8 @@ def update_buildup_svg(ts, buildup):
 def update_outer_lite_productdata(ts, buildup):
     if ts is None or buildup is None:
         raise PreventUpdate
+
+    print(buildup)
 
     props = buildup['layers'][0]['props']
 
@@ -264,10 +266,10 @@ def on_buildup_change(pt_data, gas, gap_thickness,flipped,optical_standard):
     if pt_data:
         id = pt_data['points'][0]['customdata'][0]
         if id:
-            gap_layer = wincalc.gap_layer(gas, gap_thickness)
+            gap_layer = mywincalc.gap_layer(gas, gap_thickness)
             
-            other_layer = wincalc.generic_uncoated_glass(thickness = 6, ultraclear = False)
-            props,glazing_system_u_environment, glazing_system_shgc_environment = wincalc.run_sim(id,flipped, gap_layer, other_layer,optical_standard)
+            other_layer = mywincalc.generic_uncoated_glass(thickness = 6, ultraclear = False)
+            props,glazing_system_u_environment, glazing_system_shgc_environment = mywincalc.run_sim(id,flipped, gap_layer, other_layer,optical_standard)
         else:
             return dash.no_update, 'no glass id'
         
