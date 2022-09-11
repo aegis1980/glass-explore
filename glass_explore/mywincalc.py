@@ -5,7 +5,7 @@ from typing import Dict
 import pandas as pd
 import pywincalc
 
-from glass_explore import PATH_PRODUCTS, PATH_STANDARDS, igdb,results_printer, dat
+from glass_explore import PATH_PRODUCTS, PATH_STANDARDS, igdb, optics,results_printer
 import glass_explore
 
 #@functools.cache
@@ -123,7 +123,7 @@ def generic_uncoated_glass(thickness : int , ultraclear : bool):
         id = igdb.CLEAR_LOOKUP[thickness]
     props = igdb.lookup_glass_props(id)
     wavelength_df = igdb.lookup_wavelength_data(props['GlazingID'])
-    return dat.make_datfile(props,wavelength_df)
+    return optics.make_datfile(props,wavelength_df)
 
     #return glass_layer_from_props(props)
 
@@ -147,7 +147,7 @@ def run_sim(
     props = igdb.lookup_glass_props(id)
     #coated_layer = glass_layer_from_props(props, flipped)
     wavelength_df = igdb.lookup_wavelength_data(props['GlazingID'])
-    coated_layer = dat.make_datfile(props,wavelength_df)
+    coated_layer = optics.make_datfile(props,wavelength_df,flipped=flipped)
 
 
     # Create a glazing system using the NFRC U environment in order to get NFRC U results
@@ -171,7 +171,7 @@ def run_sim(
 
     #results_printer.print_results(glazing_system_u_environment, glazing_system_shgc_environment)
     #results_printer.print_optical_method_results(glazing_system_u_environment, "SOLAR", 0, 0, '')
-    return props,glazing_system_u_environment, glazing_system_shgc_environment
+    return glazing_system_u_environment, glazing_system_shgc_environment
 
 
 if __name__ == "__main__":

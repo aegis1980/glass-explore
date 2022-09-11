@@ -20,27 +20,54 @@ _TYPES = {
 }
 
 
-def _convert_wavelength_data_dat(raw_wavelength_df : pd.DataFrame):
+def _convert_wavelength_data_dat(raw_wavelength_df : pd.DataFrame, flipped = False):
+    """_summary_
+
+    Args:
+        raw_wavelength_df (pd.DataFrame): _description_
+        flipped (bool, optional): _description_. Defaults to False.
+
+    Returns:
+        str : spectral data  four-space separated string
+    """
+
     data = []
     for i,row in raw_wavelength_df.iterrows():
-        w =float(row["Wavelength"])
-        t = float(row["T"])
-        tb = float(row["Tb"])
-        rf = float(row["Rf"])
-        rb = float(row["Rb"])
-        data.append(f'{w}    {t}    {rf}    {rb}')
+        w =row["Wavelength"]
+        t = row["T"]
+        tb = row["Tb"]
+        rf = row["Rb"] if flipped else row["Rf"]
+        rb = row["Rf"] if flipped else row["Rb"]
+        data.append(f'{w:.3f}    {t:.4f}    {rf:.4f}    {rb:.4f}')
     return "\n".join(data)
 
 
-def make_datfile(props, raw_wavelength_df : pd.DataFrame, write_to_path = None):
+def make_datfile(props, raw_wavelength_df : pd.DataFrame, flipped = False, write_to_path = None):
+    """
+    Make pywincalc glass layer via a temp optics file
+    This is my workaround for not being able to get 'custom glass' approach not working
+    """
+    emis1 = props['emis2'] if flipped else props['emis1'] 
+    emis2 = props['emis1'] if flipped else props['emis2'] 
+
+    source_ef = props['Source_eb'] if flipped else props['Source_ef']
+    source_eb = props['Source_ef'] if flipped else props['Source_eb']
+    
+    if flipped:
+        if props['Coated_Side'] == 'Back':
+            props['Coated_Side'] = 'Front'
+        elif props['Coated_Side'] == 'Front':
+            props['Coated_Side'] = 'Back'
+
+
     s = f"""{{ Units, Wavelength Units }} SI Microns
-{{ Thickness }} {props['Thickness']} 
-{{ Conductivity }} {props['Conductivity']}
+{{ Thickness }} {props['Thickness']:.3f} 
+{{ Conductivity }} {props['Conductivity']:.3f}
 {{ IR Transmittance }} TIR= {props['TIR']}
-{{ Emissivity, front back }} Emis= {props['emis1']} {props['emis2']}
+{{ Emissivity, front back }} Emis= {emis1:.3f} {emis2:.3f}
 {{ }}
-{{ Ef_Source: {props['Source_ef']} }}
-{{ Eb_Source: {props['Source_eb']} }}
+{{ Ef_Source: {source_ef} }}
+{{ Eb_Source: {source_eb} }}
 {{ IGDB_Checksum: {props['IGDB_Checksum']} }}
 {{ Product Name: {props['ProductName']} }}
 {{ Manufacturer: {props['Manufacturer']} }}
@@ -55,7 +82,7 @@ def make_datfile(props, raw_wavelength_df : pd.DataFrame, write_to_path = None):
 {{ Uses:  }}
 {{ Availability:   }}
 {{ Structure:  }}
-{_convert_wavelength_data_dat(raw_wavelength_df)}"""
+{_convert_wavelength_data_dat(raw_wavelength_df,flipped)}"""
 
     fd, path = tempfile.mkstemp()
     try:

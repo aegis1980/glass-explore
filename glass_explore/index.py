@@ -1,6 +1,7 @@
 import sqlite3
 import os
 import json
+from turtle import color
 
 import pandas as pd
 import numpy as np
@@ -13,9 +14,7 @@ from dash.exceptions import PreventUpdate
 import dash_bootstrap_components as dbc
 
 
-from glass_explore import mywincalc, standards, LayoutID, svg_glass, utils, layout, callback_helpers, ALL_MANUFACTURERS ,GRAPHTYPE_TS_TV,GRAPHTYPE_LAB,GRAPHTYPE_RGB, igdb
-import glass_explore
-from glass_explore.results_printer import print_system_optical_results_side
+from glass_explore import mywincalc, standards, LayoutID,igdb, svg_glass, utils, layout, callback_helpers, ALL_MANUFACTURERS ,GRAPHTYPE_TS_TV,GRAPHTYPE_LAB,GRAPHTYPE_RGB
 
 DATA_SOURCE = 'sqlite'
 
@@ -232,9 +231,7 @@ def update_buildup_svg(ts, buildup):
 def update_outer_lite_productdata(ts, buildup):
     if ts is None or buildup is None:
         raise PreventUpdate
-
-    print(buildup)
-
+    buildup = json.loads(buildup)
     props = buildup['layers'][0]['props']
 
     outer_layer_info = f"""
@@ -252,7 +249,8 @@ def update_outer_lite_productdata(ts, buildup):
     Output(LayoutID.TABLE_CELL_TVIS,"children"),
     Output(LayoutID.TABLE_CELL_ROUT,"children"),
     Output(LayoutID.TABLE_CELL_RIN,"children"),
-
+    Output(LayoutID.TABLE_CELL_COLOR_TRANS,"style"),
+    Output(LayoutID.TABLE_CELL_COLOR_REFL,"style"),
     [
         Input(LayoutID.GRAPH, "clickData"),
         Input(LayoutID.SELECT_GAS,"value"),
@@ -269,24 +267,24 @@ def on_buildup_change(pt_data, gas, gap_thickness,flipped,optical_standard):
             gap_layer = mywincalc.gap_layer(gas, gap_thickness)
             
             other_layer = mywincalc.generic_uncoated_glass(thickness = 6, ultraclear = False)
-            props,glazing_system_u_environment, glazing_system_shgc_environment = mywincalc.run_sim(id,flipped, gap_layer, other_layer,optical_standard)
+            glazing_system_u_environment, glazing_system_shgc_environment = mywincalc.run_sim(id,flipped, gap_layer, other_layer,optical_standard)
         else:
             return dash.no_update, 'no glass id'
         
         optical = glazing_system_u_environment.optical_method_results("PHOTOPIC").system_results
         
-        outer_layer_info = f"""
-            {props['ProductName']}
-            ({props['Manufacturer']})
-        """
-
-        uvalue = f'{glazing_system_u_environment.u(0,90):.3f}'
-        shgc = f'{glazing_system_shgc_environment.shgc(0,90):.3f}'
+        uvalue = f'{glazing_system_u_environment.u():.3f}'
+        shgc = f'{glazing_system_shgc_environment.shgc():.3f}'
         tvis = f'{optical.front.transmittance.direct_hemispherical:.3f}'
         rout = f'{optical.front.reflectance.direct_hemispherical:.3f}'
         rin = f'{optical.back.reflectance.direct_hemispherical:.3f}'
-      
-        return uvalue,shgc,tvis,rout,rin
+
+        color_t = glazing_system_u_environment.color().system_results.front.transmittance.direct_direct.rgb
+        color_r = glazing_system_u_environment.color().system_results.front.reflectance.direct_direct.rgb
+        color_t = utils.rgb_to_csshex(color_t.R,color_t.G,color_t.B)
+        color_r = utils.rgb_to_csshex(color_r.R,color_r.G,color_r.B)
+
+        return uvalue,shgc,tvis,rout,rin,{'background-color' : color_t},{'background-color' : color_r}
 
 
 

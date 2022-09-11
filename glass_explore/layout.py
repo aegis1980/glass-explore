@@ -61,9 +61,9 @@ modal_about = dbc.Modal(
             [
                 dbc.ModalHeader(dbc.ModalTitle("Welcome to Glass Explore")),
                 dbc.ModalBody([
-                    html.P("I wote this web app as playgrou"),
-                    html.P(["Running website comes at a personal cost and if it beomes too costly it'll be lights out. So, if you find useful please consider the following:"]),
-                    html.P(["Passing through? Click on the advertising banner above"]),
+                    html.P("Development of this webapp was spurred by"),
+                    html.P(["Running this website costs me. Eveyefery glass buildup you use costs server cmputing. So, if you find useful please consider the following:"]),
+                    html.P(["Passing through? Just click on the advertising banner above"]),
                     html.P(["You find useful? Consider a dinatoin thghh. "]),
                 ]),
                 dbc.ModalFooter(

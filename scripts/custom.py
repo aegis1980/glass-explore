@@ -1,6 +1,6 @@
 import os
 import pywincalc
-from glass_explore import results_printer,PATH_STANDARDS
+from glass_explore import PATH_PRODUCTS, results_printer,PATH_STANDARDS
 
 def convert(filename):
     in_data = False
@@ -10,25 +10,19 @@ def convert(filename):
             if "Structure" in line:
                 in_data = True
                 continue
-            if in_data == True:
+            if in_data:
                 points = line.split('    ')
-                wavelength = float(points[0])
-                direct_component = pywincalc.OpticalMeasurementComponent(
-                            float(points[1]),
-                            float(points[1]),
-                            float(points[2]),
-                            float(points[3]))
                 pywincalc_wavelength_measured_data.append(
                     pywincalc.WavelengthData(
-                        wavelength,
-                        float(points[1]),
-                        float(points[2]),
-                        float(points[3])
+                        float(points[0]), #wavelength_microns:
+                        float(points[1]), #direct_transmittance
+                        float(points[2]),#direct_reflectance_front:
+                        float(points[3]) #direct_reflectance_back:
                      ))
 
     return pywincalc_wavelength_measured_data
 
-
+glass_wavelength_measurements = convert(os.path.join(PATH_PRODUCTS,'CLEAR_6.DAT'))
 # Path to the optical standard file.  All other files referenced by the standard file must be in the same directory
 # Note:  While all optical standards packaged with WINDOW should work with optical calculations care should be
 # taken to use NFRC standards if NFRC thermal results are desired.  This is because for thermal calculations currently
@@ -47,8 +41,8 @@ glazing_system_height = 1.0  # height of the glazing system in meters
 # Current supported options are: 
 # APPLIED_FILM, COATED, ELECTROCHROMIC, FILM, INTERLAYER, LAMINATE, MONOLITHIC, THERMOCHROMIC
 glass_material_type = pywincalc.MaterialType.MONOLITHIC
-glass_material_thickness = 5.715000152587891 /1000  # 3.048mm thick
-glass_wavelength_measurements = convert(os.path.join(os.getcwd(),'c1.dat'))
+glass_material_thickness = 5.715 /1000  
+
 # Since the measurements do not extend to the IR range emissivity and IR transmittances should be provided
 # If there are measurements that extend to the IR range these values can be provided but result calculated
 # from the measurements will be used
@@ -77,7 +71,7 @@ glass_opening_bottom = 0
 glass_opening_left = 0
 glass_opening_right = 0
 
-glass_thermal = pywincalc.ProductDataThermal(1.0,glass_material_thickness)
+glass_thermal = pywincalc.ProductDataThermal(glass_conductivity,glass_material_thickness)
 
 # Create a glass layer from both the optical and thermal data
 glass_layer = pywincalc.ProductDataOpticalAndThermal(glass_n_band_optical_data, glass_thermal)

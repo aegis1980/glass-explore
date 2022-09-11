@@ -1,5 +1,5 @@
 { Units, Wavelength Units } SI Microns
-{ Thickness } {}}
+{ Thickness } 5.7
 { Conductivity } 1
 { IR Transmittance } TIR=0
 { Emissivity, front back } Emis= 0.84 0.84

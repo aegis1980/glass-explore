@@ -41,6 +41,21 @@ def csshex_to_rgb(csshex: str) -> Tuple[int,int,int]:
     return (r,g,b) 
 
 
+def rgb_to_csshex(r:int,g:int,b:int) -> str:
+    """_summary_
+
+    Args:
+        r (int): _description_
+        g (int): _description_
+        b (int): _description_
+
+    Returns:
+        str: _description_
+    """
+
+    return '#%02x%02x%02x' % (r, g, b)
+
+
 def rgb_to_lab(rgb : Tuple[int,int,int]):
     lab = rgb2lab([x / 256.0 for x in rgb])
     return  tuple(lab)
