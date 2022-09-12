@@ -54,16 +54,7 @@ raw_df[['RColor','GColor','BColor']] = raw_df['rgb'].apply(pd.Series)
 raw_df['lab'] = raw_df['rgb'].map(lambda x:utils.rgb_to_lab(x))
 raw_df[['lColor','aColor','bColor']] = raw_df['lab'].apply(pd.Series)
 raw_df.drop(columns=['rgb', 'lab'])
-# select_type = html.Div([
-#     dbc.Label("Glazing type:"),
-#     dbc.Select(
-#         id="select-type", value = 'dgu',
-#         options=[
-#             {"label": "Single-glazed", "value": "sgu"},
-#             {"label": "Double-glazed", "value": "dgu"},
-#         ]
-#     ),
-# ])
+
 
 select_manufacturer = html.Div([
     dbc.Label("Manufacturer:"),
@@ -74,7 +65,7 @@ select_manufacturer = html.Div([
     dbc.FormText(id = 'formtext-manufacturer',color='red'),
 ])
 
-
+DEFAULT_GRAPH_GLASS = raw_df.loc[103]
 
 
 app = dash.Dash(
@@ -86,6 +77,7 @@ app = dash.Dash(
 )
 
 app.layout = html.Div([
+    dcc.Location(LayoutID.URL),
     dcc.Store(LayoutID.STORE_BUILDUP_IN_SESSION,  storage_type = "session"),
     dcc.Store(LayoutID.STORE_SETTINGS_IN_LOCAL,  storage_type = "local"),
     layout.navbar(app),
@@ -97,7 +89,7 @@ app.layout = html.Div([
                     dbc.Col(layout.radio_thickness)
                 ]),
                 layout.nav_graphs,
-                layout.graphs()
+                layout.graph()
             ], width = 8),
             dbc.Col([
                 dbc.Row(dbc.Col(html.Div(id=LayoutID.DIV_BUILDUP_SVG_CONTAINER),className="mb-2")),
@@ -115,25 +107,36 @@ app.layout = html.Div([
 @app.callback(
     Output(LayoutID.GRAPH, "figure"),Output("formtext-manufacturer","children"),Output("formtext-manufacturer","color"),
     [
+        Input(LayoutID.GRAPH, "clickData"),
         Input(LayoutID.BUTTONGROUP_GRAPHTYPE, "value"),
         Input("select-manufacturer", "value"),
         Input("radio-thickness", "value"),
     ]
 )
-def update_graphing(graph_type, manufacturer, thickness):
+def update_graphing(pt_data,graph_type, manufacturer, thickness):
+
+    id = None
+    if pt_data:
+        id = pt_data['points'][0]['customdata'][0]
 
     df = raw_df[raw_df['Thickness'].between(thickness - 0.75, thickness + 0.75)]
 
     if graph_type == GRAPHTYPE_TS_TV:
-        fig, msg, color = callback_helpers.graphing_ts_tv(df, manufacturer,thickness)
+        fig, msg, color = callback_helpers.graphing_ts_tv(id,df, manufacturer,thickness)
     else:
-        fig, msg, color = callback_helpers.graphing_3d_colorspace(df, manufacturer,thickness, graph_type)
+        fig, msg, color = callback_helpers.graphing_3d_colorspace(id,df, manufacturer,thickness, graph_type)
 
-    fig.update_layout(clickmode='event+select')
+    #fig.update_layout(clickmode='event+select')
 
     return fig, msg, color
 
-
+@app.callback(Output(LayoutID.GRAPH, "clickData"),
+              [Input(LayoutID.URL, 'href')])
+def onload_default_graph_select(href):
+    if href is None:
+        raise PreventUpdate
+    else:
+        return {'points' :[{'customdata': DEFAULT_GRAPH_GLASS}]}
 
 
 @app.callback(

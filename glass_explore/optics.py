@@ -1,3 +1,4 @@
+
 from os import fdopen
 import os
 import tempfile
@@ -42,7 +43,7 @@ def _convert_wavelength_data_dat(raw_wavelength_df : pd.DataFrame, flipped = Fal
     return "\n".join(data)
 
 
-def make_datfile(props, raw_wavelength_df : pd.DataFrame, flipped = False, write_to_path = None):
+def product_from_tempfile(props, raw_wavelength_df : pd.DataFrame, flipped = False, write_to_path = None) -> pywincalc.ProductData:
     """
     Make pywincalc glass layer via a temp optics file
     This is my workaround for not being able to get 'custom glass' approach not working
@@ -84,6 +85,10 @@ def make_datfile(props, raw_wavelength_df : pd.DataFrame, flipped = False, write
 {{ Structure:  }}
 {_convert_wavelength_data_dat(raw_wavelength_df,flipped)}"""
 
+
+    
+
+
     fd, path = tempfile.mkstemp()
     try:
         with os.fdopen(fd, 'w') as tmp:
@@ -110,4 +115,4 @@ if __name__ == "__main__":
     props = igdb.lookup_glass_props(CLEAR_6)
     wavelength_df = igdb.lookup_wavelength_data(props['GlazingID'])
     path = os.path.join(os.getcwd(),'c1.dat')
-    clear_6 = make_datfile(props,wavelength_df, path)
+    clear_6 = product_from_tempfile(props,wavelength_df, path)

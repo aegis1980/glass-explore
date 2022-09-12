@@ -66,6 +66,8 @@ class LayoutID:
     
     BUTTONGROUP_GRAPHTYPE = "buttongroup-graphtype"
 
+    URL = "url"
+
 
 
 

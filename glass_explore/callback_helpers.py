@@ -14,7 +14,7 @@ def populate_standards(include_interesting):
     return options
     
 
-def graphing_ts_tv(df, manufacturer, thickness):
+def graphing_ts_tv(id,df, manufacturer, thickness):
     """
     Generates Tsolar vs Tvisible graph
 
@@ -95,13 +95,32 @@ def graphing_ts_tv(df, manufacturer, thickness):
                     '<br>%{customdata[18]}'
             )
         )
-        
-        
-      #  fig = px.scatter(df[mask], x="Tsol", y="Tvis",  hover_data= ["ID","Manufacturer", "ProductName"])
+
+    if id:
+        mask = (df['ID'] == id)
+
+        fig.add_trace(
+            go.Scatter(
+                mode='markers',
+                x=df[mask]["Tsol"],
+                y=df[mask]["Tvis"],
+                customdata=df[mask],
+                marker=dict(
+                    color=df[mask]['CssColor'],
+                    size=30,
+                    line=dict(
+                        color='Black',
+                        width=1
+                    )
+                ),
+                showlegend=False
+            )
+
+        )
     
     fig.update_layout(
-        xaxis_title="T_solar",
-        yaxis_title="T_visible",
+        xaxis_title="T<sub>solar</sub>",
+        yaxis_title="T<sub>visible</sub>",
         plot_bgcolor = "white",
         hovermode = 'closest'
     )
@@ -130,7 +149,7 @@ def graphing_ts_tv(df, manufacturer, thickness):
     return fig, msg, color 
 
 
-def graphing_3d_colorspace(df, manufacturer, thickness, colorspace : int):
+def graphing_3d_colorspace(id,df, manufacturer, thickness, colorspace : int):
 
     fig = go.Figure()
     if manufacturer == ALL_MANUFACTURERS:
@@ -208,6 +227,27 @@ def graphing_3d_colorspace(df, manufacturer, thickness, colorspace : int):
             )
         )
 
-    fig.update_layout(clickmode='event+select')    
+    if id:
+        mask = (df['ID'] == id)
+
+        fig.add_trace(
+            go.Scatter3d(
+                mode='markers',
+                x=df[mask]["RColor"] if colorspace == GRAPHTYPE_RGB else df[mask]["lColor"],
+                y=df[mask]["GColor"] if colorspace == GRAPHTYPE_RGB else df[mask]["aColor"],
+                z=df[mask]['BColor'] if colorspace == GRAPHTYPE_RGB else df[mask]["bColor"],
+                customdata=df[mask],
+                marker=dict(
+                    color=df[mask]['CssColor'],
+                    size=12,
+                    line=dict(
+                        color='Black',
+                        width=1
+                    )
+                ),
+                showlegend=False
+            )
+
+        )
 
     return fig, msg, color  

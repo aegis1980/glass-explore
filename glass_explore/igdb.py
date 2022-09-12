@@ -32,7 +32,9 @@ ULTRACLEAR_LOOKUP = {
 
 GASES = {
     "air" : pywincalc.PredefinedGasType.AIR,
-    "argon" : pywincalc.PredefinedGasType.ARGON
+    "argon" : pywincalc.PredefinedGasType.ARGON,
+    "krypton" : pywincalc.PredefinedGasType.KRYPTON,
+    "xenon" : pywincalc.PredefinedGasType.XENON
 }
 
 path = os.path.join('data', 'igdb.sqlite')

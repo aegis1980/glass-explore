@@ -16,7 +16,7 @@ height = 1.0  # height of the glazing system in meters
 
 props = igdb.lookup_glass_props(103)
 wavelength_df = igdb.lookup_wavelength_data(props['GlazingID'])
-clear_6 = optics.make_datfile(props,wavelength_df)
+clear_6 = optics.product_from_tempfile(props,wavelength_df)
 
 # Create a list of solid layers in order from outside to inside
 # This is a double glazing where the outside and inside are the glass

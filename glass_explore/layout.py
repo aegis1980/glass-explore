@@ -5,6 +5,7 @@ import glass_explore
 from glass_explore import LayoutID, callback_helpers, igdb
 
 FITC_LOGO = 'balloon_white_h30px.png'
+COFFEE = 'coffee.svg'
 
 nav = dbc.Nav(
     [
@@ -59,12 +60,10 @@ radio_thickness = html.Div([
 
 modal_about = dbc.Modal(
             [
-                dbc.ModalHeader(dbc.ModalTitle("Welcome to Glass Explore")),
+                dbc.ModalHeader(dbc.ModalTitle("Glass Explore")),
                 dbc.ModalBody([
-                    html.P("Development of this webapp was spurred by"),
-                    html.P(["Running this website costs me. Eveyefery glass buildup you use costs server cmputing. So, if you find useful please consider the following:"]),
-                    html.P(["Passing through? Just click on the advertising banner above"]),
-                    html.P(["You find useful? Consider a dinatoin thghh. "]),
+                    html.P(["Some technical notes here"]),
+
                 ]),
                 dbc.ModalFooter(
                     dbc.Button(
@@ -199,14 +198,14 @@ table_header = [
     html.Thead(html.Tr([html.Th("Parameter"), html.Th("Value")]))
 ]
 
-row_u = html.Tr([html.Td("U-value"), html.Td(id = LayoutID.TABLE_CELL_UVALUE)])
+row_u = html.Tr([html.Td(["U-value (W/m²K)"]), html.Td(id = LayoutID.TABLE_CELL_UVALUE)])
 row_shgc = html.Tr([html.Td("SHGC"), html.Td(id = LayoutID.TABLE_CELL_SHGC)])
 
 row_vlt = html.Tr([html.Td(["T",html.Sub("vis")]), html.Td(id = LayoutID.TABLE_CELL_TVIS)])
 row_rout = html.Tr([html.Td(["R",html.Sub("out")]), html.Td(id = LayoutID.TABLE_CELL_ROUT)])
 row_rin = html.Tr([html.Td(["R",html.Sub("in")]), html.Td(id = LayoutID.TABLE_CELL_RIN)])
-row_color1 = html.Tr([html.Td(["Colour",html.Sub("trans")]), html.Td(id = LayoutID.TABLE_CELL_COLOR_TRANS)])
-row_color2 = html.Tr([html.Td(["Colour",html.Sub("refl")]), html.Td(id = LayoutID.TABLE_CELL_COLOR_REFL)])
+row_color1 = html.Tr([html.Td("Transmitted colour"), html.Td(id = LayoutID.TABLE_CELL_COLOR_TRANS)])
+row_color2 = html.Tr([html.Td("Reflected colour"), html.Td(id = LayoutID.TABLE_CELL_COLOR_REFL)])
 
 table_body = [html.Tbody([row_u, row_shgc,row_vlt,row_rout,row_rin,row_color1,row_color2])]
 
@@ -214,7 +213,7 @@ results_table = dbc.Table(
     table_header + table_body, 
     bordered=True)
 
-def graphs():
+def graph():
 
     fig1 = go.Figure()
     fig1.update_layout(
@@ -238,8 +237,8 @@ nav_graphs = html.Div(
             labelCheckedClassName="active",
             options=[
                 {"label": "Graph: Ts vs Tv", "value": glass_explore.GRAPHTYPE_TS_TV},
-                {"label": "Graph: l*a*b* color space", "value": glass_explore.GRAPHTYPE_LAB},
-                {"label": "Graph: RGB color space", "value": glass_explore.GRAPHTYPE_RGB},
+                {"label": "Graph: L*a*b* colour space", "value": glass_explore.GRAPHTYPE_LAB},
+                {"label": "Graph: RGB colour space", "value": glass_explore.GRAPHTYPE_RGB},
             ],
             value=1,
         ),
