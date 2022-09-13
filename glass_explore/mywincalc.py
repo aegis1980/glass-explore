@@ -5,7 +5,7 @@ from typing import Dict
 import pandas as pd
 import pywincalc
 
-from glass_explore import PATH_PRODUCTS, PATH_STANDARDS, igdb, optics,results_printer
+from glass_explore import PATH_PRODUCTS, PATH_STANDARDS, igdb, optics,results_printer,Buildup
 import glass_explore
 
 #@functools.cache
@@ -136,13 +136,13 @@ def run_analysis(buildup : Dict, optical_standard_file = glass_explore.DEFAULT_O
     solid_layers = []
     gap_layers = []
 
-    for l in buildup['layers']:
+    for l in buildup[Buildup.SOLID_LAYERS]:
         props = igdb.lookup_glass_props(l['id'])
         wavelength_df = igdb.lookup_wavelength_data(props['GlazingID'])
         layer = optics.product_from_tempfile(props,wavelength_df,flipped=l['flipped'])
         solid_layers.append(layer)
 
-    for g in buildup['gases']:
+    for g in buildup[Buildup.GAP_LAYERS]:
         gap = gap_layer(g['gas'], g['thickness'])
         gap_layers.append(gap)
 

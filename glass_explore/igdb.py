@@ -1,4 +1,4 @@
-import functools
+from functools import cache
 import sqlite3
 from typing import Dict
 import os
@@ -39,6 +39,8 @@ GASES = {
 
 path = os.path.join('data', 'igdb.sqlite')
 
+
+@cache
 def lookup_wavelength_data(id : int) -> pd.DataFrame:
     """_summary_
 
@@ -56,9 +58,7 @@ def lookup_wavelength_data(id : int) -> pd.DataFrame:
     return pd.read_sql(sql,cxn)
 
 
-
-    
-#functools.cache
+@cache
 def lookup_glass_props(nfrc_id : int) -> Dict:
     """
     Performs an SQL (inner) join on data in 'glass' and glazingproperties' tables in IGDB database.

@@ -2,6 +2,7 @@ from typing import Dict
 import dash
 from dash_svg import Svg, Rect,Line,Text
 
+from glass_explore import Buildup
 
 VIEW_HEIGHT = 20
 COATING_COLOR = '#404040'
@@ -20,7 +21,7 @@ def generate_buildup(buildup : Dict) -> Svg:
 
     x=0
     children = []
-    for i,gl in enumerate(buildup['layers']):
+    for i,gl in enumerate(buildup[Buildup.SOLID_LAYERS]):
         t = gl['thickness']
 
         lite= Rect(width = t, height = VIEW_HEIGHT, x=x, fill=gl['color'])
@@ -39,8 +40,8 @@ def generate_buildup(buildup : Dict) -> Svg:
                 children.append(Line(x1 = xl,y1=0,x2=xl,y2=VIEW_HEIGHT, stroke= COATING_COLOR, strokeWidth=COATING_STROKE ,strokeDasharray='1,1'))
 
 
-        if i < len(buildup['gas_layers']):
-            x= t + float(buildup['gas_layers'][i]['thickness'])
+        if i < len(buildup[Buildup.GAP_LAYERS]):
+            x= t + float(buildup[Buildup.GAP_LAYERS][i]['thickness'])
         
     total_t = t+x
 

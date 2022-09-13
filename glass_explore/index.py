@@ -14,7 +14,7 @@ from dash.exceptions import PreventUpdate
 import dash_bootstrap_components as dbc
 
 
-from glass_explore import mywincalc, standards, LayoutID,igdb, svg_glass, utils, layout, callback_helpers, ALL_MANUFACTURERS ,GRAPHTYPE_TS_TV,GRAPHTYPE_LAB,GRAPHTYPE_RGB
+from glass_explore import mywincalc, standards, LayoutID,igdb, svg_glass, utils, layout, callback_helpers, ALL_MANUFACTURERS ,GRAPHTYPE_TS_TV,GRAPHTYPE_LAB,GRAPHTYPE_RGB,Buildup
 
 DATA_SOURCE = 'sqlite'
 
@@ -189,8 +189,8 @@ def glass_to_store(pt_data,flipped, gas, gap_thickness, inner_substrate, inner_t
     Stores current user selected buildup in session storage.
     """
     buildup = {}
-    buildup['layers'] = [{},{}]
-    buildup['gas_layers'] = [{}]
+    buildup[Buildup.SOLID_LAYERS] = [{},{}]
+    buildup[Buildup.GAP_LAYERS] = [{}]
     if pt_data:
         id = pt_data['points'][0]['customdata'][0]
     else:
@@ -198,18 +198,18 @@ def glass_to_store(pt_data,flipped, gas, gap_thickness, inner_substrate, inner_t
 
     props_outer = igdb.lookup_glass_props(id)
     
-    buildup['layers'][0]['color'] = raw_df.loc[int(id)]['CssColor']
-    buildup['layers'][0]['flipped'] = flipped
+    buildup[Buildup.SOLID_LAYERS][0]['color'] = raw_df.loc[int(id)]['CssColor']
+    buildup[Buildup.SOLID_LAYERS][0]['flipped'] = flipped
     utils.populate_buildup_with_glass_props(buildup,props_outer,0)
 
     
     props_inner = mywincalc.generic_uncoated_glass_props(int(inner_thickness),inner_substrate == 'ultraclear')
-    buildup['layers'][1]['color'] = raw_df.loc[props_inner['NFRC_ID']]['CssColor']
-    buildup['layers'][1]['flipped'] = False
+    buildup[Buildup.SOLID_LAYERS][1]['color'] = raw_df.loc[props_inner['NFRC_ID']]['CssColor']
+    buildup[Buildup.SOLID_LAYERS][1]['flipped'] = False
     utils.populate_buildup_with_glass_props(buildup,props_inner,1)
 
-    buildup['gas_layers'][0]['gas'] = gas
-    buildup['gas_layers'][0]['thickness'] = gap_thickness
+    buildup[Buildup.GAP_LAYERS][0]['gas'] = gas
+    buildup[Buildup.GAP_LAYERS][0]['thickness'] = gap_thickness
 
     return json.dumps(buildup)
 
@@ -235,7 +235,7 @@ def update_outer_lite_productdata(ts, buildup):
     if ts is None or buildup is None:
         raise PreventUpdate
     buildup = json.loads(buildup)
-    props = buildup['layers'][0]['props']
+    props = buildup[Buildup.SOLID_LAYERS][0]['props']
 
     outer_layer_info = f"""
             {props['ProductName']}
@@ -244,9 +244,41 @@ def update_outer_lite_productdata(ts, buildup):
 
     return outer_layer_info   
     
-
-
 @app.callback(
+    Output(LayoutID.TABLE_CELL_UVALUE, "children"),
+    Output(LayoutID.TABLE_CELL_SHGC,"children"),
+    Output(LayoutID.TABLE_CELL_TVIS,"children"),
+    Output(LayoutID.TABLE_CELL_ROUT,"children"),
+    Output(LayoutID.TABLE_CELL_RIN,"children"),
+    Output(LayoutID.TABLE_CELL_COLOR_TRANS,"style"),
+    Output(LayoutID.TABLE_CELL_COLOR_REFL,"style"),
+    Input(LayoutID.STORE_BUILDUP_IN_SESSION,"modified_timestamp"),
+    State(LayoutID.STORE_BUILDUP_IN_SESSION,"data")
+)
+def run_analysis_and_update_results(ts, buildup):
+    if ts is None or buildup is None:
+        raise PreventUpdate
+    buildup = json.loads(buildup)
+
+    mywincalc.run_analysis(buildup)
+    glazing_system_u_environment, glazing_system_shgc_environment= mywincalc.run_analysis(buildup)
+
+    optical = glazing_system_u_environment.optical_method_results("PHOTOPIC").system_results
+    
+    uvalue = f'{glazing_system_u_environment.u():.3f}'
+    shgc = f'{glazing_system_shgc_environment.shgc():.3f}'
+    tvis = f'{optical.front.transmittance.direct_hemispherical:.3f}'
+    rout = f'{optical.front.reflectance.direct_hemispherical:.3f}'
+    rin = f'{optical.back.reflectance.direct_hemispherical:.3f}'
+
+    color_t = glazing_system_u_environment.color().system_results.front.transmittance.direct_direct.rgb
+    color_r = glazing_system_u_environment.color().system_results.front.reflectance.direct_direct.rgb
+    color_t = utils.rgb_to_csshex(color_t.R,color_t.G,color_t.B)
+    color_r = utils.rgb_to_csshex(color_r.R,color_r.G,color_r.B)
+
+    return uvalue,shgc,tvis,rout,rin,{'background-color' : color_t},{'background-color' : color_r}
+
+""" @app.callback(
     Output(LayoutID.TABLE_CELL_UVALUE, "children"),
     Output(LayoutID.TABLE_CELL_SHGC,"children"),
     Output(LayoutID.TABLE_CELL_TVIS,"children"),
@@ -288,7 +320,7 @@ def on_buildup_change(pt_data, gas, gap_thickness,flipped,optical_standard):
         color_r = utils.rgb_to_csshex(color_r.R,color_r.G,color_r.B)
 
         return uvalue,shgc,tvis,rout,rin,{'background-color' : color_t},{'background-color' : color_r}
-
+ """
 
 
 

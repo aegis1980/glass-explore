@@ -11,13 +11,15 @@ PATH_PRODUCTS = os.path.join('data','products')
 DEVTEMP = os.path.join(os.getcwd(),'temp') 
 
 
-
 ALL_MANUFACTURERS = '[ALL]'
 
 GRAPHTYPE_TS_TV = 1
 GRAPHTYPE_LAB = 2 
 GRAPHTYPE_RGB = 3
 
+class Buildup:
+    SOLID_LAYERS = 'layers'
+    GAP_LAYERS = 'gas_layers'
 
 
 class LayoutID:

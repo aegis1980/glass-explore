@@ -1,4 +1,4 @@
-
+from functools import cache
 from os import fdopen
 import os
 import tempfile

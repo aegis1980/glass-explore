@@ -2,6 +2,8 @@ from typing import Dict, Tuple
 
 from skimage.color import rgb2lab
 
+from glass_explore import Buildup
+
 HEX_LETTER = ['a','b','c','d','e','f']
 LITTLE_ENDIAN_ORDER = [1,0,3,2,5,4]
 
@@ -62,11 +64,11 @@ def rgb_to_lab(rgb : Tuple[int,int,int]):
 
 
 def populate_buildup_with_glass_props(buildup: Dict, props:Dict, i : int) -> Dict:
-    buildup['layers'][i]['id'] = props['NFRC_ID']
-    buildup['layers'][i]['props'] = props
-    buildup['layers'][i]['thickness'] = float(props['Thickness']) #is in mm
+    buildup[Buildup.SOLID_LAYERS][i]['id'] = props['NFRC_ID']
+    buildup[Buildup.SOLID_LAYERS][i]['props'] = props
+    buildup[Buildup.SOLID_LAYERS][i]['thickness'] = float(props['Thickness']) #is in mm
 
-    buildup['layers'][i]['coating'] = props['Coated_Side']
+    buildup[Buildup.SOLID_LAYERS][i]['coating'] = props['Coated_Side']
     return buildup
 
 if __name__ == "__main__":
