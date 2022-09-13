@@ -1,7 +1,6 @@
 import sqlite3
 import os
 import json
-from turtle import color
 
 import pandas as pd
 import numpy as np
@@ -99,7 +98,7 @@ app.layout = html.Div([
                 dbc.Row(dbc.Col(layout.results_table))
             ],width = 4)
         ]),
-        layout.modal_about,
+        layout.modal_about(app),
         layout.modal_settings,
     ], fluid=True )])
 

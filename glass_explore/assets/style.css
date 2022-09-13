@@ -35,3 +35,8 @@ nav img {
     border-bottom-left-radius: 0;
     margin-left: -1px;
   }
+
+
+  .nav-link {
+    cursor: pointer;
+  }
