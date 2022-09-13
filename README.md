@@ -29,5 +29,15 @@ python mdb2sqlite.py data/igdb.mdb data/igdb.sqlite
 
 ## Heroku deployment
 
+**IMPORTANT: requirements.txt**
+
+Use `pip-chill` to freeze requirements file, rather than `pip freeze` and delete `glass-explore` line that's created.
+ the 
+
+``` bash
+pip-chill > requirements.txt
+```
+
 Auto deploys from `main`.
+
 Uses this [Heroku buildpack](https://github.com/radian-software/heroku-buildpack-git-lfs) for LFS.
