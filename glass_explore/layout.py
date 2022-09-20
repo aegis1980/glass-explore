@@ -241,7 +241,7 @@ def graph():
         height = 800,
     )
 
-    graph_ts_tv  = dcc.Graph(id = LayoutID.GRAPH, figure = fig1)
+    graph_ts_tv  = dbc.Spinner(dcc.Graph(id = LayoutID.GRAPH, figure = fig1), color="secondary", type="grow",spinner_style={"width": "10rem", "height": "10rem"})
 
     return html.Div(graph_ts_tv)
 

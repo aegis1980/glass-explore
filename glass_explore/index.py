@@ -84,19 +84,19 @@ app.layout = html.Div([
         dbc.Row([
             dbc.Col([
                 dbc.Row([
-                    dbc.Col(select_manufacturer),
-                    dbc.Col(layout.radio_thickness)
+                    dbc.Col(select_manufacturer, xl=6),
+                    dbc.Col(layout.radio_thickness, xl = 6)
                 ]),
                 layout.nav_graphs,
                 layout.graph()
-            ], width = 8),
+            ], xl = 8),
             dbc.Col([
                 dbc.Row(dbc.Col(html.Div(id=LayoutID.DIV_BUILDUP_SVG_CONTAINER),className="mb-2")),
                 dbc.Row(dbc.Col(layout.card_selected_layer)),
                 dbc.Row(dbc.Col(layout.card_gas_layer)),
                 dbc.Row(dbc.Col(layout.card_other_layer)),
-                dbc.Row(dbc.Col(layout.results_table))
-            ],width = 4)
+                dbc.Row(dbc.Col(dbc.Spinner(layout.results_table, color="dark", type="grow")))
+            ],xl = 4)
         ]),
         layout.modal_about(app),
         layout.modal_settings,
@@ -277,50 +277,6 @@ def run_analysis_and_update_results(ts, buildup):
 
     return uvalue,shgc,tvis,rout,rin,{'background-color' : color_t},{'background-color' : color_r}
 
-""" @app.callback(
-    Output(LayoutID.TABLE_CELL_UVALUE, "children"),
-    Output(LayoutID.TABLE_CELL_SHGC,"children"),
-    Output(LayoutID.TABLE_CELL_TVIS,"children"),
-    Output(LayoutID.TABLE_CELL_ROUT,"children"),
-    Output(LayoutID.TABLE_CELL_RIN,"children"),
-    Output(LayoutID.TABLE_CELL_COLOR_TRANS,"style"),
-    Output(LayoutID.TABLE_CELL_COLOR_REFL,"style"),
-    [
-        Input(LayoutID.GRAPH, "clickData"),
-        Input(LayoutID.SELECT_GAS,"value"),
-        Input(LayoutID.INPUT_GAP,"value"),
-        Input(LayoutID.CHECKBOX_FLIP_OUTERLAYER, "value"),
-        Input(LayoutID.SELECT_OPTICAL_STANDARD,"value")
-    ]
-)
-def on_buildup_change(pt_data, gas, gap_thickness,flipped,optical_standard):
-    
-    if pt_data:
-        id = pt_data['points'][0]['customdata'][0]
-        if id:
-            gap_layer = mywincalc.gap_layer(gas, gap_thickness)
-            
-            other_layer = mywincalc.generic_uncoated_glass(thickness = 6, ultraclear = False)
-            glazing_system_u_environment, glazing_system_shgc_environment = mywincalc.run_sim(id,flipped, gap_layer, other_layer,optical_standard)
-        else:
-            return dash.no_update, 'no glass id'
-        
-        optical = glazing_system_u_environment.optical_method_results("PHOTOPIC").system_results
-        
-        uvalue = f'{glazing_system_u_environment.u():.3f}'
-        shgc = f'{glazing_system_shgc_environment.shgc():.3f}'
-        tvis = f'{optical.front.transmittance.direct_hemispherical:.3f}'
-        rout = f'{optical.front.reflectance.direct_hemispherical:.3f}'
-        rin = f'{optical.back.reflectance.direct_hemispherical:.3f}'
-
-        color_t = glazing_system_u_environment.color().system_results.front.transmittance.direct_direct.rgb
-        color_r = glazing_system_u_environment.color().system_results.front.reflectance.direct_direct.rgb
-        color_t = utils.rgb_to_csshex(color_t.R,color_t.G,color_t.B)
-        color_r = utils.rgb_to_csshex(color_r.R,color_r.G,color_r.B)
-
-        return uvalue,shgc,tvis,rout,rin,{'background-color' : color_t},{'background-color' : color_r}
- """
-
 
 
 # add callback for toggling the collapse on small screens
@@ -336,7 +292,7 @@ def toggle_navbar_collapse(n, is_open):
 
 
 
-app.title = "Glass explore (using Plotly Dash)"
+app.title = "Glass Explore"
 
 if __name__ == "__main__":
     app.run_server(debug=True, use_reloader=True)  
