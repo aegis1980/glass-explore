@@ -2,7 +2,11 @@ import functools
 
 import plotly.graph_objects as go
 import glass_explore
-from glass_explore import ALL_MANUFACTURERS, GRAPHTYPE_RGB
+from glass_explore import ALL_MANUFACTURERS, GRAPHTYPE_RGB,SelectedPointProps
+
+@functools.cache
+def filter_by_thickness(raw_df,thickness : float):
+    return raw_df[raw_df['Thickness'].between(thickness - 0.75, thickness + 0.75)]
 
 
 def populate_standards(include_interesting):
@@ -14,11 +18,12 @@ def populate_standards(include_interesting):
     return options
     
 
-def graphing_ts_tv(id,df, manufacturer, thickness):
+def graphing_ts_tv(selected_id : int, df, manufacturer, thickness):
     """
     Generates Tsolar vs Tvisible graph
 
     Args:
+        selected_id (int) : id of selected glass
         df (_type_): _description_
         manufacturer (_type_): _description_
         thickness (_type_): _description_
@@ -96,7 +101,7 @@ def graphing_ts_tv(id,df, manufacturer, thickness):
             )
         )
 
-    if id:
+    if selected_id:
         mask = (df['ID'] == id)
 
         fig.add_trace(
@@ -107,17 +112,17 @@ def graphing_ts_tv(id,df, manufacturer, thickness):
                 customdata=df[mask],
                 marker=dict(
                     color=df[mask]['CssColor'],
-                    size=30,
+                    size=SelectedPointProps.SIZE_2D,
                     line=dict(
-                        color='Black',
-                        width=1
+                        color=SelectedPointProps.THICKNESS_OUTLINE,
+                        width=SelectedPointProps.THICKNESS_OUTLINE
                     )
                 ),
                 showlegend=False
             )
+        )    
 
-        )
-    
+
     fig.update_layout(
         xaxis_title="T<sub>solar</sub>",
         yaxis_title="T<sub>visible</sub>",
@@ -149,7 +154,7 @@ def graphing_ts_tv(id,df, manufacturer, thickness):
     return fig, msg, color 
 
 
-def graphing_3d_colorspace(id,df, manufacturer, thickness, colorspace : int):
+def graphing_3d_colorspace(selected_id,df, manufacturer, thickness, colorspace : int):
 
     fig = go.Figure()
     if manufacturer == ALL_MANUFACTURERS:
@@ -227,7 +232,7 @@ def graphing_3d_colorspace(id,df, manufacturer, thickness, colorspace : int):
             )
         )
 
-    if id:
+    if selected_id:
         mask = (df['ID'] == id)
 
         fig.add_trace(
@@ -239,10 +244,10 @@ def graphing_3d_colorspace(id,df, manufacturer, thickness, colorspace : int):
                 customdata=df[mask],
                 marker=dict(
                     color=df[mask]['CssColor'],
-                    size=12,
+                    size=SelectedPointProps.SIZE_3D,
                     line=dict(
-                        color='Black',
-                        width=1
+                        color=SelectedPointProps.COLOR_OUTLINE,
+                        width=SelectedPointProps.THICKNESS_OUTLINE
                     )
                 ),
                 showlegend=False

@@ -22,6 +22,12 @@ class Buildup:
     GAP_LAYERS = 'gas_layers'
 
 
+class SelectedPointProps:
+    SIZE_2D = 30
+    SIZE_3D = 12
+    COLOR_OUTLINE = "black"
+    THICKNESS_OUTLINE = 1
+
 class LayoutID:
     GRAPH = "graph-ts-tv"
     GRAPH_LAB = "graph-lab"

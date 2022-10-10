@@ -7,7 +7,7 @@ import numpy as np
 
 
 import dash
-from dash import dcc,html, Input, Output, State
+from dash import dcc,html, Input, Output, State,ctx
 from dash.exceptions import PreventUpdate
 
 import dash_bootstrap_components as dbc
@@ -104,30 +104,57 @@ app.layout = html.Div([
 
 
 @app.callback(
-    Output(LayoutID.GRAPH, "figure"),Output("formtext-manufacturer","children"),Output("formtext-manufacturer","color"),
-    [
-        Input(LayoutID.GRAPH, "clickData"),
-        Input(LayoutID.BUTTONGROUP_GRAPHTYPE, "value"),
-        Input("select-manufacturer", "value"),
-        Input("radio-thickness", "value"),
-    ]
+    Output(LayoutID.GRAPH, "figure"),Output("formtext-manufacturer","children"),
+    Output("formtext-manufacturer","color"),
+    Input(LayoutID.GRAPH, 'clickData'),
+    Input(LayoutID.BUTTONGROUP_GRAPHTYPE, "value"),
+    Input("select-manufacturer", "value"),
+    Input("radio-thickness", "value"),
+    State(LayoutID.GRAPH,"figure")
 )
-def update_graphing(pt_data,graph_type, manufacturer, thickness):
+def update_graph(click_data,graph_type, manufacturer, thickness, figure):
+    click_id = None
+    if ctx.triggered_id == LayoutID.GRAPH: #ie clickdata
+        click_id = click_data['points'][0]['customdata'][0]
+        if len(figure['data']) > 0:
+            raise PreventUpdate
 
-    id = None
-    if pt_data:
-        id = pt_data['points'][0]['customdata'][0]
-
-    df = raw_df[raw_df['Thickness'].between(thickness - 0.75, thickness + 0.75)]
+    df = callback_helpers.filter_by_thickness(raw_df,thickness)
 
     if graph_type == GRAPHTYPE_TS_TV:
-        fig, msg, color = callback_helpers.graphing_ts_tv(id,df, manufacturer,thickness)
+        fig, msg, color = callback_helpers.graphing_ts_tv(click_id,df, manufacturer,thickness)
     else:
-        fig, msg, color = callback_helpers.graphing_3d_colorspace(id,df, manufacturer,thickness, graph_type)
-
-    #fig.update_layout(clickmode='event+select')
+        fig, msg, color = callback_helpers.graphing_3d_colorspace(click_id,df, manufacturer,thickness, graph_type)
 
     return fig, msg, color
+
+
+
+@app.callback(
+    Output(LayoutID.GRAPH, "extendData"),
+    Input(LayoutID.GRAPH, "clickData"),
+    State(LayoutID.GRAPH, "figure")
+)
+def highlight_point_on_graph(click_data, figure):
+    """
+    
+    """
+    if not click_data:
+        raise PreventUpdate
+    if len(figure['data']) == 0: #ie graph is empty - no traces
+        raise PreventUpdate
+
+    point = click_data['points'][0]
+    id = click_data['points'][0]['customdata'][0]
+
+    hilight = {
+        'x' : [[point['x']]],
+        'y' : [[point['y']]],
+        'marker.color' :[[point['marker.color']]]
+    }
+    last_trace_index = len(figure['data'])-1 #will always be the last trace
+    return [hilight,[last_trace_index],1]
+    
 
 @app.callback(Output(LayoutID.GRAPH, "clickData"),
               [Input(LayoutID.URL, 'href')])
