@@ -106,20 +106,19 @@ app.layout = html.Div([
 @app.callback(
     Output(LayoutID.GRAPH, "figure"),Output("formtext-manufacturer","children"),
     Output("formtext-manufacturer","color"),
-    Input(LayoutID.GRAPH, 'clickData'),
     Input(LayoutID.BUTTONGROUP_GRAPHTYPE, "value"),
     Input("select-manufacturer", "value"),
     Input("radio-thickness", "value"),
-    State(LayoutID.GRAPH,"figure")
+    State(LayoutID.GRAPH,"figure"),
+    State(LayoutID.GRAPH, 'clickData'),
 )
-def update_graph(click_data,graph_type, manufacturer, thickness, figure):
+def update_graph(graph_type, manufacturer, thickness, figure,click_data):
     click_id = None
-    if ctx.triggered_id == LayoutID.GRAPH: #ie clickdata
+    if click_data:
         click_id = click_data['points'][0]['customdata'][0]
-        if len(figure['data']) > 0:
-            raise PreventUpdate
-
-    df = callback_helpers.filter_by_thickness(raw_df,thickness)
+        #if len(figure['data']) > 0:
+        raise PreventUpdate
+    df = raw_df[raw_df['Thickness'].between(thickness - 0.75, thickness + 0.75)]
 
     if graph_type == GRAPHTYPE_TS_TV:
         fig, msg, color = callback_helpers.graphing_ts_tv(click_id,df, manufacturer,thickness)
@@ -127,7 +126,6 @@ def update_graph(click_data,graph_type, manufacturer, thickness, figure):
         fig, msg, color = callback_helpers.graphing_3d_colorspace(click_id,df, manufacturer,thickness, graph_type)
 
     return fig, msg, color
-
 
 
 @app.callback(
@@ -153,6 +151,7 @@ def highlight_point_on_graph(click_data, figure):
         'marker.color' :[[point['marker.color']]]
     }
     last_trace_index = len(figure['data'])-1 #will always be the last trace
+    print("called me")
     return [hilight,[last_trace_index],1]
     
 
@@ -162,7 +161,8 @@ def onload_default_graph_select(href):
     if href is None:
         raise PreventUpdate
     else:
-        return {'points' :[{'customdata': DEFAULT_GRAPH_GLASS}]}
+        raise PreventUpdate
+        #return {'points' :[{'customdata': DEFAULT_GRAPH_GLASS}]}
 
 
 @app.callback(

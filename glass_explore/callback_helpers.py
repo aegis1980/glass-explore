@@ -4,10 +4,6 @@ import plotly.graph_objects as go
 import glass_explore
 from glass_explore import ALL_MANUFACTURERS, GRAPHTYPE_RGB,SelectedPointProps
 
-@functools.cache
-def filter_by_thickness(raw_df,thickness : float):
-    return raw_df[raw_df['Thickness'].between(thickness - 0.75, thickness + 0.75)]
-
 
 def populate_standards(include_interesting):
     standards = glass_explore.standards()
