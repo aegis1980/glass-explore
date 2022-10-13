@@ -5,13 +5,11 @@ import json
 import pandas as pd
 import numpy as np
 
-
 import dash
 from dash import dcc,html, Input, Output, State,ctx
 from dash.exceptions import PreventUpdate
 
 import dash_bootstrap_components as dbc
-
 
 from glass_explore import mywincalc, standards, LayoutID,igdb, svg_glass, utils, layout, callback_helpers, ALL_MANUFACTURERS ,GRAPHTYPE_TS_TV,GRAPHTYPE_LAB,GRAPHTYPE_RGB,Buildup
 
@@ -64,8 +62,6 @@ select_manufacturer = html.Div([
     dbc.FormText(id = 'formtext-manufacturer',color='red'),
 ])
 
-DEFAULT_GRAPH_GLASS = raw_df.loc[103]
-
 
 app = dash.Dash(
     __name__,
@@ -76,6 +72,7 @@ app = dash.Dash(
 )
 
 app.layout = html.Div([
+    html.Div("103",id=LayoutID.DIV_HIDDEN_SELECTED_ID,className= "hidden")
     dcc.Location(LayoutID.URL),
     dcc.Store(LayoutID.STORE_BUILDUP_IN_SESSION,  storage_type = "session"),
     dcc.Store(LayoutID.STORE_SETTINGS_IN_LOCAL,  storage_type = "local"),
@@ -100,6 +97,7 @@ app.layout = html.Div([
         ]),
         layout.modal_about(app),
         layout.modal_settings,
+       
     ], fluid=True )])
 
 
@@ -109,21 +107,16 @@ app.layout = html.Div([
     Input(LayoutID.BUTTONGROUP_GRAPHTYPE, "value"),
     Input("select-manufacturer", "value"),
     Input("radio-thickness", "value"),
-    State(LayoutID.GRAPH,"figure"),
-    State(LayoutID.GRAPH, 'clickData'),
+    State(LayoutID.DIV_HIDDEN_SELECTED_ID, 'children'),  
 )
-def update_graph(graph_type, manufacturer, thickness, figure,click_data):
-    click_id = None
-    if click_data:
-        click_id = click_data['points'][0]['customdata'][0]
-        #if len(figure['data']) > 0:
-        raise PreventUpdate
+def update_graph(graph_type, manufacturer, thickness,selected_id):
+   
     df = raw_df[raw_df['Thickness'].between(thickness - 0.75, thickness + 0.75)]
 
     if graph_type == GRAPHTYPE_TS_TV:
-        fig, msg, color = callback_helpers.graphing_ts_tv(click_id,df, manufacturer,thickness)
+        fig, msg, color = callback_helpers.graphing_ts_tv(selected_id,df, manufacturer,thickness)
     else:
-        fig, msg, color = callback_helpers.graphing_3d_colorspace(click_id,df, manufacturer,thickness, graph_type)
+        fig, msg, color = callback_helpers.graphing_3d_colorspace(selected_id,df, manufacturer,thickness, graph_type)
 
     return fig, msg, color
 
@@ -151,19 +144,9 @@ def highlight_point_on_graph(click_data, figure):
         'marker.color' :[[point['marker.color']]]
     }
     last_trace_index = len(figure['data'])-1 #will always be the last trace
-    print("called me")
+
     return [hilight,[last_trace_index],1]
     
-
-@app.callback(Output(LayoutID.GRAPH, "clickData"),
-              [Input(LayoutID.URL, 'href')])
-def onload_default_graph_select(href):
-    if href is None:
-        raise PreventUpdate
-    else:
-        raise PreventUpdate
-        #return {'points' :[{'customdata': DEFAULT_GRAPH_GLASS}]}
-
 
 @app.callback(
     Output(LayoutID.SELECT_OPTICAL_STANDARD,"options"),
@@ -198,17 +181,26 @@ def toggle_settings_modal(n1, n2, is_open):
         return not is_open
     return is_open
 
+@app.callback(
+    Output(LayoutID.DIV_HIDDEN_SELECTED_ID, 'children'),  
+    Input(LayoutID.GRAPH, "clickData"),
+)
+def store_in_hidden_div(pt_data):
+    if pt_data:
+        id = pt_data['points'][0]['customdata'][0]
+        return id
+    else:
+        raise PreventUpdate
 
 @app.callback(
-    Output(LayoutID.STORE_BUILDUP_IN_SESSION, 'data'),
-    [
-        Input(LayoutID.GRAPH, "clickData"),
-        Input(LayoutID.CHECKBOX_FLIP_OUTERLAYER, "value"),
-        Input(LayoutID.SELECT_GAS,"value"),
-        Input(LayoutID.INPUT_GAP,"value"),
-        Input(LayoutID.SELECT_INNERLAYER_SUBSTRATE,"value"), # clear or ultraclear
-        Input(LayoutID.SELECT_INNERLAYER_THICKNESS,"value")
-    ]
+    Output(LayoutID.STORE_BUILDUP_IN_SESSION, 'data'),  
+    Input(LayoutID.GRAPH, "clickData"),
+    Input(LayoutID.CHECKBOX_FLIP_OUTERLAYER, "value"),
+    Input(LayoutID.SELECT_GAS,"value"),
+    Input(LayoutID.INPUT_GAP,"value"),
+    Input(LayoutID.SELECT_INNERLAYER_SUBSTRATE,"value"), # clear or ultraclear
+    Input(LayoutID.SELECT_INNERLAYER_THICKNESS,"value")
+
 )
 def glass_to_store(pt_data,flipped, gas, gap_thickness, inner_substrate, inner_thickness):
     """

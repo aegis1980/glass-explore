@@ -29,6 +29,8 @@ class SelectedPointProps:
     THICKNESS_OUTLINE = 1
 
 class LayoutID:
+    DIV_HIDDEN_SELECTED_ID = "div-selected-id-hidden"
+
     GRAPH = "graph-ts-tv"
     GRAPH_LAB = "graph-lab"
 
