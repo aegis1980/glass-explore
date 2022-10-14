@@ -128,6 +128,47 @@ def generic_uncoated_glass(thickness : int , ultraclear : bool):
     #return glass_layer_from_props(props)
 
 
+def run_analysis1(buildup : Dict, optical_standard_file = glass_explore.DEFAULT_OPTICAL_STANDARD):
+    
+    optical_standard = load_optical_standard(optical_standard_file)
+
+    solid_layers = []
+    gap_layers = []
+
+    for l in buildup[Buildup.SOLID_LAYERS]:
+        props = igdb.lookup_glass_props(l['id'])
+        wavelength_df = igdb.lookup_wavelength_data(props['GlazingID'])
+        layer = optics.product_from_tempfile(props,wavelength_df,flipped=l['flipped'])
+        solid_layers.append(layer)
+
+    for g in buildup[Buildup.GAP_LAYERS]:
+        gap = gap_layer(g['gas'], g['thickness'])
+        gap_layers.append(gap)
+
+    # Create a glazing system using the NFRC U environment in order to get NFRC U results
+    # U and SHGC can be caculated for any given environment but in order to get results
+    # The NFRC U and SHGC environments are provided as already constructed environments and Glazing_System
+    # defaults to using the NFRC U environments
+    glazing_system_u_environment = pywincalc.GlazingSystem(optical_standard=optical_standard,
+                                                        solid_layers=solid_layers,
+                                                        gap_layers=gap_layers,
+                                                        width_meters=glazing_system_width,
+                                                        height_meters=glazing_system_height)
+
+    # In order to get NFRC SHGC results the NFRC SHGC environment should be used when creating the glazing system
+    glazing_system_shgc_environment = pywincalc.GlazingSystem(optical_standard=optical_standard,
+                                                            solid_layers=solid_layers,
+                                                            gap_layers=gap_layers,
+                                                            width_meters=glazing_system_width,
+                                                            height_meters=glazing_system_height,
+                                                            environment=pywincalc.nfrc_shgc_environments())
+
+
+    #results_printer.print_results(glazing_system_u_environment, glazing_system_shgc_environment)
+    #results_printer.print_optical_method_results(glazing_system_u_environment, "SOLAR", 0, 0, '')
+    return glazing_system_u_environment, glazing_system_shgc_environment
+
+
 
 def run_analysis(buildup : Dict, optical_standard_file = glass_explore.DEFAULT_OPTICAL_STANDARD):
     

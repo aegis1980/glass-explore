@@ -96,9 +96,9 @@ def graphing_ts_tv(selected_id : int, df, manufacturer, thickness):
                     '<br>%{customdata[18]}'
             )
         )
-
+   
     if selected_id:
-        mask = (df['ID'] == id)
+        mask = (df['ID'] == int(selected_id))
 
         fig.add_trace(
             go.Scatter(

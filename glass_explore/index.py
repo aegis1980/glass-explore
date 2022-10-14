@@ -16,6 +16,7 @@ from glass_explore import mywincalc, standards, LayoutID,igdb, svg_glass, utils,
 DATA_SOURCE = 'sqlite'
 
 
+
 if DATA_SOURCE == 'pyodbc':
     import pyodbc
     path = os.path.join('data','igdb.mdb')
@@ -63,6 +64,9 @@ select_manufacturer = html.Div([
 ])
 
 
+CLEAR_6 = 103
+DEFAULT_GRAPH_GLASS = raw_df.loc[CLEAR_6]
+
 app = dash.Dash(
     __name__,
     external_stylesheets=[dbc.themes.BOOTSTRAP],
@@ -72,7 +76,7 @@ app = dash.Dash(
 )
 
 app.layout = html.Div([
-    html.Div("103",id=LayoutID.DIV_HIDDEN_SELECTED_ID,className= "hidden")
+    html.Div(f"{CLEAR_6}",id=LayoutID.DIV_HIDDEN_SELECTED_ID,className= "hidden"),
     dcc.Location(LayoutID.URL),
     dcc.Store(LayoutID.STORE_BUILDUP_IN_SESSION,  storage_type = "session"),
     dcc.Store(LayoutID.STORE_SETTINGS_IN_LOCAL,  storage_type = "local"),
@@ -278,7 +282,6 @@ def run_analysis_and_update_results(ts, buildup):
         raise PreventUpdate
     buildup = json.loads(buildup)
 
-    mywincalc.run_analysis(buildup)
     glazing_system_u_environment, glazing_system_shgc_environment= mywincalc.run_analysis(buildup)
 
     optical = glazing_system_u_environment.optical_method_results("PHOTOPIC").system_results
@@ -308,6 +311,19 @@ def toggle_navbar_collapse(n, is_open):
     if n:
         return not is_open
     return is_open
+
+
+
+@app.callback(Output(LayoutID.GRAPH, "clickData"),
+              [Input(LayoutID.URL, 'href')])
+def onload_default_glass_select(href):
+    """
+    Mocks a data point click on the default loadup glass
+    """
+    if href is None:
+        raise PreventUpdate
+    else:
+        return {'points' :[{'customdata': DEFAULT_GRAPH_GLASS}]}
 
 
 
