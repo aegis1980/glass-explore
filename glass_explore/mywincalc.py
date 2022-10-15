@@ -128,7 +128,7 @@ def generic_uncoated_glass(thickness : int , ultraclear : bool):
     #return glass_layer_from_props(props)
 
 
-def run_analysis1(buildup : Dict, optical_standard_file = glass_explore.DEFAULT_OPTICAL_STANDARD):
+def run_analysis(buildup : Dict, optical_standard_file = glass_explore.DEFAULT_OPTICAL_STANDARD):
     
     optical_standard = load_optical_standard(optical_standard_file)
 

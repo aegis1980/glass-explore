@@ -114,7 +114,8 @@ def graphing_ts_tv(selected_id : int, df, manufacturer, thickness):
                         width=SelectedPointProps.THICKNESS_OUTLINE
                     )
                 ),
-                showlegend=False
+                showlegend=False,
+                hoverinfo='skip'
             )
         )    
 
@@ -229,7 +230,7 @@ def graphing_3d_colorspace(selected_id,df, manufacturer, thickness, colorspace :
         )
 
     if selected_id:
-        mask = (df['ID'] == id)
+        mask = (df['ID'] == selected_id)
 
         fig.add_trace(
             go.Scatter3d(
@@ -246,7 +247,8 @@ def graphing_3d_colorspace(selected_id,df, manufacturer, thickness, colorspace :
                         width=SelectedPointProps.THICKNESS_OUTLINE
                     )
                 ),
-                showlegend=False
+                showlegend=False,
+                hoverinfo='skip'
             )
 
         )

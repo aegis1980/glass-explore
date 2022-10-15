@@ -12,7 +12,7 @@ from dash.exceptions import PreventUpdate
 import dash_bootstrap_components as dbc
 
 from glass_explore import mywincalc, standards, LayoutID,igdb, svg_glass, utils, layout, callback_helpers, ALL_MANUFACTURERS ,GRAPHTYPE_TS_TV,GRAPHTYPE_LAB,GRAPHTYPE_RGB,Buildup
-
+from glass_explore import SelectedPointProps
 DATA_SOURCE = 'sqlite'
 
 
@@ -128,11 +128,12 @@ def update_graph(graph_type, manufacturer, thickness,selected_id):
 @app.callback(
     Output(LayoutID.GRAPH, "extendData"),
     Input(LayoutID.GRAPH, "clickData"),
-    State(LayoutID.GRAPH, "figure")
+    State(LayoutID.GRAPH, "figure"),
+    State(LayoutID.BUTTONGROUP_GRAPHTYPE,"value" )
 )
-def highlight_point_on_graph(click_data, figure):
+def highlight_point_on_graph(click_data, figure, graph_type):
     """
-    
+    uses extend data to hlighlight seleced point without redrawing graph.
     """
     if not click_data:
         raise PreventUpdate
@@ -140,13 +141,19 @@ def highlight_point_on_graph(click_data, figure):
         raise PreventUpdate
 
     point = click_data['points'][0]
-    id = click_data['points'][0]['customdata'][0]
-
-    hilight = {
-        'x' : [[point['x']]],
-        'y' : [[point['y']]],
-        'marker.color' :[[point['marker.color']]]
-    }
+    if graph_type == GRAPHTYPE_TS_TV:
+        hilight = {
+            'x' : [[point['x']]],
+            'y' : [[point['y']]],
+            'marker.color' :[[point['marker.color']]],
+        }
+    else:
+        hilight = {
+            'x' : [[point['x']]],
+            'y' : [[point['y']]],
+            'z' : [[point['z']]],
+            'marker.color' :[[point['marker.color']]],
+        }
     last_trace_index = len(figure['data'])-1 #will always be the last trace
 
     return [hilight,[last_trace_index],1]
@@ -313,18 +320,19 @@ def toggle_navbar_collapse(n, is_open):
     return is_open
 
 
-
 @app.callback(Output(LayoutID.GRAPH, "clickData"),
               [Input(LayoutID.URL, 'href')])
 def onload_default_glass_select(href):
     """
-    Mocks a data point click on the default loadup glass
+    Mocks a user data point click on the default loadup glass
+    to trigger analysis on first load of webapp.
+
+    Selected point in graph is not triggered by this - hard coded in hidden div.
     """
     if href is None:
         raise PreventUpdate
     else:
         return {'points' :[{'customdata': DEFAULT_GRAPH_GLASS}]}
-
 
 
 app.title = "Glass Explore"
