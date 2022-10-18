@@ -1,7 +1,9 @@
-from functools import cache
-import sqlite3
-from typing import Dict
 import os
+import sqlite3
+import warnings
+from functools import cache
+from typing import Dict
+
 import numpy as np
 import pandas as pd
 import pywincalc
@@ -74,7 +76,10 @@ def lookup_glass_props(nfrc_id : int) -> Dict:
     cxn = sqlite3.connect(path)
 
     raw_df = pd.read_sql(sql,cxn)
-    props =  raw_df.to_dict('records')[0]
+
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=UserWarning)
+        props =  raw_df.to_dict('records')[0]
 
 
 
