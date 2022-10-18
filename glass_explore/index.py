@@ -1,57 +1,19 @@
-import sqlite3
-import os
 import json
 
-import pandas as pd
-import numpy as np
-
 import dash
-from dash import dcc,html, Input, Output, State,ctx
+import dash_bootstrap_components as dbc
+import numpy as np
+import pandas as pd
+from dash import Input, Output, State, ctx, dcc, html
 from dash.exceptions import PreventUpdate
 
-import dash_bootstrap_components as dbc
+from glass_explore import (ALL_MANUFACTURERS, GRAPHTYPE_LAB, GRAPHTYPE_RGB,
+                           GRAPHTYPE_TS_TV, RAW_DF, Buildup, LayoutID,
+                           SelectedPointProps, caching, callback_helpers, igdb,
+                           layout, mywincalc, standards, svg_glass, utils)
 
-from glass_explore import mywincalc, standards, LayoutID,igdb, svg_glass, utils, layout, callback_helpers, ALL_MANUFACTURERS ,GRAPHTYPE_TS_TV,GRAPHTYPE_LAB,GRAPHTYPE_RGB,Buildup
-from glass_explore import SelectedPointProps
-DATA_SOURCE = 'sqlite'
-
-
-
-if DATA_SOURCE == 'pyodbc':
-    import pyodbc
-    path = os.path.join('data','igdb.mdb')
-    if os.name == 'nt':
-        cxn_str = f'Driver={{Microsoft Access Driver (*.mdb, *.accdb)}};DBQ={path};'
-    else:
-        cxn_str = f'DRIVER={{mdb-sql}};DBQ={path};' #nb This doent actaully work in linux (on Heruko)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
-
-    cxn = pyodbc.connect(cxn_str)
-    sql = 'select * from Glass' # where thickness > 5.5 and thickness < 6.5'
-    raw_df = pd.read_sql(sql,cxn)
-elif DATA_SOURCE == 'sqlite':
-    path = os.path.join('data', 'igdb.sqlite')
-    # Create a SQL connection to our SQLite database
-    cxn = sqlite3.connect(path)
-    sql = 'select * from Glass' # where thickness > 5.5 and thickness < 6.5'
-    raw_df = pd.read_sql(sql,cxn)
-
-elif DATA_SOURCE == 'csv':
-    path = os.path.join('data', 'igdb.csv')
-    raw_df = pd.read_csv(path, encoding='ISO-8859-1')
-    #raw_df = raw_df[raw_df['Thickness'].between(5.5, 8.5)]
-
-manufacturers = np.sort(raw_df.Manufacturer.unique())
+manufacturers = np.sort(RAW_DF.Manufacturer.unique())
 manufacturers = np.insert(manufacturers,0,ALL_MANUFACTURERS)
-
-raw_df.set_index('ID', inplace=True, drop=False)
-
-# IGDB uses number for color, we want CSS hex value.
-raw_df['CssColor'] = raw_df['Color'].map(lambda x:utils.base10color_to_csshex(x))
-raw_df['rgb'] = raw_df['CssColor'].map(lambda x:utils.csshex_to_rgb(x))
-raw_df[['RColor','GColor','BColor']] = raw_df['rgb'].apply(pd.Series)
-raw_df['lab'] = raw_df['rgb'].map(lambda x:utils.rgb_to_lab(x))
-raw_df[['lColor','aColor','bColor']] = raw_df['lab'].apply(pd.Series)
-raw_df.drop(columns=['rgb', 'lab'])
 
 
 select_manufacturer = html.Div([
@@ -65,11 +27,15 @@ select_manufacturer = html.Div([
 
 
 CLEAR_6 = 103
-DEFAULT_GRAPH_GLASS = raw_df.loc[CLEAR_6]
+DEFAULT_GRAPH_GLASS = RAW_DF.loc[CLEAR_6]
+
+
+my_bcm = caching.background_callback_manager()
 
 app = dash.Dash(
     __name__,
     external_stylesheets=[dbc.themes.BOOTSTRAP],
+    background_callback_manager=my_bcm,
     meta_tags=[
         {"name": "viewport", "content": "width=device-width, initial-scale=1"},
     ],
@@ -112,11 +78,11 @@ app.layout = html.Div([
     Input("select-manufacturer", "value"),
     Input("radio-thickness", "value"),
     State(LayoutID.DIV_HIDDEN_SELECTED_ID, 'children'),  
+    background = True
 )
 def update_graph(graph_type, manufacturer, thickness,selected_id):
    
-    df = raw_df[raw_df['Thickness'].between(thickness - 0.75, thickness + 0.75)]
-
+    df = caching.thickness_cached_df(thickness)
     if graph_type == GRAPHTYPE_TS_TV:
         fig, msg, color = callback_helpers.graphing_ts_tv(selected_id,df, manufacturer,thickness)
     else:
@@ -227,13 +193,13 @@ def glass_to_store(pt_data,flipped, gas, gap_thickness, inner_substrate, inner_t
 
     props_outer = igdb.lookup_glass_props(id)
     
-    buildup[Buildup.SOLID_LAYERS][0]['color'] = raw_df.loc[int(id)]['CssColor']
+    buildup[Buildup.SOLID_LAYERS][0]['color'] = RAW_DF.loc[int(id)]['CssColor']
     buildup[Buildup.SOLID_LAYERS][0]['flipped'] = flipped
     utils.populate_buildup_with_glass_props(buildup,props_outer,0)
 
     
     props_inner = mywincalc.generic_uncoated_glass_props(int(inner_thickness),inner_substrate == 'ultraclear')
-    buildup[Buildup.SOLID_LAYERS][1]['color'] = raw_df.loc[props_inner['NFRC_ID']]['CssColor']
+    buildup[Buildup.SOLID_LAYERS][1]['color'] = RAW_DF.loc[props_inner['NFRC_ID']]['CssColor']
     buildup[Buildup.SOLID_LAYERS][1]['flipped'] = False
     utils.populate_buildup_with_glass_props(buildup,props_inner,1)
 
@@ -336,6 +302,7 @@ def onload_default_glass_select(href):
 
 
 app.title = "Glass Explore"
+
 
 if __name__ == "__main__":
     app.run_server(debug=True, use_reloader=True)  

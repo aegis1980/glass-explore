@@ -1,8 +1,9 @@
-
-import os
-import json
 import functools
+import json
+import os
 from typing import Dict
+
+import pandas as pd
 
 PATH_DATA = os.path.join('data')
 PATH_STANDARDS = os.path.join('data','standards')
@@ -16,6 +17,9 @@ ALL_MANUFACTURERS = '[ALL]'
 GRAPHTYPE_TS_TV = 1
 GRAPHTYPE_LAB = 2 
 GRAPHTYPE_RGB = 3
+
+path = os.path.join('data','glass.h5')
+RAW_DF = pd.read_hdf(path, 'df')
 
 class Buildup:
     SOLID_LAYERS = 'layers'

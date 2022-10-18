@@ -27,6 +27,10 @@ Issues with getting linux-based heroku app environment reading Access mdb file. 
 python mdb2sqlite.py data/igdb.mdb data/igdb.sqlite
 ```
 
+### HDF file for igdb GLASS table
+
+`./scripts/glass_table_to_hdf.py` creates an HDFStore file for modified data in IGDB's GLASS table. 
+
 ## Heroku deployment
 
 **IMPORTANT: requirements.txt**

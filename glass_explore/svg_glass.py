@@ -1,7 +1,7 @@
 from typing import Dict
 
 import dash
-from dash_svg import Svg, Rect,Line,Text
+from dash_svg import Line, Rect, Svg, Text
 
 from glass_explore import Buildup
 
