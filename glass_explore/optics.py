@@ -1,10 +1,11 @@
+import os
+import shutil
+import tempfile
 from functools import cache
 from os import fdopen
-import os
-import tempfile
-import pywincalc
+
 import pandas as pd
-import shutil
+import pywincalc
 
 # TODO Should get from database GlazingTypes table
 _TYPES = {
