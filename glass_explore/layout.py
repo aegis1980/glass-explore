@@ -236,12 +236,11 @@ results_table = dbc.Table(
 
 def graph():
 
-    fig1 = go.Figure()
-    fig1.update_layout(
+    fig = go.Figure()
+    fig.update_layout(
         height = 800,
     )
-
-    graph_ts_tv  = dbc.Spinner(dcc.Graph(id = LayoutID.GRAPH, figure = fig1), color="secondary", type="grow",spinner_style={"width": "10rem", "height": "10rem"})
+    graph_ts_tv  = dbc.Spinner(dcc.Graph(id = LayoutID.GRAPH, figure = fig), color="secondary", type="grow",spinner_style={"width": "10rem", "height": "10rem"})
 
     return html.Div(graph_ts_tv)
 

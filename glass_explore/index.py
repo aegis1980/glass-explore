@@ -1,4 +1,5 @@
 import json
+import time
 
 import dash
 import dash_bootstrap_components as dbc
@@ -78,10 +79,8 @@ app.layout = html.Div([
     Input("select-manufacturer", "value"),
     Input("radio-thickness", "value"),
     State(LayoutID.DIV_HIDDEN_SELECTED_ID, 'children'),  
-    background = True
 )
 def update_graph(graph_type, manufacturer, thickness,selected_id):
-   
     df = caching.thickness_cached_df(thickness)
     if graph_type == GRAPHTYPE_TS_TV:
         fig, msg, color = callback_helpers.graphing_ts_tv(selected_id,df, manufacturer,thickness)
@@ -92,46 +91,13 @@ def update_graph(graph_type, manufacturer, thickness,selected_id):
 
 
 @app.callback(
-    Output(LayoutID.GRAPH, "extendData"),
-    Input(LayoutID.GRAPH, "clickData"),
-    State(LayoutID.GRAPH, "figure"),
-    State(LayoutID.BUTTONGROUP_GRAPHTYPE,"value" )
-)
-def highlight_point_on_graph(click_data, figure, graph_type):
-    """
-    uses extend data to hlighlight seleced point without redrawing graph.
-    """
-    if not click_data:
-        raise PreventUpdate
-    if len(figure['data']) == 0: #ie graph is empty - no traces
-        raise PreventUpdate
-
-    point = click_data['points'][0]
-    if graph_type == GRAPHTYPE_TS_TV:
-        hilight = {
-            'x' : [[point['x']]],
-            'y' : [[point['y']]],
-            'marker.color' :[[point['marker.color']]],
-        }
-    else:
-        hilight = {
-            'x' : [[point['x']]],
-            'y' : [[point['y']]],
-            'z' : [[point['z']]],
-            'marker.color' :[[point['marker.color']]],
-        }
-    last_trace_index = len(figure['data'])-1 #will always be the last trace
-
-    return [hilight,[last_trace_index],1]
-    
-
-@app.callback(
     Output(LayoutID.SELECT_OPTICAL_STANDARD,"options"),
     [Input(LayoutID.MODAL_SETTINGS, "is_open"),Input(LayoutID.CHECKBOX_ADVANCED_OPTICAL_STANDARD, "value")],
     [State(LayoutID.STORE_SETTINGS_IN_LOCAL,'data')]
 )
 def populate_standards_select(settings_open,inc_advanced,stored_settings):
     return callback_helpers.populate_standards(include_interesting=inc_advanced)
+
 
 @app.callback(
     Output(LayoutID.MODAL_ABOUT, "is_open"),
@@ -158,6 +124,7 @@ def toggle_settings_modal(n1, n2, is_open):
         return not is_open
     return is_open
 
+
 @app.callback(
     Output(LayoutID.DIV_HIDDEN_SELECTED_ID, 'children'),  
     Input(LayoutID.GRAPH, "clickData"),
@@ -169,6 +136,7 @@ def store_in_hidden_div(pt_data):
     else:
         raise PreventUpdate
 
+    
 @app.callback(
     Output(LayoutID.STORE_BUILDUP_IN_SESSION, 'data'),  
     Input(LayoutID.GRAPH, "clickData"),
@@ -238,7 +206,8 @@ def update_outer_lite_productdata(ts, buildup):
         """ 
 
     return outer_layer_info   
-    
+
+
 @app.callback(
     Output(LayoutID.TABLE_CELL_UVALUE, "children"),
     Output(LayoutID.TABLE_CELL_SHGC,"children"),
@@ -273,7 +242,6 @@ def run_analysis_and_update_results(ts, buildup):
     return uvalue,shgc,tvis,rout,rin,{'background-color' : color_t},{'background-color' : color_r}
 
 
-
 # add callback for toggling the collapse on small screens
 @app.callback(
     Output("navbar-collapse", "is_open"),
@@ -284,6 +252,80 @@ def toggle_navbar_collapse(n, is_open):
     if n:
         return not is_open
     return is_open
+
+
+# app.clientside_callback(
+#     """
+#     function(click_data, figure, graph_type) {
+    
+#         if (click_data === undefined){
+#             return window.dash_clientside.no_update;
+#         }
+
+#         if (figure === undefined || figure['data'].length == 0){
+#             return window.dash_clientside.no_update;
+#         }
+
+#         point = click_data['points'][0];
+
+#         if (graph_type == 1){
+#             hilight = {
+#                 'x' : [[point['x']]],
+#                 'y' : [[point['y']]],
+#                 'marker.color' :[[point['marker.color']]]
+#             }
+#         } else {
+#             hilight = {
+#                 'x' : [[point['x']]],
+#                 'y' : [[point['y']]],
+#                 'z' : [[point['z']]],
+#                 'marker.color' :[[point['marker.color']]]
+#             }
+#         }
+
+#         last_trace_index = figure['data'].length-1; //will always be the last trace
+
+#         return [hilight,[last_trace_index],1];
+#     }
+#     """,
+#     Output(LayoutID.GRAPH, "extendData"),
+#     Input(LayoutID.GRAPH, "clickData"),
+#     State(LayoutID.GRAPH, "figure"),
+#     State(LayoutID.BUTTONGROUP_GRAPHTYPE,"value" )
+# )
+
+@app.callback(
+    Output(LayoutID.GRAPH, "extendData"),
+    Input(LayoutID.GRAPH, "clickData"),
+    State(LayoutID.GRAPH, "figure"),
+    State(LayoutID.BUTTONGROUP_GRAPHTYPE,"value" )
+)
+def highlight_point_on_graph(click_data, figure, graph_type):
+    """
+    uses extend data to hlighlight seleced point without redrawing graph.
+    """
+    if not click_data:
+        raise PreventUpdate
+    if len(figure['data']) == 0: #ie graph is empty - no traces
+        raise PreventUpdate
+    point = click_data['points'][0]
+    if graph_type == GRAPHTYPE_TS_TV:
+        hilight = {
+            'x' : [[point['x']]],
+            'y' : [[point['y']]],
+            'marker.color' :[[point['marker.color']]],
+        }
+    else:
+        hilight = {
+            'x' : [[point['x']]],
+            'y' : [[point['y']]],
+            'z' : [[point['z']]],
+            'marker.color' :[[point['marker.color']]],
+        }
+    last_trace_index = len(figure['data'])-1 #will always be the last trace
+
+    return [hilight,[last_trace_index],1]
+
 
 
 @app.callback(Output(LayoutID.GRAPH, "clickData"),
