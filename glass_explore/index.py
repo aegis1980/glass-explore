@@ -31,12 +31,12 @@ CLEAR_6 = 103
 DEFAULT_GRAPH_GLASS = RAW_DF.loc[CLEAR_6]
 
 
-my_bcm = caching.background_callback_manager()
+#my_bcm = caching.background_callback_manager()
 
 app = dash.Dash(
     __name__,
     external_stylesheets=[dbc.themes.BOOTSTRAP],
-    background_callback_manager=my_bcm,
+    #background_callback_manager=my_bcm,
     meta_tags=[
         {"name": "viewport", "content": "width=device-width, initial-scale=1"},
     ],
