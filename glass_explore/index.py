@@ -37,8 +37,14 @@ app = dash.Dash(
     __name__,
     external_stylesheets=[dbc.themes.BOOTSTRAP],
     #background_callback_manager=my_bcm,
+    index_string=dash.dash._default_index.replace('<html>', '<html lang="en" prefix="og: http://ogp.me/ns#">'),
     meta_tags=[
         {"name": "viewport", "content": "width=device-width, initial-scale=1"},
+        {"property" : "og:title", "content": "Glass Explore"},
+        {"name":"image" ,  "property":"og:image" ,  "content":"%PUBLIC_URL%/assets/og_screenshot.png" },
+        {"name":"author" ,  "content":"Jon Robinson" },
+        {"property" : "og:description", "content": "For exploring optical and thermal properties of architectural glass"},
+        {"property" : "og:url", "content": "http://glass-explore.floatingintheclouds.com"}
     ],
 )
 
