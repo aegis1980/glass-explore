@@ -8,7 +8,7 @@ import pandas as pd
 from dash import Input, Output, State, ctx, dcc, html
 from dash.exceptions import PreventUpdate
 
-from glass_explore import (ALL_MANUFACTURERS, GRAPHTYPE_LAB, GRAPHTYPE_RGB,
+from glass_explore import (ALL_MANUFACTURERS, OG_DESCRIPTION, GRAPHTYPE_LAB, GRAPHTYPE_RGB,
                            GRAPHTYPE_TS_TV, RAW_DF, Buildup, LayoutID,
                            SelectedPointProps, caching, callback_helpers, igdb,
                            layout, mywincalc, standards, svg_glass, utils)
@@ -41,9 +41,9 @@ app = dash.Dash(
     meta_tags=[
         {"name": "viewport", "content": "width=device-width, initial-scale=1"},
         {"property" : "og:title", "content": "Glass Explore"},
-        {"name":"image" ,  "property":"og:image" ,  "content":"%PUBLIC_URL%/assets/og_screenshot.png" },
+        {"name":"image" ,  "property":"og:image" ,  "content":"http://glass-explore.floatingintheclouds.com/assets/og_screenshot.png" },
         {"name":"author" ,  "content":"Jon Robinson" },
-        {"property" : "og:description", "content": "For exploring optical and thermal properties of architectural glass"},
+        {"property" : "og:description", "content": OG_DESCRIPTION},
         {"property" : "og:url", "content": "http://glass-explore.floatingintheclouds.com"}
     ],
 )

@@ -5,6 +5,8 @@ from typing import Dict
 
 import pandas as pd
 
+OG_DESCRIPTION = "Glass explore calculates thermal and optic properties of double-glazing, using coating are substrates in the IGDB database. Currently the app is only set up to run the NFRC 100-2010 environment."
+
 PATH_DATA = os.path.join('data')
 PATH_STANDARDS = os.path.join('data','standards')
 PATH_PRODUCTS = os.path.join('data','products')

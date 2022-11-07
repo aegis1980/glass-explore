@@ -2,7 +2,7 @@ from dash import html, dcc
 import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
 import glass_explore
-from glass_explore import LayoutID, callback_helpers, igdb
+from glass_explore import LayoutID, callback_helpers, igdb, OG_DESCRIPTION
 
 FITC_LOGO = 'balloon_white_h30px.png'
 COFFEE = 'coffee.svg'
@@ -63,7 +63,7 @@ def modal_about(app):
             [
                 dbc.ModalHeader(dbc.ModalTitle("Glass Explore")),
                 dbc.ModalBody([
-                    html.P(["Glass explore calculates thermal and optic properties of double-glazing, using coating are substrates in the IGDB database. Currently the app is only set up to run the NFRC 100-2010 environment."]),
+                    html.P([OG_DESCRIPTION]),
                     html.P(["App is only intended as a playground - consult manufacturer's published data or use a tool such as LBNL Window to verify."]),
                     dbc.Row([
                         dbc.Col([
