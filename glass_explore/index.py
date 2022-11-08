@@ -41,7 +41,7 @@ app = dash.Dash(
     meta_tags=[
         {"name": "viewport", "content": "width=device-width, initial-scale=1"},
         {"property" : "og:title", "content": "Glass Explore"},
-        {"name":"image" ,  "property":"og:image" ,  "content":"http://glass-explore.floatingintheclouds.com/assets/og_screenshot.png" },
+        {"name":"image" ,  "property":"og:image" ,  "content":"https://floatingintheclouds.com/wp-content/uploads/2022/09/glass-explore.png" },
         {"name":"author" ,  "content":"Jon Robinson" },
         {"property" : "og:description", "content": OG_DESCRIPTION},
         {"property" : "og:url", "content": "http://glass-explore.floatingintheclouds.com"}
