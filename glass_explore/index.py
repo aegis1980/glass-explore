@@ -8,9 +8,8 @@ import pandas as pd
 from dash import Input, Output, State, ctx, dcc, html
 from dash.exceptions import PreventUpdate
 
-from glass_explore import (ALL_MANUFACTURERS, OG_DESCRIPTION, GRAPHTYPE_LAB, GRAPHTYPE_RGB,
-                           GRAPHTYPE_TS_TV, RAW_DF, Buildup, LayoutID,
-                           SelectedPointProps, caching, callback_helpers, igdb,
+from glass_explore import (ALL_MANUFACTURERS, OG_DESCRIPTION, RAW_DF, Buildup, LayoutID,
+                           SelectedPointProps, caching, callback_helpers, igdb,COLORSPACE_RGB,COLORSPACE_LAB,
                            layout, mywincalc, standards, svg_glass, utils)
 
 manufacturers = np.sort(RAW_DF.Manufacturer.unique())
@@ -61,8 +60,7 @@ app.layout = html.Div([
                     dbc.Col(select_manufacturer, xl=6),
                     dbc.Col(layout.radio_thickness, xl = 6)
                 ]),
-                layout.nav_graphs,
-                layout.graph()
+                layout.tabs
             ], xl = 8),
             dbc.Col([
                 dbc.Row(dbc.Col(html.Div(id=LayoutID.DIV_BUILDUP_SVG_CONTAINER),className="mb-2")),
@@ -81,17 +79,21 @@ app.layout = html.Div([
 @app.callback(
     Output(LayoutID.GRAPH, "figure"),Output("formtext-manufacturer","children"),
     Output("formtext-manufacturer","color"),
-    Input(LayoutID.BUTTONGROUP_GRAPHTYPE, "value"),
+    Input(LayoutID.TABS, "active_tab"),
     Input("select-manufacturer", "value"),
     Input("radio-thickness", "value"),
     State(LayoutID.DIV_HIDDEN_SELECTED_ID, 'children'),  
 )
-def update_graph(graph_type, manufacturer, thickness,selected_id):
+def update_tab_content(active_tabs, manufacturer, thickness,selected_id):
     df = caching.thickness_cached_df(thickness)
-    if graph_type == GRAPHTYPE_TS_TV:
+    if active_tabs == LayoutID.TAB_GRAPH_TS_TV:
         fig, msg, color = callback_helpers.graphing_ts_tv(selected_id,df, manufacturer,thickness)
     else:
-        fig, msg, color = callback_helpers.graphing_3d_colorspace(selected_id,df, manufacturer,thickness, graph_type)
+        if active_tabs == LayoutID.TAB_GRAPH_RGB:
+            color_space = COLORSPACE_RGB
+        else:
+            color_space = COLORSPACE_LAB
+        fig, msg, color = callback_helpers.graphing_3d_colorspace(selected_id,df, manufacturer,thickness, color_space)
 
     return fig, msg, color
 
@@ -297,16 +299,16 @@ def toggle_navbar_collapse(n, is_open):
 #     Output(LayoutID.GRAPH, "extendData"),
 #     Input(LayoutID.GRAPH, "clickData"),
 #     State(LayoutID.GRAPH, "figure"),
-#     State(LayoutID.BUTTONGROUP_GRAPHTYPE,"value" )
+#     State(LayoutID.TABS,"active_tab" )
 # )
 
 @app.callback(
     Output(LayoutID.GRAPH, "extendData"),
     Input(LayoutID.GRAPH, "clickData"),
     State(LayoutID.GRAPH, "figure"),
-    State(LayoutID.BUTTONGROUP_GRAPHTYPE,"value" )
+    State(LayoutID.TABS,"active_tab" )
 )
-def highlight_point_on_graph(click_data, figure, graph_type):
+def highlight_point_on_graph(click_data, figure, active_tab):
     """
     uses extend data to hlighlight seleced point without redrawing graph.
     """
@@ -315,7 +317,7 @@ def highlight_point_on_graph(click_data, figure, graph_type):
     if len(figure['data']) == 0: #ie graph is empty - no traces
         raise PreventUpdate
     point = click_data['points'][0]
-    if graph_type == GRAPHTYPE_TS_TV:
+    if active_tab == LayoutID.TAB_GRAPH_TS_TV:
         hilight = {
             'x' : [[point['x']]],
             'y' : [[point['y']]],

@@ -17,8 +17,8 @@ DEVTEMP = os.path.join(os.getcwd(),'temp')
 ALL_MANUFACTURERS = '[ALL]'
 
 GRAPHTYPE_TS_TV = 1
-GRAPHTYPE_LAB = 2 
-GRAPHTYPE_RGB = 3
+COLORSPACE_LAB = 2 
+COLORSPACE_RGB = 3
 
 path = os.path.join('data','glass.h5')
 RAW_DF = pd.read_hdf(path, 'df')
@@ -80,7 +80,11 @@ class LayoutID:
     TABLE_CELL_COLOR_TRANS = "table-cell-color_trans"
     TABLE_CELL_COLOR_REFL = "table-cell-color_refl"
     
-    BUTTONGROUP_GRAPHTYPE = "buttongroup-graphtype"
+    TABS = "tabs"
+    TAB_CONTENT = "tab_content"
+    TAB_GRAPH_TS_TV = "tab_graph_ts_tv"
+    TAB_GRAPH_LAB = "tab_graph_lab"
+    TAB_GRAPH_RGB = "tab_graph_rgb"
 
     URL = "url"
 

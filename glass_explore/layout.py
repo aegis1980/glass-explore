@@ -242,37 +242,21 @@ def graph():
     )
     graph_ts_tv  = dbc.Spinner(dcc.Graph(id = LayoutID.GRAPH, figure = fig), color="secondary", type="grow",spinner_style={"width": "10rem", "height": "10rem"})
 
-    return html.Div(graph_ts_tv)
+    return graph_ts_tv
 
 
-
-
-nav_graphs = html.Div(
+tabs = html.Div(
     [
-        dbc.RadioItems(
-            id=LayoutID.BUTTONGROUP_GRAPHTYPE,
-            className="btn-group",
-            inputClassName="btn-check",
-            labelClassName="btn btn-outline-primary",
-            labelCheckedClassName="active",
-            options=[
-                {"label": "Graph: Ts vs Tv", "value": glass_explore.GRAPHTYPE_TS_TV},
-                {"label": "Graph: L*a*b* colour space", "value": glass_explore.GRAPHTYPE_LAB},
-                {"label": "Graph: RGB colour space", "value": glass_explore.GRAPHTYPE_RGB},
+        dbc.Tabs(
+            [
+                dbc.Tab(label="Tsolar vs Tvis", tab_id=LayoutID.TAB_GRAPH_TS_TV),
+                dbc.Tab(label="Lab colour space", tab_id=LayoutID.TAB_GRAPH_LAB),
+                dbc.Tab(label="RGB colour space", tab_id= LayoutID.TAB_GRAPH_RGB)
             ],
-            value=1,
+            id=LayoutID.TABS,
+            active_tab=LayoutID.TAB_GRAPH_TS_TV,
         ),
-        html.Div(id="output"),
-    ],
-    className="radio-group",
+        html.Div([graph()],id=LayoutID.TAB_CONTENT)
+    ]
 )
 
-# nav_graphs = dbc.Nav(
-#     [
-#         dbc.NavItem(dbc.NavLink("Graph: Ts vs Tv", active=True)),
-#         dbc.NavItem(dbc.NavLink("Graph: l*a*b* color space")),
-#         dbc.NavItem(dbc.NavLink("Graph: RGB color space")),
-#     ],
-#     pills=True,
-#     id=LayoutID.NAV_GRAPHTYPE
-# )

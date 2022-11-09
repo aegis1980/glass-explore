@@ -20,27 +20,10 @@ nav img {
    font-size: 14px;
 }
 
-/* restyle radio items for button group (graphs) */
-.radio-group .form-check {
-    padding-left: 0;
-  }
-  
-  .radio-group .btn-group > .form-check:not(:last-child) > .btn {
-    border-top-right-radius: 0;
-    border-bottom-right-radius: 0;
-  }
-  
-  .radio-group .btn-group > .form-check:not(:first-child) > .btn {
-    border-top-left-radius: 0;
-    border-bottom-left-radius: 0;
-    margin-left: -1px;
-  }
+.nav-link {
+  cursor: pointer;
+}
 
-
-  .nav-link {
-    cursor: pointer;
-  }
-
-  .hidden {
-    display: none;
-  }
+.hidden {
+  display: none;
+}

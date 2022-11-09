@@ -2,7 +2,7 @@ import functools
 
 import plotly.graph_objects as go
 import glass_explore
-from glass_explore import ALL_MANUFACTURERS, GRAPHTYPE_RGB,SelectedPointProps
+from glass_explore import ALL_MANUFACTURERS, COLORSPACE_RGB,SelectedPointProps
 
 
 def populate_standards(include_interesting):
@@ -161,9 +161,9 @@ def graphing_3d_colorspace(selected_id,df, manufacturer, thickness, colorspace :
         fig.add_trace(
             go.Scatter3d(
                 mode='markers',
-                x=df["RColor"] if colorspace == GRAPHTYPE_RGB else df["lColor"],
-                y=df["GColor"] if colorspace == GRAPHTYPE_RGB else df["aColor"],
-                z=df['BColor'] if colorspace == GRAPHTYPE_RGB else df["bColor"],
+                x=df["RColor"] if colorspace == COLORSPACE_RGB else df["lColor"],
+                y=df["GColor"] if colorspace == COLORSPACE_RGB else df["aColor"],
+                z=df['BColor'] if colorspace == COLORSPACE_RGB else df["bColor"],
                 customdata=df,
                 marker=dict(
                     color=df['CssColor'],
@@ -193,9 +193,9 @@ def graphing_3d_colorspace(selected_id,df, manufacturer, thickness, colorspace :
         fig.add_trace(
             go.Scatter3d(
                 mode='markers',
-                x=df[mask_na]["RColor"] if colorspace == GRAPHTYPE_RGB else df[mask_na]["lColor"],
-                y=df[mask_na]["GColor"] if colorspace == GRAPHTYPE_RGB else df[mask_na]["aColor"],
-                z=df[mask_na]['BColor'] if colorspace == GRAPHTYPE_RGB else df[mask_na]["bColor"],
+                x=df[mask_na]["RColor"] if colorspace == COLORSPACE_RGB else df[mask_na]["lColor"],
+                y=df[mask_na]["GColor"] if colorspace == COLORSPACE_RGB else df[mask_na]["aColor"],
+                z=df[mask_na]['BColor'] if colorspace == COLORSPACE_RGB else df[mask_na]["bColor"],
                 marker=dict(
                     color=df[mask_na]['CssColor'],
                     opacity = 0.4,
@@ -208,9 +208,9 @@ def graphing_3d_colorspace(selected_id,df, manufacturer, thickness, colorspace :
         fig.add_trace(
             go.Scatter3d(
                 mode='markers',
-                x=df[mask]["RColor"] if colorspace == GRAPHTYPE_RGB else df[mask]["lColor"],
-                y=df[mask]["GColor"] if colorspace == GRAPHTYPE_RGB else df[mask]["aColor"],
-                z=df[mask]['BColor'] if colorspace == GRAPHTYPE_RGB else df[mask]["bColor"],
+                x=df[mask]["RColor"] if colorspace == COLORSPACE_RGB else df[mask]["lColor"],
+                y=df[mask]["GColor"] if colorspace == COLORSPACE_RGB else df[mask]["aColor"],
+                z=df[mask]['BColor'] if colorspace == COLORSPACE_RGB else df[mask]["bColor"],
                 customdata=df[mask],
                 marker=dict(
                     color=df[mask]['CssColor'],
@@ -235,9 +235,9 @@ def graphing_3d_colorspace(selected_id,df, manufacturer, thickness, colorspace :
         fig.add_trace(
             go.Scatter3d(
                 mode='markers',
-                x=df[mask]["RColor"] if colorspace == GRAPHTYPE_RGB else df[mask]["lColor"],
-                y=df[mask]["GColor"] if colorspace == GRAPHTYPE_RGB else df[mask]["aColor"],
-                z=df[mask]['BColor'] if colorspace == GRAPHTYPE_RGB else df[mask]["bColor"],
+                x=df[mask]["RColor"] if colorspace == COLORSPACE_RGB else df[mask]["lColor"],
+                y=df[mask]["GColor"] if colorspace == COLORSPACE_RGB else df[mask]["aColor"],
+                z=df[mask]['BColor'] if colorspace == COLORSPACE_RGB else df[mask]["bColor"],
                 customdata=df[mask],
                 marker=dict(
                     color=df[mask]['CssColor'],
