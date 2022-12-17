@@ -1,5 +1,7 @@
 import functools
 
+import pandas as pd
+
 import plotly.graph_objects as go
 import glass_explore
 from glass_explore import ALL_MANUFACTURERS, COLORSPACE_RGB,SelectedPointProps
@@ -14,7 +16,7 @@ def populate_standards(include_interesting):
     return options
     
 
-def graphing_ts_tv(selected_id : int, df, manufacturer, thickness):
+def populate_graph_ts_tv(selected_id : int, df: pd.DataFrame, manufacturer, thickness):
     """
     Generates Tsolar vs Tvisible graph
 
@@ -151,7 +153,7 @@ def graphing_ts_tv(selected_id : int, df, manufacturer, thickness):
     return fig, msg, color 
 
 
-def graphing_3d_colorspace(selected_id,df, manufacturer, thickness, colorspace : int):
+def populate_graph_colorspace(selected_id,df, manufacturer, thickness, colorspace : int):
 
     fig = go.Figure()
     if manufacturer == ALL_MANUFACTURERS:
@@ -254,3 +256,8 @@ def graphing_3d_colorspace(selected_id,df, manufacturer, thickness, colorspace :
         )
 
     return fig, msg, color  
+
+
+def populate_datatable(selected_id: int,df : pd.DataFrame, manufacturer : str,thickness : float):
+    mask = (df['Manufacturer'] == manufacturer)
+    return df[mask].to_dict('records')

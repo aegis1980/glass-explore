@@ -13,12 +13,13 @@ PATH_PRODUCTS = os.path.join('data','products')
 
 DEVTEMP = os.path.join(os.getcwd(),'temp') 
 
-
 ALL_MANUFACTURERS = '[ALL]'
 
 GRAPHTYPE_TS_TV = 1
 COLORSPACE_LAB = 2 
 COLORSPACE_RGB = 3
+
+DATATABLE_COLUMNS = ['ID','ProductName','Manufacturer','Thickness','Tvis','Tsol','Rvis1','Rvis2']
 
 path = os.path.join('data','glass.h5')
 RAW_DF = pd.read_hdf(path, 'df')
@@ -79,12 +80,15 @@ class LayoutID:
     TABLE_CELL_RIN  = "table-cell-rin"
     TABLE_CELL_COLOR_TRANS = "table-cell-color_trans"
     TABLE_CELL_COLOR_REFL = "table-cell-color_refl"
+
+    DATATABLE_OUTERLITE = "datatable-outerlite"
     
     TABS = "tabs"
-    TAB_CONTENT = "tab_content"
-    TAB_GRAPH_TS_TV = "tab_graph_ts_tv"
-    TAB_GRAPH_LAB = "tab_graph_lab"
-    TAB_GRAPH_RGB = "tab_graph_rgb"
+    TAB_CONTENT = "tab-content"
+    TAB_GRAPH_TS_TV = "tab-graph-ts-tv"
+    TAB_GRAPH_LAB = "tab-graph-ab"
+    TAB_GRAPH_RGB = "tab-graph-rgb"
+    TAB_DATATABLE = "tab-datatable"
 
     URL = "url"
 

@@ -77,25 +77,43 @@ app.layout = html.Div([
 
 
 @app.callback(
-    Output(LayoutID.GRAPH, "figure"),Output("formtext-manufacturer","children"),
-    Output("formtext-manufacturer","color"),
+    Output(LayoutID.GRAPH, "figure"),Output("formtext-manufacturer","children"), Output("formtext-manufacturer","color"),
     Input(LayoutID.TABS, "active_tab"),
     Input("select-manufacturer", "value"),
     Input("radio-thickness", "value"),
     State(LayoutID.DIV_HIDDEN_SELECTED_ID, 'children'),  
 )
-def update_tab_content(active_tabs, manufacturer, thickness,selected_id):
+def update_graph(active_tabs, manufacturer, thickness,selected_id):
     df = caching.thickness_cached_df(thickness)
-    if active_tabs == LayoutID.TAB_GRAPH_TS_TV:
-        fig, msg, color = callback_helpers.graphing_ts_tv(selected_id,df, manufacturer,thickness)
+    if active_tabs == LayoutID.TAB_DATATABLE:
+        raise PreventUpdate
+    elif active_tabs == LayoutID.TAB_GRAPH_TS_TV:
+        fig, msg, color = callback_helpers.populate_graph_ts_tv(selected_id,df, manufacturer,thickness)
     else:
         if active_tabs == LayoutID.TAB_GRAPH_RGB:
             color_space = COLORSPACE_RGB
         else:
             color_space = COLORSPACE_LAB
-        fig, msg, color = callback_helpers.graphing_3d_colorspace(selected_id,df, manufacturer,thickness, color_space)
+        fig, msg, color = callback_helpers.populate_graph_colorspace(selected_id,df, manufacturer,thickness, color_space)
 
     return fig, msg, color
+
+
+@app.callback(
+    Output(LayoutID.DATATABLE_OUTERLITE, "data"),
+    Input(LayoutID.TABS, "active_tab"),
+    Input("select-manufacturer", "value"),
+    Input("radio-thickness", "value"),
+    State(LayoutID.DIV_HIDDEN_SELECTED_ID, 'children'),  
+)
+def update_datatable(active_tabs, manufacturer, thickness,selected_id):
+    df = caching.thickness_cached_df(thickness)
+    if active_tabs == LayoutID.TAB_DATATABLE:
+        data = callback_helpers.populate_datatable(selected_id,df, manufacturer,thickness)
+    else:
+        raise PreventUpdate
+    print(data)
+    return data
 
 
 @app.callback(

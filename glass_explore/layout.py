@@ -1,4 +1,4 @@
-from dash import html, dcc
+from dash import html, dcc,dash_table
 import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
 import glass_explore
@@ -234,7 +234,7 @@ results_table = dbc.Table(
     table_header + table_body, 
     bordered=True)
 
-def graph():
+def init_graph():
 
     fig = go.Figure()
     fig.update_layout(
@@ -245,18 +245,23 @@ def graph():
     return graph_ts_tv
 
 
+def init_datatable():
+    return dbc.Spinner(dash_table.DataTable(id = LayoutID.DATATABLE_OUTERLITE), color="secondary", type="grow",spinner_style={"width": "10rem", "height": "10rem"})
+
+
 tabs = html.Div(
     [
         dbc.Tabs(
             [
                 dbc.Tab(label="Tsolar vs Tvis", tab_id=LayoutID.TAB_GRAPH_TS_TV),
                 dbc.Tab(label="Lab colour space", tab_id=LayoutID.TAB_GRAPH_LAB),
-                dbc.Tab(label="RGB colour space", tab_id= LayoutID.TAB_GRAPH_RGB)
+                dbc.Tab(label="RGB colour space", tab_id= LayoutID.TAB_GRAPH_RGB),
+                dbc.Tab(label="Data table", tab_id= LayoutID.TAB_DATATABLE),
             ],
             id=LayoutID.TABS,
             active_tab=LayoutID.TAB_GRAPH_TS_TV,
         ),
-        html.Div([graph()],id=LayoutID.TAB_CONTENT)
+        html.Div([init_graph(),init_datatable()],id=LayoutID.TAB_CONTENT)
     ]
 )
 
