@@ -21,7 +21,7 @@ From LBNL the IGDB database file in a Microsoft Access file (*.mdb).
 
 ### Converting database for Heroku env
 
-Issues with getting linux-based heroku app environment reading Access mdb file. Solution is to convert with `mdb2sqlite.py` script:
+Issues with getting linux-based heroku app environment reading Microsoft Access mdb file. Solution is to convert with `mdb2sqlite.py` script:
 
 ``` bash
 python mdb2sqlite.py data/igdb.mdb data/igdb.sqlite

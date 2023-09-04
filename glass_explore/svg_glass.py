@@ -1,7 +1,10 @@
 from typing import Dict
 
 import dash
+from dash import Input, Output, State, ctx, dcc, html
+import dash_bootstrap_components as dbc
 from dash_svg import Line, Rect, Svg, Text
+from glass_explore import LayoutID
 
 from glass_explore import Buildup
 
@@ -64,7 +67,7 @@ if __name__ == "__main__":
                 'thickness' : 6,
                 'id' : 12345,
                 'props' : {},
-                'color' : '#1320ff',
+                'color' : '#ccc',
                 'flipped' : True,
                 'coating' : 'BACK'
             },
@@ -84,8 +87,23 @@ if __name__ == "__main__":
 
 
     app = dash.Dash(__name__)
-    app.layout = generate_buildup(buildup)
+    app.layout = html.Div([
+        html.Div(generate_buildup(buildup),id=LayoutID.DIV_BUILDUP_SVG_CONTAINER),
+        dbc.Checkbox(
+            id=LayoutID.CHECKBOX_FLIP_OUTERLAYER,
+            label="Flip layer",
+            value=False,
+        )
+    ])
+
+
+    @app.callback(
+        Output(LayoutID.DIV_BUILDUP_SVG_CONTAINER, 'children'),  
+        Input(LayoutID.CHECKBOX_FLIP_OUTERLAYER, "value"),
+    )
+    def flip(flipped):
+        buildup['layers'][0]['flipped'] = flipped
+        return generate_buildup(buildup)
+
+
     app.run_server(debug=True, use_reloader=True)
-
-
-
