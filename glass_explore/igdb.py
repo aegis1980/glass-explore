@@ -8,6 +8,8 @@ import numpy as np
 import pandas as pd
 import pywincalc
 
+from glass_explore import IGDB_SQLITE_PATH,DF_GLASS_TABLE
+
 # nfrc ids for generic clear glasses.
 CLEAR_LOOKUP = {
     3 : 102,
@@ -39,7 +41,14 @@ GASES = {
     "xenon" : pywincalc.PredefinedGasType.XENON
 }
 
-path = os.path.join('data', 'igdb.sqlite')
+@cache
+def db_version() -> float:
+    """
+    Returns:
+        int: IGDB version
+    """
+    s = DF_GLASS_TABLE['Source'].str.extractall('(\d+)')[0].astype(float).groupby(level=0).max()
+    return max(s)
 
 
 @cache
@@ -54,7 +63,7 @@ def lookup_wavelength_data(id : int) -> pd.DataFrame:
     """
 
     # Create a SQL connection to our SQLite database
-    cxn = sqlite3.connect(path)
+    cxn = sqlite3.connect(IGDB_SQLITE_PATH)
 
     sql = f'select * from SpectralData where GlazingID = {id}'
     return pd.read_sql(sql,cxn)
@@ -73,7 +82,7 @@ def lookup_glass_props(nfrc_id : int) -> Dict:
     """
     sql = f'select * from Glass INNER JOIN GlazingProperties on Glass.ID=GlazingProperties.NFRC_ID where ID = {nfrc_id} ' 
     # Create a SQL connection to our SQLite database
-    cxn = sqlite3.connect(path)
+    cxn = sqlite3.connect(IGDB_SQLITE_PATH)
 
     raw_df = pd.read_sql(sql,cxn)
 
@@ -84,3 +93,9 @@ def lookup_glass_props(nfrc_id : int) -> Dict:
 
 
     return props
+
+
+if __name__ == "__main__":
+    print(f'IGDB v{db_version()}')
+
+

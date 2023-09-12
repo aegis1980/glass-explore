@@ -63,8 +63,8 @@ def modal_about(app):
             [
                 dbc.ModalHeader(dbc.ModalTitle("Glass Explore")),
                 dbc.ModalBody([
-                    html.P([OG_DESCRIPTION]),
-                    html.P(["App is only intended as a playground - consult manufacturer's published data or use a tool such as LBNL Window to verify."]),
+                    html.P([OG_DESCRIPTION +f" using coatings and substrate data in the IGDB database (IGDB v{igdb.db_version()}). Currently the app is only set up to run the NFRC 100-2010 environment."]),
+                    html.P(["This app is only intended as a playground - consult manufacturer's published data or use a tool such as LBNL Window to verify."]),
                     dbc.Row([
                         dbc.Col([
                             html.A(
@@ -256,7 +256,7 @@ tabs = html.Div(
                 dbc.Tab(label="Tsolar vs Tvis", tab_id=LayoutID.TAB_GRAPH_TS_TV),
                 dbc.Tab(label="Lab colour space", tab_id=LayoutID.TAB_GRAPH_LAB),
                 dbc.Tab(label="RGB colour space", tab_id= LayoutID.TAB_GRAPH_RGB),
-                dbc.Tab(label="Data table", tab_id= LayoutID.TAB_DATATABLE),
+                dbc.Tab(label="Table", tab_id= LayoutID.TAB_DATATABLE,disabled=True),
             ],
             id=LayoutID.TABS,
             active_tab=LayoutID.TAB_GRAPH_TS_TV,

@@ -5,11 +5,15 @@ from typing import Dict
 
 import pandas as pd
 
-OG_DESCRIPTION = "Glass explore calculates thermal and optic properties of double-glazing, using coating are substrates in the IGDB database. Currently the app is only set up to run the NFRC 100-2010 environment."
+URL = "http://glass-explore.floatingintheclouds.com"
+OG_DESCRIPTION = "Glass explore calculates thermal and optic properties of double-glazing"
 
 PATH_DATA = os.path.join('data')
 PATH_STANDARDS = os.path.join('data','standards')
 PATH_PRODUCTS = os.path.join('data','products')
+
+IGDB_SQLITE_PATH = os.path.join('data', 'igdb.sqlite')
+
 
 DEVTEMP = os.path.join(os.getcwd(),'temp') 
 
@@ -21,8 +25,12 @@ COLORSPACE_RGB = 3
 
 DATATABLE_COLUMNS = ['ID','ProductName','Manufacturer','Thickness','Tvis','Tsol','Rvis1','Rvis2']
 
-path = os.path.join('data','glass.h5')
-RAW_DF = pd.read_hdf(path, 'df')
+H5_GLASS_PATH = os.path.join('data','glass.h5')
+
+try:
+    DF_GLASS_TABLE = pd.read_hdf(H5_GLASS_PATH, 'df')
+except FileNotFoundError:
+    print("HD5 file not found")
 
 class Buildup:
     SOLID_LAYERS = 'layers'

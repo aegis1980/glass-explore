@@ -13,23 +13,30 @@
 7. `pip install -e .` to make editable
 8. Run `./glass_explore/index.py` to run with **dev server**. (Running `./production.py` runs using `gunicorn` in production environment)
 
-## IGDB
+## Updating the IGDB
+
+The IGDB is updated every couple of months with new and updated glass data from manufacturers.
+
+
+
 
 From LBNL the IGDB database file in a Microsoft Access file (*.mdb).
 
-`igdb.csv` only includes glass data - good enough for basic visualisation.
+Most up to date version is here
 
-### Converting database for Heroku env
+### Prepping IGDB database file for Heroku production env
 
-Issues with getting linux-based heroku app environment reading Microsoft Access mdb file. Solution is to convert with `mdb2sqlite.py` script:
 
-``` bash
-python mdb2sqlite.py data/igdb.mdb data/igdb.sqlite
-```
+#### MDB to SQLITE
+Issues with getting linux-based heroku app environment reading Microsoft Access mdb file. Solution is to convert to sqlite file.
+This requires drivers for Access to be available on dev machine - so Microsoft Access installed or the Microsoft Access Database Engine
+Update IGDB to in LBNL WINDOW8, then  default path for uptodate non-password protected access db is in c:/Users/Public/LBNL/WINDOW7.8/w7.mdb
 
-### HDF file for igdb GLASS table
+#### HDF file for igdb GLASS table
 
 `./scripts/glass_table_to_hdf.py` creates an HDFStore file for modified data in IGDB's GLASS table. 
+
+Run `script/update_igdb.py`
 
 ## Heroku deployment
 

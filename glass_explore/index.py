@@ -8,11 +8,11 @@ import pandas as pd
 from dash import Input, Output, State, ctx, dcc, html
 from dash.exceptions import PreventUpdate
 
-from glass_explore import (ALL_MANUFACTURERS, OG_DESCRIPTION, RAW_DF, Buildup, LayoutID,
+from glass_explore import (ALL_MANUFACTURERS, OG_DESCRIPTION, URL, DF_GLASS_TABLE, Buildup, LayoutID,
                            SelectedPointProps, caching, callback_helpers, igdb,COLORSPACE_RGB,COLORSPACE_LAB,
                            layout, mywincalc, standards, svg_glass, utils)
 
-manufacturers = np.sort(RAW_DF.Manufacturer.unique())
+manufacturers = np.sort(DF_GLASS_TABLE.Manufacturer.unique())
 manufacturers = np.insert(manufacturers,0,ALL_MANUFACTURERS)
 
 
@@ -27,7 +27,7 @@ select_manufacturer = html.Div([
 
 
 CLEAR_6 = 103
-DEFAULT_GRAPH_GLASS = RAW_DF.loc[CLEAR_6]
+DEFAULT_GRAPH_GLASS = DF_GLASS_TABLE.loc[CLEAR_6]
 
 
 #my_bcm = caching.background_callback_manager()
@@ -43,7 +43,7 @@ app = dash.Dash(
         {"name":"image" ,  "property":"og:image" ,  "content":"https://floatingintheclouds.com/wp-content/uploads/2022/09/glass-explore.png" },
         {"name":"author" ,  "content":"Jon Robinson" },
         {"property" : "og:description", "content": OG_DESCRIPTION},
-        {"property" : "og:url", "content": "http://glass-explore.floatingintheclouds.com"}
+        {"property" : "og:url", "content": URL}
     ],
 )
 
@@ -187,13 +187,13 @@ def glass_to_store(pt_data,flipped, gas, gap_thickness, inner_substrate, inner_t
 
     props_outer = igdb.lookup_glass_props(id)
     
-    buildup[Buildup.SOLID_LAYERS][0]['color'] = RAW_DF.loc[int(id)]['CssColor']
+    buildup[Buildup.SOLID_LAYERS][0]['color'] = DF_GLASS_TABLE.loc[int(id)]['CssColor']
     buildup[Buildup.SOLID_LAYERS][0]['flipped'] = flipped
     utils.populate_buildup_with_glass_props(buildup,props_outer,0)
 
     
     props_inner = mywincalc.generic_uncoated_glass_props(int(inner_thickness),inner_substrate == 'ultraclear')
-    buildup[Buildup.SOLID_LAYERS][1]['color'] = RAW_DF.loc[props_inner['NFRC_ID']]['CssColor']
+    buildup[Buildup.SOLID_LAYERS][1]['color'] = DF_GLASS_TABLE.loc[props_inner['NFRC_ID']]['CssColor']
     buildup[Buildup.SOLID_LAYERS][1]['flipped'] = False
     utils.populate_buildup_with_glass_props(buildup,props_inner,1)
 
@@ -374,6 +374,4 @@ app.title = "Glass Explore"
 
 if __name__ == "__main__":
     app.run_server(debug=True, use_reloader=True)  
-
-
 
