@@ -4,7 +4,7 @@ from uuid import uuid4
 from dash import CeleryManager, DiskcacheManager
 from data_cache import pandas_cache
 
-from glass_explore import DF_GLASS_TABLE
+from glass_explore import DF_GLASS_TABLE,DF_READABLE_GLASS_TABLE
 
 # You should change 'test' to your preferred folder.
 CACHE_DIR = os.path.join('cache')
@@ -45,3 +45,8 @@ def background_callback_manager():
 @pandas_cache
 def thickness_cached_df(thickness):
     return DF_GLASS_TABLE[DF_GLASS_TABLE['Thickness'].between(thickness - 0.75, thickness + 0.75)]
+
+
+@pandas_cache
+def thickness_cached_readable_df(thickness):
+    return DF_READABLE_GLASS_TABLE[DF_READABLE_GLASS_TABLE['Thickness'].between(thickness - 0.75, thickness + 0.75)]

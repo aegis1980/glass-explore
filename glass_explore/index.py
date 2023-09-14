@@ -2,9 +2,11 @@ import json
 import time
 
 import dash
+from dash import dash_table
 import dash_bootstrap_components as dbc
 import numpy as np
 import pandas as pd
+
 from dash import Input, Output, State, ctx, dcc, html
 from dash.exceptions import PreventUpdate
 
@@ -76,50 +78,63 @@ app.layout = html.Div([
     ], fluid=True )])
 
 
+
 @app.callback(
-    Output(LayoutID.GRAPH, "figure"),Output("formtext-manufacturer","children"), Output("formtext-manufacturer","color"),
+    Output(LayoutID.DIV_DATATABLE_IGDB, "style"),Output(LayoutID.DIV_GRAPH_IGDB, "style"),
+    Input(LayoutID.TABS, "active_tab"),
+)
+def update_tab(active_tabs):
+    if active_tabs == LayoutID.TAB_DATATABLE:
+       return {'display' : 'inline'},{'display' : 'none'}
+    else:
+       return {'display' : 'none'},{'display' : 'inline'}
+        
+
+
+
+
+@app.callback(
+    Output(LayoutID.GRAPH_IGDB, "figure"),Output(LayoutID.SPINNER_DATATABLE_IGDB, "children"),Output("formtext-manufacturer","children"), Output("formtext-manufacturer","color"),
     Input(LayoutID.TABS, "active_tab"),
     Input("select-manufacturer", "value"),
     Input("radio-thickness", "value"),
     State(LayoutID.DIV_HIDDEN_SELECTED_ID, 'children'),  
 )
-def update_graph(active_tabs, manufacturer, thickness,selected_id):
-    df = caching.thickness_cached_df(thickness)
+def update_igdb_data_display(active_tabs, manufacturer, thickness,selected_id):
+    out_fig = dash.no_update
+    out_datatable = dash.no_update
     if active_tabs == LayoutID.TAB_DATATABLE:
-        raise PreventUpdate
+        df = caching.thickness_cached_readable_df(thickness)
+        df,out_msg,out_msgcolor = callback_helpers.populate_datatable(selected_id,df, manufacturer,thickness)
+
+        out_datatable = dash_table.DataTable(
+            columns=[{'name': i, 'id': i} for i in df.columns],
+            data = df.to_dict('records'),
+            id = LayoutID.DATATABLE_IGDB,
+            style_data_conditional=[{'if': {'row_index': i, 'column_id': 'CssColor'}, 'background-color': df['CssColor'].iloc[i], 'color': df['CssColor'].iloc[i]} for i in range(df.shape[0])],
+            fixed_rows={'headers': True},
+            style_table={'height': 500}  # defaults to 500
+        )
     elif active_tabs == LayoutID.TAB_GRAPH_TS_TV:
-        fig, msg, color = callback_helpers.populate_graph_ts_tv(selected_id,df, manufacturer,thickness)
+        df = caching.thickness_cached_df(thickness)
+        out_fig, out_msg, out_msgcolor = callback_helpers.populate_graph_ts_tv(selected_id,df, manufacturer,thickness)
     else:
+        df = caching.thickness_cached_df(thickness)
         if active_tabs == LayoutID.TAB_GRAPH_RGB:
             color_space = COLORSPACE_RGB
         else:
             color_space = COLORSPACE_LAB
-        fig, msg, color = callback_helpers.populate_graph_colorspace(selected_id,df, manufacturer,thickness, color_space)
 
-    return fig, msg, color
+        out_fig, out_msg, out_msgcolor = callback_helpers.populate_graph_colorspace(selected_id,df, manufacturer,thickness, color_space)
 
-
-@app.callback(
-    Output(LayoutID.DATATABLE_OUTERLITE, "data"),
-    Input(LayoutID.TABS, "active_tab"),
-    Input("select-manufacturer", "value"),
-    Input("radio-thickness", "value"),
-    State(LayoutID.DIV_HIDDEN_SELECTED_ID, 'children'),  
-)
-def update_datatable(active_tabs, manufacturer, thickness,selected_id):
-    df = caching.thickness_cached_df(thickness)
-    if active_tabs == LayoutID.TAB_DATATABLE:
-        data = callback_helpers.populate_datatable(selected_id,df, manufacturer,thickness)
-    else:
-        raise PreventUpdate
-    print(data)
-    return data
+    return out_fig, out_datatable, out_msg, out_msgcolor
 
 
 @app.callback(
     Output(LayoutID.SELECT_OPTICAL_STANDARD,"options"),
-    [Input(LayoutID.MODAL_SETTINGS, "is_open"),Input(LayoutID.CHECKBOX_ADVANCED_OPTICAL_STANDARD, "value")],
-    [State(LayoutID.STORE_SETTINGS_IN_LOCAL,'data')]
+    Input(LayoutID.MODAL_SETTINGS, "is_open"),
+    Input(LayoutID.CHECKBOX_ADVANCED_OPTICAL_STANDARD, "value"),
+    State(LayoutID.STORE_SETTINGS_IN_LOCAL,'data')
 )
 def populate_standards_select(settings_open,inc_advanced,stored_settings):
     return callback_helpers.populate_standards(include_interesting=inc_advanced)
@@ -153,7 +168,7 @@ def toggle_settings_modal(n1, n2, is_open):
 
 @app.callback(
     Output(LayoutID.DIV_HIDDEN_SELECTED_ID, 'children'),  
-    Input(LayoutID.GRAPH, "clickData"),
+    Input(LayoutID.GRAPH_IGDB, "clickData"),
 )
 def store_in_hidden_div(pt_data):
     if pt_data:
@@ -165,7 +180,7 @@ def store_in_hidden_div(pt_data):
     
 @app.callback(
     Output(LayoutID.STORE_BUILDUP_IN_SESSION, 'data'),  
-    Input(LayoutID.GRAPH, "clickData"),
+    Input(LayoutID.GRAPH_IGDB, "clickData"),
     Input(LayoutID.CHECKBOX_FLIP_OUTERLAYER, "value"),
     Input(LayoutID.SELECT_GAS,"value"),
     Input(LayoutID.INPUT_GAP,"value"),
@@ -321,9 +336,9 @@ def toggle_navbar_collapse(n, is_open):
 # )
 
 @app.callback(
-    Output(LayoutID.GRAPH, "extendData"),
-    Input(LayoutID.GRAPH, "clickData"),
-    State(LayoutID.GRAPH, "figure"),
+    Output(LayoutID.GRAPH_IGDB, "extendData"),
+    Input(LayoutID.GRAPH_IGDB, "clickData"),
+    State(LayoutID.GRAPH_IGDB, "figure"),
     State(LayoutID.TABS,"active_tab" )
 )
 def highlight_point_on_graph(click_data, figure, active_tab):
@@ -354,7 +369,7 @@ def highlight_point_on_graph(click_data, figure, active_tab):
 
 
 
-@app.callback(Output(LayoutID.GRAPH, "clickData"),
+@app.callback(Output(LayoutID.GRAPH_IGDB, "clickData"),
               [Input(LayoutID.URL, 'href')])
 def onload_default_glass_select(href):
     """

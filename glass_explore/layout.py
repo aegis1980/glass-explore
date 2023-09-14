@@ -1,6 +1,8 @@
 from dash import html, dcc,dash_table
+from dash.dash_table.Format import Format
 import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
+
 import glass_explore
 from glass_explore import LayoutID, callback_helpers, igdb, OG_DESCRIPTION
 
@@ -240,13 +242,25 @@ def init_graph():
     fig.update_layout(
         height = 800,
     )
-    graph_ts_tv  = dbc.Spinner(dcc.Graph(id = LayoutID.GRAPH, figure = fig), color="secondary", type="grow",spinner_style={"width": "10rem", "height": "10rem"})
+    return html.Div(
+        dbc.Spinner(dcc.Graph(id = LayoutID.GRAPH_IGDB, figure = fig), color="secondary", type="grow",spinner_style={"width": "10rem", "height": "10rem"}),
+        id= LayoutID.DIV_GRAPH_IGDB
+    )
 
-    return graph_ts_tv
+
 
 
 def init_datatable():
-    return dbc.Spinner(dash_table.DataTable(id = LayoutID.DATATABLE_OUTERLITE), color="secondary", type="grow",spinner_style={"width": "10rem", "height": "10rem"})
+    return html.Div(
+        dbc.Spinner([],
+            id = LayoutID.SPINNER_DATATABLE_IGDB,
+            color="secondary", 
+            type="grow",
+            spinner_style={"width": "10rem", "height": "10rem"}
+        ), 
+        id= LayoutID.DIV_DATATABLE_IGDB,
+        style= {'display' : 'none'},
+    )
 
 
 tabs = html.Div(
@@ -256,7 +270,7 @@ tabs = html.Div(
                 dbc.Tab(label="Tsolar vs Tvis", tab_id=LayoutID.TAB_GRAPH_TS_TV),
                 dbc.Tab(label="Lab colour space", tab_id=LayoutID.TAB_GRAPH_LAB),
                 dbc.Tab(label="RGB colour space", tab_id= LayoutID.TAB_GRAPH_RGB),
-                dbc.Tab(label="Table", tab_id= LayoutID.TAB_DATATABLE,disabled=True),
+                dbc.Tab(label="Table", tab_id= LayoutID.TAB_DATATABLE),
             ],
             id=LayoutID.TABS,
             active_tab=LayoutID.TAB_GRAPH_TS_TV,

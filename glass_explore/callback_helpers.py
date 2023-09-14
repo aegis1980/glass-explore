@@ -3,9 +3,21 @@ import functools
 import pandas as pd
 
 import plotly.graph_objects as go
+
+
 import glass_explore
 from glass_explore import ALL_MANUFACTURERS, COLORSPACE_RGB,SelectedPointProps
 
+
+def number_of_glasses_message(df, manufacturer, thickness):
+
+    if len(df.index)==0:
+        msg = f'No glasses from {manufacturer} with thickness, {thickness}mm'
+        msg_color = 'red'
+    else:
+        msg = f'{len(df.index)} glasses'
+        msg_color = 'darkgrey'
+    return msg, msg_color
 
 def populate_standards(include_interesting):
     standards = glass_explore.standards()
@@ -28,9 +40,7 @@ def populate_graph_ts_tv(selected_id : int, df: pd.DataFrame, manufacturer, thic
     """
     fig = go.Figure()
     if manufacturer == ALL_MANUFACTURERS:
-
-        msg = f'{len(df.index)} glasses'
-        color = 'darkgrey'
+        msg,msg_color = number_of_glasses_message(df,manufacturer,thickness)
         fig.add_trace(
             go.Scatter(
                 mode='markers',
@@ -55,12 +65,7 @@ def populate_graph_ts_tv(selected_id : int, df: pd.DataFrame, manufacturer, thic
         mask_na = (df['Manufacturer'] != manufacturer)
         mask = (df['Manufacturer'] == manufacturer)
 
-        if len(df[mask].index)==0:
-            msg = f'No glasses from {manufacturer} with thickness, {thickness}mm'
-            color = 'red'
-        else:
-            msg = f'{len(df[mask].index)} glasses'
-            color = 'darkgrey'
+        msg,msg_color = number_of_glasses_message(df[mask],manufacturer,thickness)
 
         fig.add_trace(
             go.Scatter(
@@ -150,7 +155,7 @@ def populate_graph_ts_tv(selected_id : int, df: pd.DataFrame, manufacturer, thic
         minor=dict(showgrid=True)
     )
 
-    return fig, msg, color 
+    return fig, msg, msg_color 
 
 
 def populate_graph_colorspace(selected_id,df, manufacturer, thickness, colorspace : int):
@@ -158,8 +163,8 @@ def populate_graph_colorspace(selected_id,df, manufacturer, thickness, colorspac
     fig = go.Figure()
     if manufacturer == ALL_MANUFACTURERS:
 
-        msg = f'{len(df.index)} glasses'
-        color = 'darkgrey'
+        msg,msg_color = number_of_glasses_message(df,manufacturer,thickness)
+
         fig.add_trace(
             go.Scatter3d(
                 mode='markers',
@@ -185,12 +190,7 @@ def populate_graph_colorspace(selected_id,df, manufacturer, thickness, colorspac
         mask_na = (df['Manufacturer'] != manufacturer)
         mask = (df['Manufacturer'] == manufacturer)
 
-        if len(df[mask].index)==0:
-            msg = f'No glasses from {manufacturer} with thickness, {thickness}mm'
-            color = 'red'
-        else:
-            msg = f'{len(df[mask].index)} glasses'
-            color = 'darkgrey'
+        msg,msg_color = number_of_glasses_message(df[mask],manufacturer,thickness)
 
         fig.add_trace(
             go.Scatter3d(
@@ -255,9 +255,27 @@ def populate_graph_colorspace(selected_id,df, manufacturer, thickness, colorspac
 
         )
 
-    return fig, msg, color  
+    return fig, msg, msg_color  
 
 
-def populate_datatable(selected_id: int,df : pd.DataFrame, manufacturer : str,thickness : float):
-    mask = (df['Manufacturer'] == manufacturer)
-    return df[mask].to_dict('records')
+def populate_datatable(selected_id: int,df : pd.DataFrame, manufacturer : str,thickness : float) -> pd.DataFrame:
+    """_summary_
+
+    Args:
+        selected_id (int): _description_
+        df (pd.DataFrame): _description_
+        manufacturer (str): _description_
+        thickness (float): _description_
+
+    Returns:
+        pd.DataFrame: dataframe
+    """
+
+
+    if manufacturer == ALL_MANUFACTURERS:
+        msg,msg_color = number_of_glasses_message(df,manufacturer,thickness)
+        return df,msg,msg_color
+    else:
+        mask = (df['Manufacturer'] == manufacturer)
+        msg,msg_color = number_of_glasses_message(df[mask],manufacturer,thickness)
+        return df[mask],msg,msg_color

@@ -26,11 +26,18 @@ COLORSPACE_RGB = 3
 DATATABLE_COLUMNS = ['ID','ProductName','Manufacturer','Thickness','Tvis','Tsol','Rvis1','Rvis2']
 
 H5_GLASS_PATH = os.path.join('data','glass.h5')
+H5_READABLE_GLASS_PATH= os.path.join('data','readable_glass.h5')
 
 try:
     DF_GLASS_TABLE = pd.read_hdf(H5_GLASS_PATH, 'df')
 except FileNotFoundError:
-    print("HD5 file not found")
+    print("Glass table HD5 file not found")
+
+try:
+    DF_READABLE_GLASS_TABLE = pd.read_hdf(H5_READABLE_GLASS_PATH, 'df')
+except FileNotFoundError:
+    print("Readable glass table HD5 file not found")
+
 
 class Buildup:
     SOLID_LAYERS = 'layers'
@@ -45,8 +52,10 @@ class SelectedPointProps:
 
 class LayoutID:
     DIV_HIDDEN_SELECTED_ID = "div-selected-id-hidden"
+    DIV_DATATABLE_IGDB = "div-datatable-igdb"
+    DIV_GRAPH_IGDB = "div-graph-igdb"
 
-    GRAPH = "graph-ts-tv"
+    GRAPH_IGDB = "graph-ts-tv"
     GRAPH_LAB = "graph-lab"
 
     MODAL_ABOUT = "modal-splash"
@@ -78,6 +87,8 @@ class LayoutID:
     SELECT_MANUFACTURER = "select-manufacturer"
     SELECT_OPTICAL_STANDARD = "select-standard"
 
+    SPINNER_DATATABLE_IGDB = "spinner-datatable-idgb"
+
     STORE_BUILDUP_IN_SESSION = "store-buildup-session"
     STORE_SETTINGS_IN_LOCAL = "store-settings-local"
 
@@ -89,7 +100,7 @@ class LayoutID:
     TABLE_CELL_COLOR_TRANS = "table-cell-color_trans"
     TABLE_CELL_COLOR_REFL = "table-cell-color_refl"
 
-    DATATABLE_OUTERLITE = "datatable-outerlite"
+    DATATABLE_IGDB = "datatable-outerlite"
     
     TABS = "tabs"
     TAB_CONTENT = "tab-content"

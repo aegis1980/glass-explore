@@ -27,3 +27,11 @@ nav img {
 .hidden {
   display: none;
 }
+
+#datatable-outerlite {
+  margin-top: 20px;
+}
+
+td:has(~ .dash-cell.cell--selected.focused), .dash-cell.cell--selected.focused ~ td {
+  background-color: #A86561 !important; 
+}
