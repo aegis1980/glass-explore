@@ -49,6 +49,8 @@ app = dash.Dash(
     ],
 )
 
+app.title = "Glass Explore"
+
 app.layout = html.Div([
     html.Div(f"{CLEAR_6}",id=LayoutID.DIV_HIDDEN_SELECTED_ID,className= "hidden"),
     dcc.Location(LayoutID.URL),
@@ -113,7 +115,11 @@ def update_igdb_data_display(active_tabs, manufacturer, thickness,selected_id):
             id = LayoutID.DATATABLE_IGDB,
             style_data_conditional=[{'if': {'row_index': i, 'column_id': 'CssColor'}, 'background-color': df['CssColor'].iloc[i], 'color': df['CssColor'].iloc[i]} for i in range(df.shape[0])],
             fixed_rows={'headers': True},
-            style_table={'height': 500}  # defaults to 500
+            style_table={'height': 500},  # defaults to 500
+            css=[
+                {"selector": ".dash-spreadsheet tr th", "rule": "height: 12px;"},  # set height of header
+                {"selector": ".dash-spreadsheet tr td", "rule": "height: 8px;"},  # set height of body rows
+            ]
         )
     elif active_tabs == LayoutID.TAB_GRAPH_TS_TV:
         df = caching.thickness_cached_df(thickness)
@@ -294,47 +300,6 @@ def toggle_navbar_collapse(n, is_open):
         return not is_open
     return is_open
 
-
-# app.clientside_callback(
-#     """
-#     function(click_data, figure, graph_type) {
-    
-#         if (click_data === undefined){
-#             return window.dash_clientside.no_update;
-#         }
-
-#         if (figure === undefined || figure['data'].length == 0){
-#             return window.dash_clientside.no_update;
-#         }
-
-#         point = click_data['points'][0];
-
-#         if (graph_type == 1){
-#             hilight = {
-#                 'x' : [[point['x']]],
-#                 'y' : [[point['y']]],
-#                 'marker.color' :[[point['marker.color']]]
-#             }
-#         } else {
-#             hilight = {
-#                 'x' : [[point['x']]],
-#                 'y' : [[point['y']]],
-#                 'z' : [[point['z']]],
-#                 'marker.color' :[[point['marker.color']]]
-#             }
-#         }
-
-#         last_trace_index = figure['data'].length-1; //will always be the last trace
-
-#         return [hilight,[last_trace_index],1];
-#     }
-#     """,
-#     Output(LayoutID.GRAPH, "extendData"),
-#     Input(LayoutID.GRAPH, "clickData"),
-#     State(LayoutID.GRAPH, "figure"),
-#     State(LayoutID.TABS,"active_tab" )
-# )
-
 @app.callback(
     Output(LayoutID.GRAPH_IGDB, "extendData"),
     Input(LayoutID.GRAPH_IGDB, "clickData"),
@@ -370,8 +335,9 @@ def highlight_point_on_graph(click_data, figure, active_tab):
 
 
 @app.callback(Output(LayoutID.GRAPH_IGDB, "clickData"),
-              [Input(LayoutID.URL, 'href')])
-def onload_default_glass_select(href):
+    Input(LayoutID.URL, 'href'),
+    State(LayoutID.URL,'pathname' ))
+def onload_parse_url(href, pathname):
     """
     Mocks a user data point click on the default loadup glass
     to trigger analysis on first load of webapp.
@@ -381,10 +347,11 @@ def onload_default_glass_select(href):
     if href is None:
         raise PreventUpdate
     else:
-        return {'points' :[{'customdata': DEFAULT_GRAPH_GLASS}]}
-
-
-app.title = "Glass Explore"
+        if not pathname or pathname == '/':
+            return {'points' :[{'customdata': DEFAULT_GRAPH_GLASS}]}
+        else:
+            print(pathname)
+            return {'points' :[{'customdata': DEFAULT_GRAPH_GLASS}]}
 
 
 if __name__ == "__main__":
