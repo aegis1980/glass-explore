@@ -118,8 +118,15 @@ def update_igdb_data_display(active_tabs, manufacturer, thickness,selected_id):
             style_table={'height': 500},  # defaults to 500
             css=[
                 {"selector": ".dash-spreadsheet tr th", "rule": "height: 12px;"},  # set height of header
-                {"selector": ".dash-spreadsheet tr td", "rule": "height: 8px;"},  # set height of body rows
-            ]
+                {"selector": ".dash-spreadsheet tr td", "rule": "height: 9px;"},  # set height of body rows
+            ],
+            page_action='none',
+           # virtualization=True,
+
+            style_cell = {
+                'font-size': '10px',
+                'text-align': 'left'
+            },
         )
     elif active_tabs == LayoutID.TAB_GRAPH_TS_TV:
         df = caching.thickness_cached_df(thickness)
@@ -175,9 +182,13 @@ def toggle_settings_modal(n1, n2, is_open):
 @app.callback(
     Output(LayoutID.DIV_HIDDEN_SELECTED_ID, 'children'),  
     Input(LayoutID.GRAPH_IGDB, "clickData"),
+    Input(LayoutID.DATATABLE_IGDB,'active_cell'),
+    State(LayoutID.TABS, "active_tab")
 )
-def store_in_hidden_div(pt_data):
-    if pt_data:
+def store_in_hidden_div(pt_data, row_data, active_tab):
+    if active_tab == LayoutID.TAB_DATATABLE and row_data: 
+        print (row_data)
+    elif pt_data:
         id = pt_data['points'][0]['customdata'][0]
         return id
     else:
