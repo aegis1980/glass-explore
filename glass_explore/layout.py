@@ -1,5 +1,4 @@
-from dash import html, dcc,dash_table
-from dash.dash_table.Format import Format
+from dash import html, dcc
 import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
 
@@ -248,21 +247,6 @@ def init_graph():
     )
 
 
-
-
-def init_datatable():
-    return html.Div(
-        dbc.Spinner([],
-            id = LayoutID.SPINNER_DATATABLE_IGDB,
-            color="secondary", 
-            type="grow",
-            spinner_style={"width": "10rem", "height": "10rem"}
-        ), 
-        id= LayoutID.DIV_DATATABLE_IGDB,
-        style= {'display' : 'none'},
-    )
-
-
 tabs = html.Div(
     [
         dbc.Tabs(
@@ -270,12 +254,11 @@ tabs = html.Div(
                 dbc.Tab(label="Tsolar vs Tvis", tab_id=LayoutID.TAB_GRAPH_TS_TV),
                 dbc.Tab(label="Lab colour space", tab_id=LayoutID.TAB_GRAPH_LAB),
                 dbc.Tab(label="RGB colour space", tab_id= LayoutID.TAB_GRAPH_RGB),
-                dbc.Tab(label="Table", tab_id= LayoutID.TAB_DATATABLE),
             ],
             id=LayoutID.TABS,
             active_tab=LayoutID.TAB_GRAPH_TS_TV,
         ),
-        html.Div([init_graph(),init_datatable()],id=LayoutID.TAB_CONTENT)
+        html.Div([init_graph()],id=LayoutID.TAB_CONTENT)
     ]
 )
 

@@ -52,7 +52,6 @@ class SelectedPointProps:
 
 class LayoutID:
     DIV_HIDDEN_SELECTED_ID = "div-selected-id-hidden"
-    DIV_DATATABLE_IGDB = "div-datatable-igdb"
     DIV_GRAPH_IGDB = "div-graph-igdb"
 
     GRAPH_IGDB = "graph-ts-tv"
@@ -87,7 +86,6 @@ class LayoutID:
     SELECT_MANUFACTURER = "select-manufacturer"
     SELECT_OPTICAL_STANDARD = "select-standard"
 
-    SPINNER_DATATABLE_IGDB = "spinner-datatable-idgb"
 
     STORE_BUILDUP_IN_SESSION = "store-buildup-session"
     STORE_SETTINGS_IN_LOCAL = "store-settings-local"
@@ -99,16 +97,13 @@ class LayoutID:
     TABLE_CELL_RIN  = "table-cell-rin"
     TABLE_CELL_COLOR_TRANS = "table-cell-color_trans"
     TABLE_CELL_COLOR_REFL = "table-cell-color_refl"
-
-    DATATABLE_IGDB = "datatable-outerlite"
     
     TABS = "tabs"
     TAB_CONTENT = "tab-content"
     TAB_GRAPH_TS_TV = "tab-graph-ts-tv"
     TAB_GRAPH_LAB = "tab-graph-ab"
     TAB_GRAPH_RGB = "tab-graph-rgb"
-    TAB_DATATABLE = "tab-datatable"
-
+   
     URL = "url"
 
 

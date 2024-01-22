@@ -80,7 +80,7 @@ def hdf_from_glass_table(datasource :str = 'sqlite', path :str = IGDB_SQLITE_PAT
     raw_df[['lColor','aColor','bColor']] = raw_df['lab'].apply(pd.Series)
     raw_df.drop(columns=['rgb', 'lab'],inplace = True)
 
-    #raw_df.to_hdf(hdf_file_path, key = 'df')
+    raw_df.to_hdf(hdf_file_path, key = 'df')
 
     return raw_df
 
@@ -176,6 +176,6 @@ def readable_glass_table(df, hdf_file_path = H5_READABLE_GLASS_PATH):
 
 if __name__ == "__main__":
 
-    #convert_mdb_to_sqlite(DEFAULT_LBNL_WINDOWS_MDB_FILE_PATH,IGDB_SQLITE_PATH)
+    convert_mdb_to_sqlite(DEFAULT_LBNL_WINDOWS_MDB_FILE_PATH,IGDB_SQLITE_PATH)
     df = hdf_from_glass_table()
     df = readable_glass_table(df)

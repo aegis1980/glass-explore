@@ -15,14 +15,10 @@
 
 ## Updating the IGDB
 
-The IGDB is updated every couple of months with new and updated glass data from manufacturers.
-
-
-
+The International Glazing Database (IGDB) is [updated every couple of months](https://windows.lbl.gov/igdb-downloads) with new and updated glass data from manufacturers.
 
 From LBNL the IGDB database file in a Microsoft Access file (*.mdb).
 
-Most up to date version is here
 
 ### Prepping IGDB database file for Heroku production env
 

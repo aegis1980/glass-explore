@@ -80,23 +80,8 @@ app.layout = html.Div([
     ], fluid=True )])
 
 
-
 @app.callback(
-    Output(LayoutID.DIV_DATATABLE_IGDB, "style"),Output(LayoutID.DIV_GRAPH_IGDB, "style"),
-    Input(LayoutID.TABS, "active_tab"),
-)
-def update_tab(active_tabs):
-    if active_tabs == LayoutID.TAB_DATATABLE:
-       return {'display' : 'inline'},{'display' : 'none'}
-    else:
-       return {'display' : 'none'},{'display' : 'inline'}
-        
-
-
-
-
-@app.callback(
-    Output(LayoutID.GRAPH_IGDB, "figure"),Output(LayoutID.SPINNER_DATATABLE_IGDB, "children"),Output("formtext-manufacturer","children"), Output("formtext-manufacturer","color"),
+    Output(LayoutID.GRAPH_IGDB, "figure"),Output("formtext-manufacturer","children"), Output("formtext-manufacturer","color"),
     Input(LayoutID.TABS, "active_tab"),
     Input("select-manufacturer", "value"),
     Input("radio-thickness", "value"),
@@ -104,31 +89,7 @@ def update_tab(active_tabs):
 )
 def update_igdb_data_display(active_tabs, manufacturer, thickness,selected_id):
     out_fig = dash.no_update
-    out_datatable = dash.no_update
-    if active_tabs == LayoutID.TAB_DATATABLE:
-        df = caching.thickness_cached_readable_df(thickness)
-        df,out_msg,out_msgcolor = callback_helpers.populate_datatable(selected_id,df, manufacturer,thickness)
-
-        out_datatable = dash_table.DataTable(
-            columns=[{'name': i, 'id': i} for i in df.columns],
-            data = df.to_dict('records'),
-            id = LayoutID.DATATABLE_IGDB,
-            style_data_conditional=[{'if': {'row_index': i, 'column_id': 'CssColor'}, 'background-color': df['CssColor'].iloc[i], 'color': df['CssColor'].iloc[i]} for i in range(df.shape[0])],
-            fixed_rows={'headers': True},
-            style_table={'height': 500},  # defaults to 500
-            css=[
-                {"selector": ".dash-spreadsheet tr th", "rule": "height: 12px;"},  # set height of header
-                {"selector": ".dash-spreadsheet tr td", "rule": "height: 9px;"},  # set height of body rows
-            ],
-            page_action='none',
-           # virtualization=True,
-
-            style_cell = {
-                'font-size': '10px',
-                'text-align': 'left'
-            },
-        )
-    elif active_tabs == LayoutID.TAB_GRAPH_TS_TV:
+    if active_tabs == LayoutID.TAB_GRAPH_TS_TV:
         df = caching.thickness_cached_df(thickness)
         out_fig, out_msg, out_msgcolor = callback_helpers.populate_graph_ts_tv(selected_id,df, manufacturer,thickness)
     else:
@@ -140,7 +101,7 @@ def update_igdb_data_display(active_tabs, manufacturer, thickness,selected_id):
 
         out_fig, out_msg, out_msgcolor = callback_helpers.populate_graph_colorspace(selected_id,df, manufacturer,thickness, color_space)
 
-    return out_fig, out_datatable, out_msg, out_msgcolor
+    return out_fig, out_msg, out_msgcolor
 
 
 @app.callback(
@@ -182,13 +143,10 @@ def toggle_settings_modal(n1, n2, is_open):
 @app.callback(
     Output(LayoutID.DIV_HIDDEN_SELECTED_ID, 'children'),  
     Input(LayoutID.GRAPH_IGDB, "clickData"),
-    Input(LayoutID.DATATABLE_IGDB,'active_cell'),
     State(LayoutID.TABS, "active_tab")
 )
-def store_in_hidden_div(pt_data, row_data, active_tab):
-    if active_tab == LayoutID.TAB_DATATABLE and row_data: 
-        print (row_data)
-    elif pt_data:
+def store_in_hidden_div(pt_data, active_tab):
+    if pt_data:
         id = pt_data['points'][0]['customdata'][0]
         return id
     else:
