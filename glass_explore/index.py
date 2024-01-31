@@ -7,8 +7,10 @@ import dash_bootstrap_components as dbc
 import numpy as np
 import pandas as pd
 
-from dash import Input, Output, State, ctx, dcc, html
+from dash import Input, Output, State, ctx, dcc, html,clientside_callback
 from dash.exceptions import PreventUpdate
+
+import dash_breakpoints
 
 from glass_explore import (ALL_MANUFACTURERS, OG_DESCRIPTION, URL, DF_GLASS_TABLE, Buildup, LayoutID,
                            SelectedPointProps, caching, callback_helpers, igdb,COLORSPACE_RGB,COLORSPACE_LAB,
@@ -52,33 +54,52 @@ app = dash.Dash(
 app.title = "Glass Explore"
 
 app.layout = html.Div([
-    html.Div(f"{CLEAR_6}",id=LayoutID.DIV_HIDDEN_SELECTED_ID,className= "hidden"),
-    dcc.Location(LayoutID.URL),
-    dcc.Store(LayoutID.STORE_BUILDUP_IN_SESSION,  storage_type = "session"),
-    dcc.Store(LayoutID.STORE_SETTINGS_IN_LOCAL,  storage_type = "local"),
-    layout.navbar(app),
-    dbc.Container([
-        dbc.Row([
-            dbc.Col([
-                dbc.Row([
-                    dbc.Col(select_manufacturer, xl=6),
-                    dbc.Col(layout.radio_thickness, xl = 6)
-                ]),
-                layout.tabs
-            ], xl = 8),
-            dbc.Col([
-                dbc.Row(dbc.Col(html.Div(id=LayoutID.DIV_BUILDUP_SVG_CONTAINER),className="mb-2")),
-                dbc.Row(dbc.Col(layout.card_selected_layer)),
-                dbc.Row(dbc.Col(layout.card_gas_layer)),
-                dbc.Row(dbc.Col(layout.card_other_layer)),
-                dbc.Row(dbc.Col(dbc.Spinner(layout.results_table, color="dark", type="grow")))
-            ],xl = 4)
-        ]),
-        layout.modal_about(app),
-        layout.modal_settings,
+            html.Div("hello",id="d"),
+            dash_breakpoints.WindowBreakpoints(
+                id = LayoutID.DIV_DISPLAY_RESIZE,
+                height  = 100
+            ),
+        
+        html.Div(f"{CLEAR_6}",id=LayoutID.DIV_HIDDEN_SELECTED_ID,className= "hidden"),
+        dcc.Location(LayoutID.URL),
+        dcc.Store(LayoutID.STORE_BUILDUP_IN_SESSION,  storage_type = "session"),
+        dcc.Store(LayoutID.STORE_SETTINGS_IN_LOCAL,  storage_type = "local"),
+        layout.navbar(app),
+        dbc.Container([
+            dbc.Row([
+                dbc.Col([
+                    dbc.Row([
+                        dbc.Col(select_manufacturer, xl=6),
+                        dbc.Col(layout.radio_thickness, xl = 6)
+                    ]),
+                    layout.tabs
+                ], xl = 8),
+                dbc.Col([
+                    dbc.Row(dbc.Col(html.Div(id=LayoutID.DIV_BUILDUP_SVG_CONTAINER),className="mb-2")),
+                    dbc.Row(dbc.Col(layout.card_selected_layer)),
+                    dbc.Row(dbc.Col(layout.card_gas_layer)),
+                    dbc.Row(dbc.Col(layout.card_other_layer)),
+                    dbc.Row(dbc.Col(dbc.Spinner(layout.results_table, color="dark", type="grow")))
+                ],xl = 4)
+            ]),
+            layout.modal_about(app),
+            layout.modal_settings,
+        
+        ], fluid=True )],
        
-    ], fluid=True )])
+    )
 
+
+clientside_callback(
+    """
+    function(h,w) {
+        return self.innerHeight
+    }
+    """,
+    Output("d", "children"),
+    Input(LayoutID.DIV_DISPLAY_RESIZE,"height"),
+    Input(LayoutID.DIV_DISPLAY_RESIZE,"width")
+)
 
 @app.callback(
     Output(LayoutID.GRAPH_IGDB, "figure"),Output("formtext-manufacturer","children"), Output("formtext-manufacturer","color"),

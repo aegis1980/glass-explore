@@ -53,6 +53,7 @@ class SelectedPointProps:
 class LayoutID:
     DIV_HIDDEN_SELECTED_ID = "div-selected-id-hidden"
     DIV_GRAPH_IGDB = "div-graph-igdb"
+    DIV_DISPLAY_RESIZE = "div-displayresize"
 
     GRAPH_IGDB = "graph-ts-tv"
     GRAPH_LAB = "graph-lab"

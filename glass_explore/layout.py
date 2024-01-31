@@ -238,11 +238,16 @@ results_table = dbc.Table(
 def init_graph():
 
     fig = go.Figure()
-    fig.update_layout(
-        height = 800,
-    )
+    #fig.update_layout(
+    #    height = '800',
+    #)
     return html.Div(
-        dbc.Spinner(dcc.Graph(id = LayoutID.GRAPH_IGDB, figure = fig), color="secondary", type="grow",spinner_style={"width": "10rem", "height": "10rem"}),
+        dbc.Spinner(
+            dcc.Graph(
+                id = LayoutID.GRAPH_IGDB, 
+                figure = fig,
+                #style={'width': '100%', 'height': '90vh'}
+            ), color="secondary", type="grow",spinner_style={"width": "10rem", "height": "10rem"}),
         id= LayoutID.DIV_GRAPH_IGDB
     )
 
