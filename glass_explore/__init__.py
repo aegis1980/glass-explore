@@ -30,6 +30,8 @@ H5_READABLE_GLASS_PATH= os.path.join('data','readable_glass.h5')
 
 try:
     DF_GLASS_TABLE = pd.read_hdf(H5_GLASS_PATH, 'df')
+    CLEAR_6 = 103
+    DEFAULT_GRAPH_GLASS = DF_GLASS_TABLE.loc[CLEAR_6]
 except FileNotFoundError:
     print("Glass table HD5 file not found")
 
@@ -51,6 +53,10 @@ class SelectedPointProps:
     THICKNESS_OUTLINE = 1
 
 class LayoutID:
+
+
+
+    DIV_HIDDEN_WINDOW_HT = "div-hidden-window-ht"
     DIV_HIDDEN_SELECTED_ID = "div-selected-id-hidden"
     DIV_GRAPH_IGDB = "div-graph-igdb"
     DIV_DISPLAY_RESIZE = "div-displayresize"

@@ -238,9 +238,9 @@ results_table = dbc.Table(
 def init_graph():
 
     fig = go.Figure()
-    #fig.update_layout(
-    #    height = '800',
-    #)
+    fig.update_layout(
+        height = 800,
+    )
     return html.Div(
         dbc.Spinner(
             dcc.Graph(

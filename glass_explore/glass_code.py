@@ -1,0 +1,14 @@
+
+
+SEPARATOR_IGU = "-"
+SEPARATOR_LAM = "_"
+
+SEPARATOR_IGDB = "#"
+
+FLIPPED = "x"
+
+class HeatTreatment:
+    ANNEALED = "A"
+    HEAT_STRENGTHENED = "HS"
+    TOUGHENED = "T"
+    TOUGHENED_HEATSOAKED = ""
