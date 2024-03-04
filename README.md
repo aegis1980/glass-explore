@@ -26,7 +26,7 @@ From LBNL the IGDB database file in a Microsoft Access file (*.mdb).
 #### MDB to SQLITE
 Issues with getting linux-based heroku app environment reading Microsoft Access mdb file. Solution is to convert to sqlite file.
 This requires drivers for Access to be available on dev machine - so Microsoft Access installed or the Microsoft Access Database Engine
-Update IGDB to in LBNL WINDOW8, then  default path for uptodate non-password protected access db is in c:/Users/Public/LBNL/WINDOW7.8/w7.mdb
+Update IGDB to in LBNL WINDOW8, then  default path for up-to-date non-password protected access db is in c:/Users/Public/LBNL/WINDOW7.8/w7.mdb
 
 #### HDF file for igdb GLASS table
 

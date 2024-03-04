@@ -1,8 +1,6 @@
 import os
 import shutil
 import tempfile
-from functools import cache
-from os import fdopen
 
 import pandas as pd
 import pywincalc
@@ -55,11 +53,11 @@ def product_from_tempfile(props, raw_wavelength_df : pd.DataFrame, flipped = Fal
     source_ef = props['Source_eb'] if flipped else props['Source_ef']
     source_eb = props['Source_ef'] if flipped else props['Source_eb']
     
-    if flipped:
-        if props['Coated_Side'] == 'Back':
-            props['Coated_Side'] = 'Front'
-        elif props['Coated_Side'] == 'Front':
-            props['Coated_Side'] = 'Back'
+  #  if flipped:
+  #      if props['Coated_Side'] == 'Back':
+  #          props['Coated_Side'] = 'Front'
+  #      elif props['Coated_Side'] == 'Front':
+  #          props['Coated_Side'] = 'Back'
 
 
     s = f"""{{ Units, Wavelength Units }} SI Microns

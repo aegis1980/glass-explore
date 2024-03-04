@@ -127,7 +127,7 @@ def glass_to_store(pt_data,flipped, gas, gap_thickness, inner_substrate, inner_t
     utils.populate_buildup_with_glass_props(buildup,props_outer,0)
 
     
-    props_inner = mywincalc.generic_uncoated_glass_props(int(inner_thickness),inner_substrate == 'ultraclear')
+    props_inner = mywincalc.generic_uncoated_glass_props(int(inner_thickness),inner_substrate == 'ultraclear') # note inntersubstrate taking a bool!
     buildup[Buildup.SOLID_LAYERS][1]['color'] = DF_GLASS_TABLE.loc[props_inner['NFRC_ID']]['CssColor']
     buildup[Buildup.SOLID_LAYERS][1]['flipped'] = False
     utils.populate_buildup_with_glass_props(buildup,props_inner,1)
