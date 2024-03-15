@@ -71,15 +71,18 @@ app.layout = html.Div([
                     layout.tabs
                 ], xl = 8),
                 dbc.Col([
+                    dbc.Row(dbc.Col(layout.div_buttons)),
                     dbc.Row(dbc.Col(html.Div(id=LayoutID.DIV_BUILDUP_SVG_CONTAINER),className="mb-2")),
                     dbc.Row(dbc.Col(layout.card_selected_layer)),
                     dbc.Row(dbc.Col(layout.card_gas_layer)),
-                    dbc.Row(dbc.Col(layout.card_other_layer)),
+                    dbc.Row(dbc.Col(layout.card_inner_layer)),
+                    
                     dbc.Row(dbc.Col(dbc.Spinner(layout.results_table, color="dark", type="grow")))
                 ],xl = 4)
             ]),
             layout.modal_about(app),
             layout.modal_settings,
+            layout.model_share
         
         ], fluid=True )],
        

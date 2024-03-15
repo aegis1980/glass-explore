@@ -54,7 +54,8 @@ class SelectedPointProps:
 
 class LayoutID:
 
-
+    BUTTON_SHARE = "button-share"
+    BUTTON_REPORT = "button-report"
 
     DIV_HIDDEN_WINDOW_HT = "div-hidden-window-ht"
     DIV_HIDDEN_SELECTED_ID = "div-selected-id-hidden"
@@ -70,6 +71,9 @@ class LayoutID:
     MODAL_SETTINGS = "modal-settings"
     MODAL_SETTINGS_CLOSE = "modal-settings-close"
 
+    MODAL_SHARE = "modal-share"
+    MODAL_SHARE_CLOSE = "modal-share-close"
+
     SELECT_GAS = "select-gas"
     INPUT_GAP = "input-gap"
 
@@ -78,6 +82,7 @@ class LayoutID:
 
     DIV_OUTERLITE_PRODUCT = "div-outerlite-product"
     DIV_BUILDUP_SVG_CONTAINER = "div-buildup-svg-container"
+    LINK_GSTR = "div-gstr"
 
     NAV_GRAPHTYPE = "nav_graphtype"
     

@@ -32,7 +32,7 @@ def generate_buildup(buildup : Dict) -> Svg:
         children.append(lite)
 
         if gl['coating'] and gl['coating'].upper() != 'NEITHER':
-            print('flipped: ' + str(gl['flipped'])+ ' coating: ' + gl['coating'].upper() )
+            #print('flipped: ' + str(gl['flipped'])+ ' coating: ' + gl['coating'].upper() )
             if gl['coating'].upper() == 'BOTH':
                 children.append(Line(x1 = x,y1=0,x2=x,y2=VIEW_HEIGHT, stroke= COATING_COLOR, strokeWidth=COATING_STROKE ,strokeDasharray='1,1'))
                 children.append(Line(x1 = x+t,y1=0,x2=x+t,y2=VIEW_HEIGHT, stroke= COATING_COLOR, strokeWidth=COATING_STROKE ,strokeDasharray='1,1'))

@@ -1,4 +1,5 @@
 import functools
+from urllib.parse import urlparse
 
 import pandas as pd
 
@@ -279,3 +280,8 @@ def populate_datatable(selected_id: int,df : pd.DataFrame, manufacturer : str,th
         mask = (df['Manufacturer'] == manufacturer)
         msg,msg_color = number_of_glasses_message(df[mask],manufacturer,thickness)
         return df[mask],msg,msg_color
+
+
+def get_root_netloc(url) -> str:
+    r = urlparse(url)
+    return f'{r.scheme}://{r.netloc}'

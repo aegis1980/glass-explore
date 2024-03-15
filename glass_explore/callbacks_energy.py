@@ -8,7 +8,9 @@ from dash.exceptions import PreventUpdate
 
 from glass_explore import (ALL_MANUFACTURERS, OG_DESCRIPTION, URL, DF_GLASS_TABLE, DEFAULT_GRAPH_GLASS,Buildup, LayoutID,
                            SelectedPointProps, caching, callback_helpers, igdb,COLORSPACE_RGB,COLORSPACE_LAB,
-                           layout, mywincalc, standards, svg_glass, utils)
+                           layout, mywincalc, standards, svg_glass, utils, glass_model_helpers)
+
+from glass_model import InsulatedGlass
 
 clientside_callback(
     """
@@ -65,6 +67,19 @@ def populate_standards_select(settings_open,inc_advanced,stored_settings):
     [State(LayoutID.MODAL_ABOUT, "is_open")],
 )
 def toggle_about_modal(n1, n2, is_open):
+    if n1 :
+        return not is_open
+    if n2 :
+        return not is_open
+    return is_open
+
+
+@callback(
+    Output(LayoutID.MODAL_SHARE, "is_open"),
+    [Input(LayoutID.MODAL_SHARE_CLOSE, "n_clicks"),Input(LayoutID.BUTTON_SHARE, "n_clicks")],
+    [State(LayoutID.MODAL_SHARE, "is_open")],
+)
+def toggle_share_modal(n1, n2, is_open):
     if n1 :
         return not is_open
     if n2 :
@@ -203,6 +218,26 @@ def run_analysis_and_update_results(ts, buildup):
     return uvalue,shgc,tvis,rout,rin,{'background-color' : color_t},{'background-color' : color_r}
 
 
+@callback(
+    Output(LayoutID.LINK_GSTR,"children"),
+    Input(LayoutID.STORE_BUILDUP_IN_SESSION,"modified_timestamp"),
+    State(LayoutID.STORE_BUILDUP_IN_SESSION,"data"),
+    State(LayoutID.URL, "href")
+)
+def update_gstr_url(ts, buildup, href):
+    if ts is None or buildup is None:
+        raise PreventUpdate
+    _buildup = json.loads(buildup)
+   
+    lites = glass_model_helpers.lites_from_dict(_buildup)
+    gases = glass_model_helpers.gaslayers_from_dict(_buildup)
+
+    igu = InsulatedGlass(lites,gases)
+
+    gs = igu.to_gstr(False)
+    root_url = callback_helpers.get_root_netloc(href)
+    return f'{root_url}/{gs}'
+
 # add callback for toggling the collapse on small screens
 @callback(
     Output("navbar-collapse", "is_open"),
@@ -264,5 +299,5 @@ def onload_parse_url(href, pathname):
         if not pathname or pathname == '/':
             return {'points' :[{'customdata': DEFAULT_GRAPH_GLASS}]}
         else:
-            print(pathname)
+            #print(pathname)
             return {'points' :[{'customdata': DEFAULT_GRAPH_GLASS}]}

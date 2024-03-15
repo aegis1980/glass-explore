@@ -126,6 +126,38 @@ modal_settings = dbc.Modal(
             is_open=False,
         )
 
+model_share = dbc.Modal(
+    [
+        dbc.ModalHeader(dbc.ModalTitle("Share/ save IGU buildup ")),
+        dbc.ModalBody([
+            dbc.Alert(
+                [dcc.Link(
+                    '',
+                    id = LayoutID.LINK_GSTR,
+                    target='_blank',
+                    href = ''
+                ),
+                dcc.Clipboard(
+                    target_id=LayoutID.LINK_GSTR,
+                    title="Copy URL to clipboard",
+                    style={
+                        "display": "inline-block",
+                        "fontSize": 18,
+                        "verticalAlign": "right",
+                        "float":"right"
+                    },
+                )],color = "light"
+            )
+        ]),
+        dbc.ModalFooter(
+            dbc.Button(
+                "Close", id=LayoutID.MODAL_SHARE_CLOSE, className="ms-auto", n_clicks=0
+            )
+        ),
+    ],
+    id=LayoutID.MODAL_SHARE,
+    is_open=True,
+)
 
 card_gas_layer = dbc.Card([
     dbc.CardHeader("Gas layer"),
@@ -182,7 +214,7 @@ card_selected_layer = dbc.Card([
         className="mb-2",
     )
 
-card_other_layer = dbc.Card([
+card_inner_layer = dbc.Card([
         dbc.CardHeader("Inner glass layer"),
         dbc.CardBody(   
             dbc.Form(
@@ -213,6 +245,13 @@ card_other_layer = dbc.Card([
             )
         )],
         className="mb-2",
+    )
+
+
+div_buttons = html.Div([
+            dbc.Button("Save/ share buildup", id= LayoutID.BUTTON_SHARE, size='sm',outline=True, color="secondary",className="me-1"),
+            dbc.Button("Export report", size='sm',id= LayoutID.BUTTON_REPORT, outline=True, color="secondary",className="me-1"),
+        ],className="mb-2"
     )
 
 
