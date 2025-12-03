@@ -5,6 +5,9 @@ from typing import Dict
 
 import pandas as pd
 
+class Paths:
+    ENERGY = '/energy'
+
 URL = "http://glass-explore.floatingintheclouds.com"
 OG_DESCRIPTION = "Glass explore calculates thermal and optic properties of double-glazing"
 
@@ -52,7 +55,7 @@ class SelectedPointProps:
     COLOR_OUTLINE = "black"
     THICKNESS_OUTLINE = 1
 
-class LayoutID:
+class EnergyLayoutID:
 
     BUTTON_SHARE = "button-share"
     BUTTON_REPORT = "button-report"

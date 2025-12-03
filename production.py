@@ -1,4 +1,4 @@
-from glass_explore.index import app
+from glass_explore.pages.app_energy import app
 
 # Reference the underlying flask app (Used by gunicorn webserver in Heroku production deployment)
 server = app.server 

@@ -4,7 +4,7 @@ import dash
 from dash import Input, Output, State, ctx, dcc, html
 import dash_bootstrap_components as dbc
 from dash_svg import Line, Rect, Svg, Text
-from glass_explore import LayoutID
+from glass_explore import EnergyLayoutID
 
 from glass_explore import Buildup
 
@@ -89,9 +89,9 @@ if __name__ == "__main__":
 
     app = dash.Dash(__name__)
     app.layout = html.Div([
-        html.Div(generate_buildup(buildup),id=LayoutID.DIV_BUILDUP_SVG_CONTAINER),
+        html.Div(generate_buildup(buildup),id=EnergyLayoutID.DIV_BUILDUP_SVG_CONTAINER),
         dbc.Checkbox(
-            id=LayoutID.CHECKBOX_FLIP_OUTERLAYER,
+            id=EnergyLayoutID.CHECKBOX_FLIP_OUTERLAYER,
             label="Flip layer",
             value=False,
         )
@@ -99,8 +99,8 @@ if __name__ == "__main__":
 
 
     @app.callback(
-        Output(LayoutID.DIV_BUILDUP_SVG_CONTAINER, 'children'),  
-        Input(LayoutID.CHECKBOX_FLIP_OUTERLAYER, "value"),
+        Output(EnergyLayoutID.DIV_BUILDUP_SVG_CONTAINER, 'children'),  
+        Input(EnergyLayoutID.CHECKBOX_FLIP_OUTERLAYER, "value"),
     )
     def flip(flipped):
         buildup['layers'][0]['flipped'] = flipped

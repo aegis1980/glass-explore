@@ -1,5 +1,8 @@
 
-from typing import Dict, List
+from typing import Dict, List, Tuple
+
+from glass_explore import DF_GLASS_TABLE
+
 from glass_model import InsulatedGlass,MonoGlass,HeatTreatment,GlassBuildup,GasLayer
 
 GAS_LOOKUP = {
@@ -8,6 +11,8 @@ GAS_LOOKUP = {
     'krypton' : GasLayer.KRYPTON,
     'xenon' : GasLayer.XENON
 }
+
+
 
 def find_nearest(numbers, target):
     return min(numbers, key=lambda x: abs(x - target))
@@ -42,3 +47,15 @@ def gaslayers_from_dict(_dict : Dict) -> GasLayer:
     
     return gases
 
+
+def callback_return(igu : InsulatedGlass) -> Tuple:
+    gas = GAS_LOOKUP.keys()[list(GAS_LOOKUP.values()).index(igu.gases[0].gas_mixture)] #reverse lookup 
+    outer_igdb_id = igu.lites[0].igdbcode
+    inner_igdb_id = igu.lites[1].igdbcode
+    return \
+        {'points' :[{'customdata': DF_GLASS_TABLE.loc[outer_igdb_id]}]}, \
+        igu.lites[0].igdbflip, \
+        gas, \
+        igu.gases[0].t_actual, \
+        'clear', \
+        6
