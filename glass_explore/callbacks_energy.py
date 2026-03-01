@@ -77,7 +77,7 @@ def toggle_about_modal(n1, n2, is_open):
     return is_open
 
 
-@callback(
+""" @callback(
     Output(EnergyLayoutID.MODAL_SHARE, "is_open"),
     [Input(EnergyLayoutID.MODAL_SHARE_CLOSE, "n_clicks"),Input(EnergyLayoutID.BUTTON_SHARE, "n_clicks")],
     [State(EnergyLayoutID.MODAL_SHARE, "is_open")],
@@ -87,7 +87,7 @@ def toggle_share_modal(n1, n2, is_open):
         return not is_open
     if n2 :
         return not is_open
-    return is_open
+    return is_open """
 
 
 @callback(
