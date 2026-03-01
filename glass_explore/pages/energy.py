@@ -79,7 +79,7 @@ def layout(g = None):
                     energy_layout.tabs
                 ], xl = 8),
                 dbc.Col([
-                    dbc.Row(dbc.Col(energy_layout.div_buttons)),
+                    #dbc.Row(dbc.Col(energy_layout.div_buttons)),
                     dbc.Row(dbc.Col(html.Div(id=EnergyLayoutID.DIV_BUILDUP_SVG_CONTAINER),className="mb-2")),
                     dbc.Row(dbc.Col(energy_layout.card_selected_layer)),
                     dbc.Row(dbc.Col(energy_layout.card_gas_layer)),
