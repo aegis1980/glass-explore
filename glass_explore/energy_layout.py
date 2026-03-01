@@ -18,7 +18,7 @@ LINK_GLASSMODEL = "https://github.com/aegis1980/glass-model"
 nav = dbc.Nav(
     [
         dbc.NavItem(dbc.NavLink( "About",id = EnergyLayoutID.NAVLINK_ABOUT)),
-        dbc.NavItem(dbc.NavLink("Settings",disabled=False,id = EnergyLayoutID.NAVLINK_SETTINGS)),
+        dbc.NavItem(dbc.NavLink("Settings",disabled=True,id = EnergyLayoutID.NAVLINK_SETTINGS)),
     ]
 )
 
@@ -93,7 +93,8 @@ modal_about = dbc.Modal(
                         html.A("linkedin", href="https://www.linkedin.com/in/jon-robinson-nz/", className="alert-link", target="_blank")
                     ])
                 ]),
-            ])
+            ]),
+            html.P(["The source code for this webapp is available on request, under the AGPL-3.0 license. If you want to use any of the code, or have suggestions for improvements, please get in touch."]),
         ]),
         dbc.ModalFooter(
             dbc.Button(
