@@ -1,3 +1,5 @@
+#(c)2026 Jon Robinson. All Rights Reserved.
+
 import dash
 from dash import html, dcc
 import dash_bootstrap_components as dbc
@@ -68,7 +70,9 @@ modal_about = dbc.Modal(
     [
         dbc.ModalHeader(dbc.ModalTitle("Glass Explore")),
         dbc.ModalBody([
-            html.P([OG_DESCRIPTION +f" using coatings and substrate data in the IGDB database (IGDB v{igdb.db_version()}). Currently the app is only set up to run the NFRC 100-2010 environment."]),
+            html.P([OG_DESCRIPTION +f" using coatings and substrate data in the ",
+                html.A("IGDB database", href="https://windows.lbl.gov/igdb-downloads", className="alert-link", target="_blank"),
+                f" (Current database version: IGDB v{igdb.db_version()}). At the moment, app is only set up to run the NFRC 100-2010 environment."]),
             html.P(["This app is only intended as a playground - consult manufacturer's published data or use a tool such as LBNL Window to verify."]),
             dbc.Row([
                 dbc.Col([

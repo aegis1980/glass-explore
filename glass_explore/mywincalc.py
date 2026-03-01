@@ -1,3 +1,5 @@
+#(c)2026 Jon Robinson. All Rights Reserved.
+
 import functools
 import os
 from typing import Dict

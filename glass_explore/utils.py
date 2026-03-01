@@ -1,3 +1,5 @@
+#(c)2026 Jon Robinson. All Rights Reserved.
+
 from typing import Dict, Tuple
 
 from skimage.color import rgb2lab

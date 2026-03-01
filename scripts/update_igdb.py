@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+#(c)2026 Jon Robinson. All Rights Reserved.
+
 r"""
 Preps Internaotnal Glass Database (IGBD) for use.
 File downloaded from LBNL is a password-protected Microsoft Access db file.
@@ -27,7 +29,7 @@ from colorama import Fore,Style
 
 from glass_explore import IGDB_SQLITE_PATH,H5_GLASS_PATH,H5_READABLE_GLASS_PATH, utils
 
-DEFAULT_LBNL_WINDOWS_MDB_FILE_PATH = "c:/Users/Public/LBNL/WINDOW7.8/w7.mdb"
+DEFAULT_LBNL_WINDOWS_MDB_FILE_PATH = "c:/Users/Public/LBNL/WINDOW7.7/w7.mdb"
 
 def decode_sketchy_utf16(raw_bytes):
     s = raw_bytes.decode("utf-16le", "ignore")

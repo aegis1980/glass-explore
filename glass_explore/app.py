@@ -1,3 +1,10 @@
+#(c)2026 Jon Robinson. All Rights Reserved.
+
+"""
+entry point for the glass explore dash (multipage) app
+"""
+
+
 import dash
 from dash import Dash, html, dcc
 
@@ -8,7 +15,7 @@ server = Flask(__name__)
 
 @server.route('/')
 def index_redirect():
-    return redirect('/energy/')
+    return redirect('/energy')
 
 app = Dash(
     __name__, 

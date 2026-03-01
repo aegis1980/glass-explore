@@ -1,4 +1,6 @@
 
+# (c)2026 Jon Robinson. All Rights Reserved.
+
 import dash
 import dash_bootstrap_components as dbc
 import numpy as np
