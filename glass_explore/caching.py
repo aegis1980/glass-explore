@@ -2,53 +2,39 @@
 
 import os
 from uuid import uuid4
-
 from dash import CeleryManager, DiskcacheManager
-from data_cache import pandas_cache
+import diskcache
+from glass_explore import CACHE_PATH,DF_GLASS_TABLE, DF_READABLE_GLASS_TABLE
 
-from glass_explore import DF_GLASS_TABLE,DF_READABLE_GLASS_TABLE
+# 1. Use an absolute path for the cache
+# If on Railway, this should ideally be in your /igdb volume to persist
+os.makedirs(CACHE_PATH, exist_ok=True)
 
-# You should change 'test' to your preferred folder.
-CACHE_DIR = os.path.join('cache')
-
-# If cache folder doesn't exist, then create it.
-if not os.path.isdir(CACHE_DIR):
-    os.makedirs(CACHE_DIR)
-
-# Set CACHE_PATH env var for pandas_cache
-os.environ['CACHE_PATH'] = os.path.join('cache','pandas_cache')
-
+# 2. Initialise a single diskcache instance
+cache = diskcache.Cache(CACHE_PATH)
 
 def background_callback_manager():
-    """
-    Refer 
-    """
     launch_uid = uuid4()
-
     if 'REDIS_URL' in os.environ:
-        # Use Redis & Celery if REDIS_URL set as an env variable
         from celery import Celery
         celery_app = Celery(__name__, broker=os.environ['REDIS_URL'], backend=os.environ['REDIS_URL'])
-        background_callback_manager = CeleryManager(
-            celery_app, cache_by=[lambda: launch_uid], expire=60
-        )
-
+        return CeleryManager(celery_app, cache_by=[lambda: launch_uid], expire=60)
     else:
-        # Diskcache for non-production apps when developing locally
-        import diskcache
-        cache = diskcache.Cache("./cache")
-        background_callback_manager = DiskcacheManager(
-            cache, cache_by=[lambda: launch_uid], expire=120
-        )
+        return DiskcacheManager(cache, cache_by=[lambda: launch_uid], expire=120)
 
-    return background_callback_manager
-
-
-@pandas_cache
+# 3. Use a custom memoize function instead of the broken @pandas_cache
 def thickness_cached_df(thickness):
-    return DF_GLASS_TABLE[DF_GLASS_TABLE['Thickness'].between(thickness - 0.75, thickness + 0.75)]
+    cache_key = f"thickness_{thickness}"
+    result = cache.get(cache_key)
+    if result is None:
+        result = DF_GLASS_TABLE[DF_GLASS_TABLE['Thickness'].between(thickness - 0.75, thickness + 0.75)]
+        cache.set(cache_key, result, expire=3600) # Cache for 1 hour
+    return result
 
-
-@pandas_cache
 def thickness_cached_readable_df(thickness):
-    return DF_READABLE_GLASS_TABLE[DF_READABLE_GLASS_TABLE['Thickness'].between(thickness - 0.75, thickness + 0.75)]
+    cache_key = f"readable_thickness_{thickness}"
+    result = cache.get(cache_key)
+    if result is None:
+        result = DF_READABLE_GLASS_TABLE[DF_READABLE_GLASS_TABLE['Thickness'].between(thickness - 0.75, thickness + 0.75)]
+        cache.set(cache_key, result, expire=3600)
+    return result

@@ -4,7 +4,7 @@ from typing import Dict, List, Tuple
 
 from glass_explore import DF_GLASS_TABLE
 
-from glass_model import InsulatedGlass,MonoGlass,HeatTreatment,GlassBuildup,GasLayer
+from glass_explore.glass_model import InsulatedGlass,MonoGlass,HeatTreatment,GlassBuildup,GasLayer
 
 GAS_LOOKUP = {
     'air' : GasLayer.AIR,

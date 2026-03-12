@@ -27,7 +27,7 @@ import numpy as np
 import pandas as pd
 from colorama import Fore,Style
 
-from glass_explore import IGDB_SQLITE_PATH,H5_GLASS_PATH,H5_READABLE_GLASS_PATH, utils
+from glass_explore import IGDB_SQLITE_PATH,PARQUET_GLASS_PATH,PARQUET_READABLE_GLASS_PATH, utils
 
 DEFAULT_LBNL_WINDOWS_MDB_FILE_PATH = "c:/Users/Public/LBNL/WINDOW7.7/w7.mdb"
 
@@ -40,9 +40,9 @@ def decode_sketchy_utf16(raw_bytes):
         pass
     return s
 
-def hdf_from_glass_table(datasource :str = 'sqlite', path :str = IGDB_SQLITE_PATH, hdf_file_path :str = H5_GLASS_PATH ):
+def parquet_from_glass_table(datasource :str = 'sqlite', path :str = IGDB_SQLITE_PATH, parquet_file_path :str = PARQUET_GLASS_PATH ):
     """
-    Creates an hdf file for modified GLASS tables in igdb, for quicker app loads times.
+    Creates a parquet file for modified GLASS tables in igdb, for quicker app loads times.
 
     Args:
         datasource (str, optional): _description_. Defaults to 'sqlite'.
@@ -82,7 +82,9 @@ def hdf_from_glass_table(datasource :str = 'sqlite', path :str = IGDB_SQLITE_PAT
     raw_df[['lColor','aColor','bColor']] = raw_df['lab'].apply(pd.Series)
     raw_df.drop(columns=['rgb', 'lab'],inplace = True)
 
-    raw_df.to_hdf(hdf_file_path, key = 'df')
+    raw_df['MaterialID'] = raw_df['MaterialID'].astype(str)
+
+    raw_df.to_parquet(parquet_file_path, engine='pyarrow', index=False)
 
     return raw_df
 
@@ -159,7 +161,7 @@ def convert_mdb_to_sqlite(filename_in : str,filename_out:str):
     print ("db connections closed")
 
 
-def readable_glass_table(df, hdf_file_path = H5_READABLE_GLASS_PATH):
+def readable_glass_table(df, parquet_file_path = PARQUET_READABLE_GLASS_PATH):
     df = df.drop(columns=['Source','Name','SpectralData','AngularFunction','Rsol1','Rsol2','Rvis1','Rvis2','emis1','emis2','Conductivity','Comment','Certification','Status', 'Timestamp', 'Specularity','Tvis2','Tsol2','MaterialID','Tir','Color','RColor','GColor','BColor','lColor','aColor','bColor']) 
     
     df = df.round(
@@ -172,12 +174,12 @@ def readable_glass_table(df, hdf_file_path = H5_READABLE_GLASS_PATH):
 
     df = df[['ID','ProductName','Manufacturer', 'Thickness','Tvis', 'Tsol' , 'CssColor']]
     
-    df.to_hdf(hdf_file_path, key = 'df')
+    df.to_parquet(parquet_file_path, engine='pyarrow', index=False)
 
     return df
 
 if __name__ == "__main__":
 
-    convert_mdb_to_sqlite(DEFAULT_LBNL_WINDOWS_MDB_FILE_PATH,IGDB_SQLITE_PATH)
-    df = hdf_from_glass_table()
+    #convert_mdb_to_sqlite(DEFAULT_LBNL_WINDOWS_MDB_FILE_PATH,IGDB_SQLITE_PATH)
+    df = parquet_from_glass_table()
     df = readable_glass_table(df)

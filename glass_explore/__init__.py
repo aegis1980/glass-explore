@@ -3,22 +3,59 @@
 import functools
 import json
 import os
-from typing import Dict
+import subprocess
 
 import pandas as pd
 
-class Paths:
+DEBUG = False
+
+class WebPaths:
     ENERGY = '/energy'
 
 URL = "http://glass-explore.floatingintheclouds.com"
 OG_DESCRIPTION = "Glass explore calculates thermal and optic properties of double-glazing"
 
+is_railway = os.getenv("RAILWAY_ENVIRONMENT") is not None
+
+if is_railway:
+
+    # Use absolute paths by starting with '/'
+    # This points to the mount point at the root of the container
+    BASE_VOLUME_PATH = '/igdb'
+    SUB_FOLDER = 'storage'  # Adjust if your files are in a subfolder within the mounted volume
+
+
+    CACHE_PATH = os.path.join(BASE_VOLUME_PATH, 'cache')
+
+    IGDB_SQLITE_PATH = os.path.join(BASE_VOLUME_PATH,SUB_FOLDER,'data', 'igdb.sqlite')
+    PARQUET_GLASS_PATH = os.path.join(BASE_VOLUME_PATH,SUB_FOLDER,'data', 'glass.parquet')
+    PARQUET_READABLE_GLASS_PATH= os.path.join(BASE_VOLUME_PATH,SUB_FOLDER,  'data','readable_glass.parquet')
+    print("Railway environment detected, using paths for railway deployment")
+    print(f"IGDB_SQLITE_PATH: {IGDB_SQLITE_PATH}")
+    print(f"PARQUET_GLASS_PATH: {PARQUET_GLASS_PATH}")    
+    print(f"PARQUET_READABLE_GLASS_PATH: {PARQUET_READABLE_GLASS_PATH}")
+
+    print(f"Checking path: {PARQUET_GLASS_PATH}")
+    
+    # Debugging check: Does the file actually exist?
+    if not os.path.exists(PARQUET_GLASS_PATH):
+        print(f"WARNING: {PARQUET_GLASS_PATH} not found. Contents of {BASE_VOLUME_PATH}:")
+        try:
+            print(os.listdir(BASE_VOLUME_PATH))
+        except Exception as e:
+            print(f"Could not list volume: {e}")
+
+else:
+    CACHE_PATH =  os.path.join('cache')
+
+    IGDB_SQLITE_PATH = os.path.join('data', 'igdb.sqlite')
+    PARQUET_GLASS_PATH = os.path.join('data','glass.parquet')
+    PARQUET_READABLE_GLASS_PATH= os.path.join('data','readable_glass.parquet')
+    print("Local environment detected, using local paths")
+
 PATH_DATA = os.path.join('data')
 PATH_STANDARDS = os.path.join('data','standards')
 PATH_PRODUCTS = os.path.join('data','products')
-
-IGDB_SQLITE_PATH = os.path.join('data', 'igdb.sqlite')
-
 
 DEVTEMP = os.path.join(os.getcwd(),'temp') 
 
@@ -30,20 +67,18 @@ COLORSPACE_RGB = 3
 
 DATATABLE_COLUMNS = ['ID','ProductName','Manufacturer','Thickness','Tvis','Tsol','Rvis1','Rvis2']
 
-H5_GLASS_PATH = os.path.join('data','glass.h5')
-H5_READABLE_GLASS_PATH= os.path.join('data','readable_glass.h5')
 
 try:
-    DF_GLASS_TABLE = pd.read_hdf(H5_GLASS_PATH, 'df')
+    DF_GLASS_TABLE = pd.read_parquet(PARQUET_GLASS_PATH, engine='pyarrow')
     CLEAR_6 = 103
     DEFAULT_GRAPH_GLASS = DF_GLASS_TABLE.loc[CLEAR_6]
 except FileNotFoundError:
-    print("Glass table HD5 file not found")
+    print("Glass table Parquet file not found")
 
 try:
-    DF_READABLE_GLASS_TABLE = pd.read_hdf(H5_READABLE_GLASS_PATH, 'df')
+    DF_READABLE_GLASS_TABLE = pd.read_parquet(PARQUET_READABLE_GLASS_PATH, engine='pyarrow')
 except FileNotFoundError:
-    print("Readable glass table HD5 file not found")
+    print("Readable glass table Parquet file not found")
 
 
 class Buildup:

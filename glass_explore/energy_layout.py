@@ -66,7 +66,8 @@ radio_thickness = html.Div([
     ]
 )
 
-modal_about = dbc.Modal(
+def modal_about():
+    return dbc.Modal(
     [
         dbc.ModalHeader(dbc.ModalTitle("Glass Explore")),
         dbc.ModalBody([

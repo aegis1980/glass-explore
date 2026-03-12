@@ -1,0 +1,29 @@
+[tool.poetry]
+name = "glass-explore"
+version = "0.1.0"
+description = "Tools for playing with architectural glass"
+authors = [
+    "Jon Robinson <jonrobinson1980@gmail.com>"
+]
+license = "AGPL(v3)"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+dash = "4.0.0"
+pandas = "3.0.1"
+dash-bootstrap-components= "2.0.4"
+dash-breakpoints = "0.1.0"
+dash-svg = "0.0.12"
+diskcache = "5.6.3"
+gunicorn = "25.1.0"
+icecream = "2.1.10"
+orjson = "3.11.7"
+pywincalc = "3.3.1"
+scikit-image = "0.26.0"
+pyodbc = "5.3.0"
+pyarrow = "23.0.1"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"

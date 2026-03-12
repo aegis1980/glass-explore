@@ -9,11 +9,11 @@ from dash import Input, Output, State, ctx, dcc, html,clientside_callback, callb
 from dash.exceptions import PreventUpdate
 
 
-from glass_explore import (ALL_MANUFACTURERS, OG_DESCRIPTION, URL, DF_GLASS_TABLE, DEFAULT_GRAPH_GLASS,Buildup, EnergyLayoutID, Paths,
-                           SelectedPointProps, caching, callback_helpers, energy_layout, igdb,COLORSPACE_RGB,COLORSPACE_LAB,
+from glass_explore import (ALL_MANUFACTURERS, OG_DESCRIPTION, URL, DF_GLASS_TABLE, DEFAULT_GRAPH_GLASS,Buildup, EnergyLayoutID, WebPaths,
+                           SelectedPointProps, caching, callback_helpers, igdb,COLORSPACE_RGB,COLORSPACE_LAB,
                            mywincalc, standards, svg_glass, utils, glass_model_helpers)
 
-from glass_model import (GlassBuildup, InsulatedGlass)
+from glass_explore.glass_model import (GlassBuildup, InsulatedGlass)
 
 clientside_callback(
     """
@@ -243,7 +243,7 @@ def update_gstr_url(ts, buildup, href):
 
     
 
-    return f'{root_url}{Paths.ENERGY}?g={_gs}',f'{root_url}{Paths.ENERGY}?g={_gs}'
+    return f'{root_url}{WebPaths.ENERGY}?g={_gs}',f'{root_url}{WebPaths.ENERGY}?g={_gs}'
 
 # add callback for toggling the collapse on small screens
 @callback(

@@ -11,9 +11,10 @@ from dash.exceptions import PreventUpdate
 
 import dash_breakpoints
 
-from glass_explore import (ALL_MANUFACTURERS, OG_DESCRIPTION, URL, DF_GLASS_TABLE,CLEAR_6,DEFAULT_GRAPH_GLASS, Buildup, EnergyLayoutID, Paths,
+from glass_explore import (ALL_MANUFACTURERS, OG_DESCRIPTION, URL, DF_GLASS_TABLE,CLEAR_6,DEFAULT_GRAPH_GLASS, Buildup, EnergyLayoutID, WebPaths,
                            SelectedPointProps, caching, callback_helpers, energy_layout, igdb,COLORSPACE_RGB,COLORSPACE_LAB,
                            standards)
+
 from glass_explore import callbacks_energy
 
 manufacturers = np.sort(DF_GLASS_TABLE.Manufacturer.unique())
@@ -22,7 +23,7 @@ manufacturers = np.insert(manufacturers,0,ALL_MANUFACTURERS)
 
 dash.register_page(
     __name__, 
-    path=Paths.ENERGY,
+    path=WebPaths.ENERGY,
     title = "Glass Explore | Energy"
 )
 
@@ -88,7 +89,7 @@ def layout(g = None):
                     dbc.Row(dbc.Col(dbc.Spinner(energy_layout.results_table, color="dark", type="grow")))
                 ],xl = 4)
             ]),
-            energy_layout.modal_about,
+            energy_layout.modal_about(),
             energy_layout.modal_settings,
             energy_layout.model_share
         
