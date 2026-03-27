@@ -5,14 +5,17 @@ import urllib.parse
 
 import dash
 
-from dash import Input, Output, State, ctx, dcc, html,clientside_callback, callback
+from dash import Input, Output, State, clientside_callback, callback, no_update, html
 from dash.exceptions import PreventUpdate
+
+import pandas as pd
 
 
 from glass_explore import (ALL_MANUFACTURERS, OG_DESCRIPTION, URL, DF_GLASS_TABLE, DEFAULT_GRAPH_GLASS,Buildup, EnergyLayoutID, WebPaths,
-                           SelectedPointProps, caching, callback_helpers, igdb,COLORSPACE_RGB,COLORSPACE_LAB,
+                           caching as caching, callback_helpers, igdb,COLORSPACE_RGB,COLORSPACE_LAB,
                            mywincalc, standards, svg_glass, utils, glass_model_helpers)
 
+import glass_explore
 from glass_explore.glass_model import (GlassBuildup, InsulatedGlass)
 
 clientside_callback(
@@ -31,19 +34,22 @@ clientside_callback(
 
 
 @callback(
-    Output(EnergyLayoutID.GRAPH_IGDB, "figure"),Output("formtext-manufacturer","children"), Output("formtext-manufacturer","color"),
+    Output(EnergyLayoutID.GRAPH_IGDB, "figure"),
+    Output("formtext-manufacturer","children"), 
+    Output("formtext-manufacturer","color"),
     Input(EnergyLayoutID.TABS, "active_tab"),
     Input("select-manufacturer", "value"),
     Input("radio-thickness", "value"),
     State(EnergyLayoutID.DIV_HIDDEN_SELECTED_ID, 'children'),  
 )
 def update_igdb_data_display(active_tabs, manufacturer, thickness,selected_id):
+
+
     out_fig = dash.no_update
+    df = caching.thickness_cached_df(thickness)
     if active_tabs == EnergyLayoutID.TAB_GRAPH_TS_TV:
-        df = caching.thickness_cached_df(thickness)
         out_fig, out_msg, out_msgcolor = callback_helpers.populate_graph_ts_tv(selected_id,df, manufacturer,thickness)
     else:
-        df = caching.thickness_cached_df(thickness)
         if active_tabs == EnergyLayoutID.TAB_GRAPH_RGB:
             color_space = COLORSPACE_RGB
         else:
@@ -53,15 +59,34 @@ def update_igdb_data_display(active_tabs, manufacturer, thickness,selected_id):
 
     return out_fig, out_msg, out_msgcolor
 
-
+# CALLBACK 2: Handles the snappy highlight (Patch Only)
 @callback(
-    Output(EnergyLayoutID.SELECT_OPTICAL_STANDARD,"options"),
-    Input(EnergyLayoutID.MODAL_SETTINGS, "is_open"),
-    Input(EnergyLayoutID.CHECKBOX_ADVANCED_OPTICAL_STANDARD, "value"),
-    State(EnergyLayoutID.STORE_SETTINGS_IN_LOCAL,'data')
+    Output(EnergyLayoutID.GRAPH_IGDB, "figure", allow_duplicate=True),
+    Input(EnergyLayoutID.GRAPH_IGDB, "clickData"),
+    prevent_initial_call=True
 )
-def populate_standards_select(settings_open,inc_advanced,stored_settings):
-    return callback_helpers.populate_standards(include_interesting=inc_advanced)
+def fast_highlight(click_data):
+
+    point = click_data['points'][0]
+    new_x = [point.get("x")]
+    new_y = [point.get("y")]
+    new_z = [point.get("z")] if "z" in point else None
+
+    new_color = point.get("marker.color") or point.get("marker", {}).get("color")
+    
+    p = dash.Patch()
+
+    # Target the last trace directly via index -1 which is the dedicated highlight trace
+    # Update coordinates
+    p["data"][-1]["x"] = new_x
+    p["data"][-1]["y"] = new_y
+    if new_z is not None:
+        p["data"][-1]["z"] = new_z
+    
+    # Ensure marker dictionary exists before assignment to avoid potential UI errors
+    p["data"][-1]["marker"]["color"] = [new_color]
+    
+    return p
 
 
 @callback(
@@ -77,25 +102,13 @@ def toggle_about_modal(n1, n2, is_open):
     return is_open
 
 
-""" @callback(
-    Output(EnergyLayoutID.MODAL_SHARE, "is_open"),
-    [Input(EnergyLayoutID.MODAL_SHARE_CLOSE, "n_clicks"),Input(EnergyLayoutID.BUTTON_SHARE, "n_clicks")],
-    [State(EnergyLayoutID.MODAL_SHARE, "is_open")],
-)
-def toggle_share_modal(n1, n2, is_open):
-    if n1 :
-        return not is_open
-    if n2 :
-        return not is_open
-    return is_open """
-
 
 @callback(
-    Output(EnergyLayoutID.MODAL_SETTINGS, "is_open"),
-    [Input(EnergyLayoutID.MODAL_SETTINGS_CLOSE, "n_clicks"),Input(EnergyLayoutID.NAVLINK_SETTINGS, "n_clicks")],
-    [State(EnergyLayoutID.MODAL_SETTINGS, "is_open")],
+    Output(EnergyLayoutID.MODAL_SEARCH_IGDB, "is_open"),
+    [Input(EnergyLayoutID.MODAL_SEARCH_IGDB_CLOSE, "n_clicks"),Input(EnergyLayoutID.BUTTON_IGDB_SEARCH, "n_clicks")],
+    [State(EnergyLayoutID.MODAL_SEARCH_IGDB, "is_open")],
 )
-def toggle_settings_modal(n1, n2, is_open):
+def toggle_search_igdb_modal(n1, n2, is_open):
     if n1 :
         return not is_open
     if n2 :
@@ -103,12 +116,14 @@ def toggle_settings_modal(n1, n2, is_open):
     return is_open
 
 
+
+
+
 @callback(
     Output(EnergyLayoutID.DIV_HIDDEN_SELECTED_ID, 'children'),  
     Input(EnergyLayoutID.GRAPH_IGDB, "clickData"),
-    State(EnergyLayoutID.TABS, "active_tab")
 )
-def store_in_hidden_div(pt_data, active_tab):
+def store_in_hidden_div(pt_data):
     if pt_data:
         id = pt_data['points'][0]['customdata'][0]
         return id
@@ -132,7 +147,7 @@ def glass_to_store(pt_data,flipped, gas, gap_thickness, inner_substrate, inner_t
     """
     buildup = {}
     buildup[Buildup.SOLID_LAYERS] = [{},{}]
-    buildup[Buildup.GAP_LAYERS] = [{}]
+    buildup[Buildup.GAS_LAYERS] = [{}]
     if pt_data:
         id = pt_data['points'][0]['customdata'][0]
     else:
@@ -150,8 +165,8 @@ def glass_to_store(pt_data,flipped, gas, gap_thickness, inner_substrate, inner_t
     buildup[Buildup.SOLID_LAYERS][1]['flipped'] = False
     utils.populate_buildup_with_glass_props(buildup,props_inner,1)
 
-    buildup[Buildup.GAP_LAYERS][0]['gas'] = gas
-    buildup[Buildup.GAP_LAYERS][0]['thickness'] = gap_thickness
+    buildup[Buildup.GAS_LAYERS][0]['gas'] = gas
+    buildup[Buildup.GAS_LAYERS][0]['thickness'] = gap_thickness
 
     return json.dumps(buildup)
 
@@ -188,6 +203,30 @@ def update_outer_lite_productdata(ts, buildup):
 
 
 @callback(
+    Output(EnergyLayoutID.SELECT_GAS,"options"),
+    Input(EnergyLayoutID.SELECT_STANDARD,"value")
+)
+def update_gas_options(standard):
+    if standard == "nfrc":
+        options = [{"label": k, "value": k} for k in igdb.GASES_NFRC_LOOKUP]
+    else:
+        options = [{"label": k, "value": k} for k in igdb.GASES_EN673_LOOKUP]
+    return options
+
+@callback(
+    Output(EnergyLayoutID.TABLE_CELL_TVIS_LABEL,"children"),
+    Output(EnergyLayoutID.TABLE_CELL_SHGC_LABEL,"children"),
+    Input(EnergyLayoutID.SELECT_STANDARD,"value")
+)
+def update_results_labels(standard):
+    if standard == "nfrc":
+        return ["Visible transmittance, T",html.Sub("vis")], ["SHGC"]
+    else:
+        return ["Visible transmittance, τᵥ"], ["Solar factor, g"]
+
+
+
+@callback(
     Output(EnergyLayoutID.TABLE_CELL_UVALUE, "children"),
     Output(EnergyLayoutID.TABLE_CELL_SHGC,"children"),
     Output(EnergyLayoutID.TABLE_CELL_TVIS,"children"),
@@ -196,22 +235,41 @@ def update_outer_lite_productdata(ts, buildup):
     Output(EnergyLayoutID.TABLE_CELL_COLOR_TRANS,"style"),
     Output(EnergyLayoutID.TABLE_CELL_COLOR_REFL,"style"),
     Input(EnergyLayoutID.STORE_BUILDUP_IN_SESSION,"modified_timestamp"),
+    Input(EnergyLayoutID.SELECT_STANDARD,"value"),
     State(EnergyLayoutID.STORE_BUILDUP_IN_SESSION,"data")
 )
-def run_analysis_and_update_results(ts, buildup):
+def run_analysis_and_update_results(ts, standard, buildup):
     if ts is None or buildup is None:
         raise PreventUpdate
     buildup = json.loads(buildup)
 
-    glazing_system_u_environment, glazing_system_shgc_environment= mywincalc.run_analysis(buildup)
+    print("Running analysis for buildup:",standard)
+
+    if standard == "nfrc":   
+        glazing_system_u_environment, glazing_system_solar_environment= mywincalc.run_nfrc_analysis(buildup)
+    else:
+        glazing_system_u_environment, glazing_system_solar_environment= mywincalc.run_cen_analysis(buildup)
 
     optical = glazing_system_u_environment.optical_method_results("PHOTOPIC").system_results
     
     uvalue = f'{glazing_system_u_environment.u():.3f}'
-    shgc = f'{glazing_system_shgc_environment.shgc():.3f}'
-    tvis = f'{optical.front.transmittance.direct_hemispherical:.3f}'
-    rout = f'{optical.front.reflectance.direct_hemispherical:.3f}'
-    rin = f'{optical.back.reflectance.direct_hemispherical:.3f}'
+
+    try:
+        shgc = f'{glazing_system_solar_environment.shgc():.3f}'
+    except Exception as e:
+        solar = glazing_system_u_environment.optical_method_results("SOLAR")
+        tau_e = solar.system_results.front.transmittance.direct_direct
+
+        absorptances = [
+            layer.front.absorptance.total_direct
+            for layer in solar.layer_results
+        ]
+        g = tau_e + 0.5 * sum(absorptances)
+        shgc = f'{g:.3f}'
+  
+    tvis = f'{optical.front.transmittance.direct_direct:.3f}'
+    rout = f'{optical.front.reflectance.direct_direct:.3f}'
+    rin = f'{optical.back.reflectance.direct_direct:.3f}'
 
     color_t = glazing_system_u_environment.color().system_results.front.transmittance.direct_direct.rgb
     color_r = glazing_system_u_environment.color().system_results.front.reflectance.direct_direct.rgb
@@ -231,7 +289,7 @@ def update_gstr_url(ts, buildup, href):
     if ts is None or buildup is None:
         raise PreventUpdate
     _buildup = json.loads(buildup)
-   
+    
     lites = glass_model_helpers.lites_from_dict(_buildup)
     gases = glass_model_helpers.gaslayers_from_dict(_buildup)
 
@@ -255,39 +313,6 @@ def toggle_navbar_collapse(n, is_open):
     if n:
         return not is_open
     return is_open
-
-@callback(
-    Output(EnergyLayoutID.GRAPH_IGDB, "extendData"),
-    Input(EnergyLayoutID.GRAPH_IGDB, "clickData"),
-    State(EnergyLayoutID.GRAPH_IGDB, "figure"),
-    State(EnergyLayoutID.TABS,"active_tab" )
-)
-def highlight_point_on_graph(click_data, figure, active_tab):
-    """
-    uses extend data to hlighlight seleced point without redrawing graph.
-    """
-    if not click_data:
-        raise PreventUpdate
-    if len(figure['data']) == 0: #ie graph is empty - no traces
-        raise PreventUpdate
-    point = click_data['points'][0]
-    if active_tab == EnergyLayoutID.TAB_GRAPH_TS_TV:
-        hilight = {
-            'x' : [[point['x']]],
-            'y' : [[point['y']]],
-            'marker.color' :[[point['marker.color']]],
-        }
-    else:
-        hilight = {
-            'x' : [[point['x']]],
-            'y' : [[point['y']]],
-            'z' : [[point['z']]],
-            'marker.color' :[[point['marker.color']]],
-        }
-    last_trace_index = len(figure['data'])-1 #will always be the last trace
-
-    return [hilight,[last_trace_index],1]
-
 
 
 @callback(
@@ -325,3 +350,26 @@ def onload_parse_url(href, pathname,search):
                 'clear', \
                 6
         
+@callback(
+    Output(EnergyLayoutID.DATALIST_GLASS_SEARCH_SUGGESTIONS, "children"),
+    Input(EnergyLayoutID.INPUT_GLASS_SEARCH, "value")
+)
+def update_suggestions(search_value):
+    if not search_value or len(search_value) < 2:
+        return []
+
+
+    # Logic: Search across multiple specific columns
+    # Example: 'Manufacturer', 'Product_Name', and 'Thickness'
+    cols_to_search = ['Manufacturer', 'Product_Name']
+    
+    # Efficient filtering across multiple columns
+    mask = pd.concat([
+        DF_GLASS_TABLE[col].str.contains(search_value, case=False, na=False) 
+        for col in cols_to_search
+    ], axis=1).any(axis=1)
+
+    # Extract unique values from the primary display column or a combined label
+    suggestions = DF_GLASS_TABLE[mask]['Product_Name'].unique()[:15]
+    
+    return [{"label": s, "value": s} for s in suggestions]

@@ -3,7 +3,7 @@
 from typing import Dict
 
 import dash
-from dash import Input, Output, State, ctx, dcc, html
+from dash import Input, Output, html
 import dash_bootstrap_components as dbc
 from dash_svg import Line, Rect, Svg, Text
 from glass_explore import EnergyLayoutID
@@ -25,8 +25,12 @@ def generate_buildup(buildup : Dict) -> Svg:
         Svg: dash_svg.Svg represent of buildup.
     """
 
-    x=0
-    children = []
+    MARGIN_X = 15
+    x = MARGIN_X
+    children = [
+        Text("Out", x=0, y=11, fontSize="3px", fill="#404040", fontFamily="sans-serif")
+    ]
+
     for i,gl in enumerate(buildup[Buildup.SOLID_LAYERS]):
         t = gl['thickness']
 
@@ -47,15 +51,20 @@ def generate_buildup(buildup : Dict) -> Svg:
                 children.append(Line(x1 = xl,y1=0,x2=xl,y2=VIEW_HEIGHT, stroke= COATING_COLOR, strokeWidth=COATING_STROKE ,strokeDasharray='1,1'))
 
 
-        if i < len(buildup[Buildup.GAP_LAYERS]):
-            x= t + float(buildup[Buildup.GAP_LAYERS][i]['thickness'])
+        if i < len(buildup[Buildup.GAS_LAYERS]):
+            x += t + float(buildup[Buildup.GAS_LAYERS][i]['thickness'])
+        else:
+            x += t
         
-    total_t = t+x
+    children.append(
+        Text("In", x=x + 5, y=11, fontSize="3px", fill="#404040", fontFamily="sans-serif")
+    )
+    total_w = x + MARGIN_X
 
     svg = Svg(
            children
         ,
-        viewBox=f"0 0 {total_t} {VIEW_HEIGHT}", width = '100%', height = '100')
+        viewBox=f"0 0 {total_w} {VIEW_HEIGHT}", width = '100%', height = '100')
 
     return svg
 

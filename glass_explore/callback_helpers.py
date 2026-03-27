@@ -1,10 +1,10 @@
 #(c)2026 Jon Robinson. All Rights Reserved.
 
-import functools
+
 from urllib.parse import urlparse
 
 import pandas as pd
-
+from icecream import ic
 import plotly.graph_objects as go
 
 
@@ -46,6 +46,7 @@ def populate_graph_ts_tv(selected_id : int, df: pd.DataFrame, manufacturer, thic
         msg,msg_color = number_of_glasses_message(df,manufacturer,thickness)
         fig.add_trace(
             go.Scatter(
+                name="all",
                 mode='markers',
                 x=df["Tsol"],
                 y=df["Tvis"],
@@ -72,6 +73,7 @@ def populate_graph_ts_tv(selected_id : int, df: pd.DataFrame, manufacturer, thic
 
         fig.add_trace(
             go.Scatter(
+                name="all",
                 mode='markers',
                 x=df[mask_na]["Tsol"],
                 y=df[mask_na]["Tvis"],
@@ -86,6 +88,7 @@ def populate_graph_ts_tv(selected_id : int, df: pd.DataFrame, manufacturer, thic
         )
         fig.add_trace(
             go.Scatter(
+                name="manufacturer",
                 mode='markers',
                 x=df[mask]["Tsol"],
                 y=df[mask]["Tvis"],
@@ -112,6 +115,7 @@ def populate_graph_ts_tv(selected_id : int, df: pd.DataFrame, manufacturer, thic
 
         fig.add_trace(
             go.Scatter(
+                name="selected_id",
                 mode='markers',
                 x=df[mask]["Tsol"],
                 y=df[mask]["Tvis"],
@@ -134,7 +138,8 @@ def populate_graph_ts_tv(selected_id : int, df: pd.DataFrame, manufacturer, thic
         xaxis_title="T<sub>solar</sub>",
         yaxis_title="T<sub>visible</sub>",
         plot_bgcolor = "white",
-        hovermode = 'closest'
+        hovermode = 'closest',
+        uirevision='constant-id-to-preserve-zoom-and-pan'
     )
 
     fig.update_xaxes(

@@ -29,7 +29,7 @@ from colorama import Fore,Style
 
 from glass_explore import IGDB_SQLITE_PATH,PARQUET_GLASS_PATH,PARQUET_READABLE_GLASS_PATH, utils
 
-DEFAULT_LBNL_WINDOWS_MDB_FILE_PATH = "c:/Users/Public/LBNL/WINDOW7.7/w7.mdb"
+DEFAULT_LBNL_WINDOWS_MDB_FILE_PATH = "c:/Users/Public/LBNL/WINDOW7.8/w7.mdb"
 
 def decode_sketchy_utf16(raw_bytes):
     s = raw_bytes.decode("utf-16le", "ignore")
@@ -84,7 +84,7 @@ def parquet_from_glass_table(datasource :str = 'sqlite', path :str = IGDB_SQLITE
 
     raw_df['MaterialID'] = raw_df['MaterialID'].astype(str)
 
-    raw_df.to_parquet(parquet_file_path, engine='pyarrow', index=False)
+    raw_df.to_parquet(parquet_file_path, engine='pyarrow', index=True)
 
     return raw_df
 
@@ -174,12 +174,20 @@ def readable_glass_table(df, parquet_file_path = PARQUET_READABLE_GLASS_PATH):
 
     df = df[['ID','ProductName','Manufacturer', 'Thickness','Tvis', 'Tsol' , 'CssColor']]
     
-    df.to_parquet(parquet_file_path, engine='pyarrow', index=False)
+    df.to_parquet(parquet_file_path, engine='pyarrow', index=True)
 
     return df
 
 if __name__ == "__main__":
 
-    #convert_mdb_to_sqlite(DEFAULT_LBNL_WINDOWS_MDB_FILE_PATH,IGDB_SQLITE_PATH)
+    
+    print ("Starting IGDB prep script...")
+    convert_mdb_to_sqlite(DEFAULT_LBNL_WINDOWS_MDB_FILE_PATH,IGDB_SQLITE_PATH)
+    print ("...MDB to SQLITE conversion complete")
+    print("Creating parquet file for glass table...")
     df = parquet_from_glass_table()
+    print ("...parquet file for glass table created")
+    print("Creating readable glass table...")
     df = readable_glass_table(df)
+    print ("...readable glass table created")
+    print ("IGDB prep script complete")

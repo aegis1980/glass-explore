@@ -69,7 +69,7 @@ DATATABLE_COLUMNS = ['ID','ProductName','Manufacturer','Thickness','Tvis','Tsol'
 
 
 try:
-    DF_GLASS_TABLE = pd.read_parquet(PARQUET_GLASS_PATH, engine='pyarrow')
+    DF_GLASS_TABLE = pd.read_parquet(PARQUET_GLASS_PATH, engine='pyarrow',)
     CLEAR_6 = 103
     DEFAULT_GRAPH_GLASS = DF_GLASS_TABLE.loc[CLEAR_6]
 except FileNotFoundError:
@@ -83,7 +83,7 @@ except FileNotFoundError:
 
 class Buildup:
     SOLID_LAYERS = 'layers'
-    GAP_LAYERS = 'gas_layers'
+    GAS_LAYERS = 'gas_layers'
 
 
 class SelectedPointProps:
@@ -96,6 +96,8 @@ class EnergyLayoutID:
 
     BUTTON_SHARE = "button-share"
     BUTTON_REPORT = "button-report"
+    BUTTON_IGDB_SEARCH = "button-igdb-search"
+
 
     DIV_HIDDEN_WINDOW_HT = "div-hidden-window-ht"
     DIV_HIDDEN_SELECTED_ID = "div-selected-id-hidden"
@@ -114,8 +116,16 @@ class EnergyLayoutID:
     MODAL_SHARE = "modal-share"
     MODAL_SHARE_CLOSE = "modal-share-close"
 
+    MODAL_SEARCH_IGDB = "modal-search-igdb"
+    MODAL_SEARCH_IGDB_CLOSE = "modal-search-igdb-close"
+    INPUT_GLASS_SEARCH = "input-glass-search"
+    DATALIST_GLASS_SEARCH_SUGGESTIONS = "datalist-glass-search-suggestions"
+
+    SELECT_STANDARD = "select-standard"
+
     SELECT_GAS = "select-gas"
     INPUT_GAP = "input-gap"
+
 
     CHECKBOX_FLIP_OUTERLAYER = "checkbox-flip-outerlayer"
     CHECKBOX_ADVANCED_OPTICAL_STANDARD = "checkbox-advance-standard"
@@ -127,7 +137,7 @@ class EnergyLayoutID:
     NAV_GRAPHTYPE = "nav_graphtype"
     
     NAVLINK_ABOUT = "navlink_about"
-    NAVLINK_SETTINGS = "navlink_settings"
+    NAVLINK_STRUCTURE = "navlink_structure"
 
     NAVLINK_GRAPHTYPE_TS_TV = 1
     NAVLINK_GRAPHTYPE_LAB = 2 
@@ -138,12 +148,14 @@ class EnergyLayoutID:
     SELECT_MANUFACTURER = "select-manufacturer"
     SELECT_OPTICAL_STANDARD = "select-standard"
 
-
+    DUMMY_FOR_CALLBACK = "dummy-for-callback"
     STORE_BUILDUP_IN_SESSION = "store-buildup-session"
     STORE_SETTINGS_IN_LOCAL = "store-settings-local"
 
     TABLE_CELL_UVALUE = "table-cell-uvalue"
+    TABLE_CELL_SHGC_LABEL = "table-cell-shgc-label"
     TABLE_CELL_SHGC = "table-cell-shgc"
+    TABLE_CELL_TVIS_LABEL = "table-cell-tvis-label"
     TABLE_CELL_TVIS = "table-cell-tvis"
     TABLE_CELL_ROUT = "table-cell-rout"
     TABLE_CELL_RIN  = "table-cell-rin"
@@ -161,7 +173,8 @@ class EnergyLayoutID:
 
 
 
-DEFAULT_OPTICAL_STANDARD = "W5_NFRC_2003.std"
+NFRC_OPTICAL_STANDARD = "W5_NFRC_2003.std"
+CEN_OPTICAL_STANDARD = "prEN_410.std"
 
 @functools.cache    
 def standards():

@@ -7,7 +7,7 @@ from typing import Dict
 import pandas as pd
 import pywincalc
 
-from glass_explore import PATH_STANDARDS, igdb, optics,results_printer,Buildup
+from glass_explore import PATH_STANDARDS, igdb, optics,Buildup
 import glass_explore
 
 
@@ -17,7 +17,7 @@ def load_optical_standard(filename):
     # taken to use NFRC standards if NFRC thermal results are desired.  This is because for thermal calculations currently
     # only ISO 15099 is supported.  While it is possible to use EN optical standards and create thermal results
     # those results will not be based on EN 673
-    optical_standard_path = os.path.join(PATH_STANDARDS, filename or glass_explore.DEFAULT_OPTICAL_STANDARD)
+    optical_standard_path = os.path.join(PATH_STANDARDS, filename or glass_explore.NFRC_OPTICAL_STANDARD)
     return pywincalc.load_standard(optical_standard_path)
 
 glazing_system_width = 1.0  # width of the glazing system in meters
@@ -36,8 +36,19 @@ def coated_side(side : str):
 
     return s
 
-def gap_layer(gas : str, thickness: float):
-    return  pywincalc.Gap(igdb.GASES[gas], float(thickness)/1000)
+def gap_layer(gas : str, standard : str, thickness: float):
+
+    if standard == "nfrc":
+        gas_id = igdb.GASES_NFRC_LOOKUP[gas]
+    else:   
+        gas_id = igdb.GASES_EN673_LOOKUP[gas]
+
+    gas = igdb.lookup_gas_props(gas_id)  
+
+    return  pywincalc.Layers.gap(
+        thickness = float(thickness)/1000,
+        gas=gas
+    )
 
 
 
@@ -130,9 +141,81 @@ def generic_uncoated_glass(thickness : int , ultraclear : bool):
     #return glass_layer_from_props(props)
 
 
-def run_analysis(buildup : Dict, optical_standard_file = glass_explore.DEFAULT_OPTICAL_STANDARD):
+def run_nfrc_analysis(buildup : Dict):
     
-    optical_standard = load_optical_standard(optical_standard_file)
+    optical_standard = load_optical_standard(glass_explore.NFRC_OPTICAL_STANDARD)
+
+    solid_layers = []
+    gas_layers = []
+
+    for l in buildup[Buildup.SOLID_LAYERS]:
+        props = igdb.lookup_glass_props(l['id'])
+        wavelength_df = igdb.lookup_wavelength_data(props['GlazingID'])
+        layer = optics.product_from_tempfile(props,wavelength_df,flipped=l['flipped'])
+        solid_layers.append(layer)
+
+    for g in buildup[Buildup.GAS_LAYERS]:
+        gap = gap_layer(g['gas'],'nfrc', g['thickness'])
+        gas_layers.append(gap)
+    # Create a glazing system using the NFRC U environment in order to get NFRC U results
+    # U and SHGC can be caculated for any given environment but in order to get results
+    # The NFRC U and SHGC environments are provided as already constructed environments and Glazing_System
+    # defaults to using the NFRC U environments
+    glazing_system_u_environment = pywincalc.GlazingSystem(optical_standard=optical_standard,
+                                                        solid_layers=solid_layers,
+                                                        gap_layers=gas_layers,
+                                                        width_meters=glazing_system_width,
+                                                        height_meters=glazing_system_height)
+
+    # In order to get NFRC SHGC results the NFRC SHGC environment should be used when creating the glazing system
+    glazing_system_shgc_environment = pywincalc.GlazingSystem(optical_standard=optical_standard,
+                                                            solid_layers=solid_layers,
+                                                            gap_layers=gas_layers,
+                                                            width_meters=glazing_system_width,
+                                                            height_meters=glazing_system_height,
+                                                            environment=pywincalc.nfrc_shgc_environments())
+
+
+    #results_printer.print_results(glazing_system_u_environment, glazing_system_shgc_environment)
+    #results_printer.print_optical_method_results(glazing_system_u_environment, "SOLAR", 0, 0, '')
+    return glazing_system_u_environment, glazing_system_shgc_environment
+
+
+def run_cen_analysis(buildup : Dict):
+    
+    optical_standard = load_optical_standard(glass_explore.CEN_OPTICAL_STANDARD)
+
+
+    # EN673-like Boundary Conditions
+    inside_environment = pywincalc.Environment(
+        air_temperature=293.15,   # 20 C
+        pressure=101325.0,
+        convection_coefficient=7.0,
+        coefficient_model=pywincalc.BoundaryConditionsCoefficientModelType.HC_PRESCRIBED,
+        radiation_temperature=293.15,
+        emissivity=1.0,
+        air_speed=0.0,
+        air_direction=pywincalc.AirHorizontalDirection.NONE,
+        direct_solar_radiation=0.0,
+    )
+
+    outside_environment = pywincalc.Environment(
+        air_temperature=273.15,   # 0 C
+        pressure=101325.0,
+        convection_coefficient=25.0,
+        coefficient_model=pywincalc.BoundaryConditionsCoefficientModelType.HC_PRESCRIBED,
+        radiation_temperature=273.15,
+        emissivity=1.0,
+        air_speed=0.0,
+        air_direction=pywincalc.AirHorizontalDirection.NONE,
+        direct_solar_radiation=0.0,
+    )
+
+    en673_env = pywincalc.Environments(
+        outside_environment,
+        inside_environment,
+    )
+
 
     solid_layers = []
     gap_layers = []
@@ -143,19 +226,16 @@ def run_analysis(buildup : Dict, optical_standard_file = glass_explore.DEFAULT_O
         layer = optics.product_from_tempfile(props,wavelength_df,flipped=l['flipped'])
         solid_layers.append(layer)
 
-    for g in buildup[Buildup.GAP_LAYERS]:
-        gap = gap_layer(g['gas'], g['thickness'])
+    for g in buildup[Buildup.GAS_LAYERS]:
+        gap = gap_layer(g['gas'],'en673', g['thickness'])
         gap_layers.append(gap)
 
-    # Create a glazing system using the NFRC U environment in order to get NFRC U results
-    # U and SHGC can be caculated for any given environment but in order to get results
-    # The NFRC U and SHGC environments are provided as already constructed environments and Glazing_System
-    # defaults to using the NFRC U environments
-    glazing_system_u_environment = pywincalc.GlazingSystem(optical_standard=optical_standard,
+    glazing_system_u_environment = pywincalc.GlazingSystem(
                                                         solid_layers=solid_layers,
                                                         gap_layers=gap_layers,
                                                         width_meters=glazing_system_width,
-                                                        height_meters=glazing_system_height)
+                                                        height_meters=glazing_system_height,
+                                                        environment=en673_env)
 
     # In order to get NFRC SHGC results the NFRC SHGC environment should be used when creating the glazing system
     glazing_system_shgc_environment = pywincalc.GlazingSystem(optical_standard=optical_standard,
@@ -163,106 +243,9 @@ def run_analysis(buildup : Dict, optical_standard_file = glass_explore.DEFAULT_O
                                                             gap_layers=gap_layers,
                                                             width_meters=glazing_system_width,
                                                             height_meters=glazing_system_height,
-                                                            environment=pywincalc.nfrc_shgc_environments())
+                                                            environment=en673_env)
 
 
     #results_printer.print_results(glazing_system_u_environment, glazing_system_shgc_environment)
     #results_printer.print_optical_method_results(glazing_system_u_environment, "SOLAR", 0, 0, '')
     return glazing_system_u_environment, glazing_system_shgc_environment
-
-
-
-def run_analysis(buildup : Dict, optical_standard_file = glass_explore.DEFAULT_OPTICAL_STANDARD):
-    
-    optical_standard = load_optical_standard(optical_standard_file)
-
-    solid_layers = []
-    gap_layers = []
-
-    for l in buildup[Buildup.SOLID_LAYERS]:
-        props = igdb.lookup_glass_props(l['id'])
-        wavelength_df = igdb.lookup_wavelength_data(props['GlazingID'])
-        layer = optics.product_from_tempfile(props,wavelength_df,flipped=l['flipped'])
-        solid_layers.append(layer)
-
-    for g in buildup[Buildup.GAP_LAYERS]:
-        gap = gap_layer(g['gas'], g['thickness'])
-        gap_layers.append(gap)
-
-    # Create a glazing system using the NFRC U environment in order to get NFRC U results
-    # U and SHGC can be caculated for any given environment but in order to get results
-    # The NFRC U and SHGC environments are provided as already constructed environments and Glazing_System
-    # defaults to using the NFRC U environments
-    glazing_system_u_environment = pywincalc.GlazingSystem(optical_standard=optical_standard,
-                                                        solid_layers=solid_layers,
-                                                        gap_layers=gap_layers,
-                                                        width_meters=glazing_system_width,
-                                                        height_meters=glazing_system_height)
-
-    # In order to get NFRC SHGC results the NFRC SHGC environment should be used when creating the glazing system
-    glazing_system_shgc_environment = pywincalc.GlazingSystem(optical_standard=optical_standard,
-                                                            solid_layers=solid_layers,
-                                                            gap_layers=gap_layers,
-                                                            width_meters=glazing_system_width,
-                                                            height_meters=glazing_system_height,
-                                                            environment=pywincalc.nfrc_shgc_environments())
-
-
-    #results_printer.print_results(glazing_system_u_environment, glazing_system_shgc_environment)
-    #results_printer.print_optical_method_results(glazing_system_u_environment, "SOLAR", 0, 0, '')
-    return glazing_system_u_environment, glazing_system_shgc_environment
-
-
-def run_sim(
-        id,
-        flipped : bool,
-        gap_layer,
-        other_layer,
-        optical_standard_file = glass_explore.DEFAULT_OPTICAL_STANDARD
-    ):
-
-    optical_standard = load_optical_standard(optical_standard_file)
-
-    props = igdb.lookup_glass_props(id)
-    #coated_layer = glass_layer_from_props(props, flipped)
-    wavelength_df = igdb.lookup_wavelength_data(props['GlazingID'])
-    coated_layer = optics.product_from_tempfile(props,wavelength_df,flipped=flipped)
-
-
-    # Create a glazing system using the NFRC U environment in order to get NFRC U results
-    # U and SHGC can be caculated for any given environment but in order to get results
-    # The NFRC U and SHGC environments are provided as already constructed environments and Glazing_System
-    # defaults to using the NFRC U environments
-    glazing_system_u_environment = pywincalc.GlazingSystem(optical_standard=optical_standard,
-                                                        solid_layers=[coated_layer,other_layer],
-                                                        gap_layers=[gap_layer],
-                                                        width_meters=glazing_system_width,
-                                                        height_meters=glazing_system_height)
-
-    # In order to get NFRC SHGC results the NFRC SHGC environment should be used when creating the glazing system
-    glazing_system_shgc_environment = pywincalc.GlazingSystem(optical_standard=optical_standard,
-                                                            solid_layers=[coated_layer,other_layer],
-                                                            gap_layers=[gap_layer],
-                                                            width_meters=glazing_system_width,
-                                                            height_meters=glazing_system_height,
-                                                            environment=pywincalc.nfrc_shgc_environments())
-
-
-    #results_printer.print_results(glazing_system_u_environment, glazing_system_shgc_environment)
-    #results_printer.print_optical_method_results(glazing_system_u_environment, "SOLAR", 0, 0, '')
-    return glazing_system_u_environment, glazing_system_shgc_environment
-
-
-if __name__ == "__main__":
-    gap = pywincalc.Gap(pywincalc.PredefinedGasType.AIR, .0127)  # .0127 is gap thickness in meters
-    #gap = gap_layer("air", "12")
-
-            
-    other = generic_uncoated_glass(thickness = 6, ultraclear = False)
-
-    print(dir(other))
-    props,glazing_system_u_environment, glazing_system_shgc_environment = run_sim(103,False,gap,other)
-
-   # results_printer.print_results(glazing_system_u_environment, glazing_system_shgc_environment)
-
-

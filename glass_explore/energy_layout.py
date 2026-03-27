@@ -15,40 +15,75 @@ LINK_COFFEE = "https://www.buymeacoffee.com/fitc"
 LINK_GLASSMODEL = "https://github.com/aegis1980/glass-model"
 
 
-nav = dbc.Nav(
-    [
-        dbc.NavItem(dbc.NavLink( "About",id = EnergyLayoutID.NAVLINK_ABOUT)),
-        dbc.NavItem(dbc.NavLink("Settings",disabled=True,id = EnergyLayoutID.NAVLINK_SETTINGS)),
-    ]
-)
+
+table_header = [
+    html.Thead(html.Tr([html.Th("Parameter"), html.Th("Value")]))
+]
+
+row_u = html.Tr([html.Td(["U-value (W/m²K)"]), html.Td(id = EnergyLayoutID.TABLE_CELL_UVALUE)])
+row_shgc = html.Tr(children=[
+    html.Td(id = EnergyLayoutID.TABLE_CELL_SHGC_LABEL),
+    html.Td(id = EnergyLayoutID.TABLE_CELL_SHGC)
+    ])
+
+row_vlt = html.Tr(children = [
+    html.Td(id = EnergyLayoutID.TABLE_CELL_TVIS_LABEL),
+    html.Td(id = EnergyLayoutID.TABLE_CELL_TVIS)
+    ])
+row_rout = html.Tr([html.Td(["R",html.Sub("out")]), html.Td(id = EnergyLayoutID.TABLE_CELL_ROUT)])
+row_rin = html.Tr([html.Td(["R",html.Sub("in")]), html.Td(id = EnergyLayoutID.TABLE_CELL_RIN)])
+row_color1 = html.Tr([html.Td("Transmitted colour"), html.Td(id = EnergyLayoutID.TABLE_CELL_COLOR_TRANS)])
+row_color2 = html.Tr([html.Td("Reflected colour"), html.Td(id = EnergyLayoutID.TABLE_CELL_COLOR_REFL)])
+
+table_body = [html.Tbody([row_u, row_shgc,row_vlt,row_rout,row_rin,row_color1,row_color2])]
+
+results_table = dbc.Table(
+    table_header + table_body, 
+    bordered=True)
 
 def navbar():
+
+    nav = dbc.Nav(
+        
+        [
+            dbc.NavItem(dbc.NavLink( "About",id = EnergyLayoutID.NAVLINK_ABOUT)),
+            dbc.NavItem(dbc.NavLink( "GLASS EXPLORE | Structure",id = EnergyLayoutID.NAVLINK_STRUCTURE)),
+        ],
+        className="g-0 ms-auto flex-nowrap mt-3 mt-md-0",
+    )
+
     return dbc.Navbar(
-    [
-        html.A(
-            # Use row and col to control vertical alignment of logo / brand
-            dbc.Row(
-                [
-                    dbc.Col(html.Img(src=dash.get_asset_url(FITC_LOGO), height="30px")),
-                    dbc.Col(dbc.NavbarBrand("GLASS EXPLORE", className="ms-2")),
-                ],
-                align="center",
-                className="g-0",
-            ),
-            href="https://floatingintheclouds.com",
-            style={"textDecoration": "none"},
-        ),
-        dbc.NavbarToggler(id="navbar-toggler", n_clicks=0),
-            dbc.Collapse(
-                nav,
-                id="navbar-collapse",
-                is_open=False,
-                navbar=True,
-            ),
-    ],
-    color="dark",
-    dark=True,
-)
+            [
+                html.A(
+                    # Use row and col to control vertical alignment of logo / brand
+                    dbc.Row(
+                        [
+                            dbc.Col(html.Img(src=dash.get_asset_url(FITC_LOGO), height="30px")),
+                            dbc.Col(dbc.NavbarBrand(
+                                [
+                                    "GLASS EXPLORE | ", 
+                                    html.B("Energy")
+                                ],
+                                className="ms-2"
+                            )),
+                        ],
+                        align="center",
+                        className="g-0",
+                    ),
+                    href="https://floatingintheclouds.com",
+                    style={"textDecoration": "none"},
+                ),
+                dbc.NavbarToggler(id="navbar-toggler", n_clicks=0),
+                    dbc.Collapse(
+                        nav,
+                        id="navbar-collapse",
+                        is_open=False,
+                        navbar=True,
+                    ),
+            ],
+        color="dark",
+        dark=True,
+    )
 
 
 radio_thickness = html.Div([
@@ -69,7 +104,7 @@ radio_thickness = html.Div([
 def modal_about():
     return dbc.Modal(
     [
-        dbc.ModalHeader(dbc.ModalTitle("Glass Explore")),
+        dbc.ModalHeader(dbc.ModalTitle("GLASS EXPLORE | Energy")),
         dbc.ModalBody([
             html.P([OG_DESCRIPTION +f" using coatings and substrate data in the ",
                 html.A("IGDB database", href="https://windows.lbl.gov/igdb-downloads", className="alert-link", target="_blank"),
@@ -104,37 +139,42 @@ def modal_about():
         ),
     ],
     id=EnergyLayoutID.MODAL_ABOUT,
-    is_open=True,
+    is_open=False,
 )
 
 
-
-
-modal_settings = dbc.Modal(
+def modal_glass_search():
+    return dbc.Modal(
     [
-        dbc.ModalHeader(dbc.ModalTitle("Settings")),
+        dbc.ModalHeader(dbc.ModalTitle("GLASS EXPLORE | Energy")),
         dbc.ModalBody([
-            dbc.Label("Optical standard"),
-            dbc.Select(
-                id=EnergyLayoutID.SELECT_OPTICAL_STANDARD,
-                options = callback_helpers.populate_standards(False),
-                value=glass_explore.DEFAULT_OPTICAL_STANDARD
-            ),
-            dbc.Checkbox(
-                id=EnergyLayoutID.CHECKBOX_ADVANCED_OPTICAL_STANDARD,
-                label="Show some other optical setups",
-                value=False,
-            )                            
+            html.P(["This app is only intended as a playground - consult manufacturer's published data or use a tool such as LBNL Window to verify."]),
+            dbc.Row([
+                dbc.Col([
+                    html.Label("Search Glass Database:"),
+                  dbc.Input(
+                        id=EnergyLayoutID.INPUT_GLASS_SEARCH,
+                        type="search",
+                        placeholder="Search" ,
+                        list="search-suggestions",
+                        placeholder="Type to search...",
+                        debounce=True, # Prevents hitting SQLite on every single keystroke
+                    ),
+                    html.Datalist(id=EnergyLayoutID.DATALIST_GLASS_SEARCH_SUGGESTIONS)
+                ], width=6),
             ]),
+            html.P(["The source code for this webapp is available on request, under the AGPL-3.0 license. If you want to use any of the code, or have suggestions for improvements, please get in touch."]),
+        ]),
         dbc.ModalFooter(
             dbc.Button(
-                "Done with settings", id=EnergyLayoutID.MODAL_SETTINGS_CLOSE, className="ms-auto", n_clicks=0
+                "Close", id=EnergyLayoutID.MODAL_SEARCH_IGDB_CLOSE, className="ms-auto", n_clicks=0
             )
         ),
     ],
-    id=EnergyLayoutID.MODAL_SETTINGS,
+    id=EnergyLayoutID.MODAL_SEARCH_IGDB,
     is_open=False,
 )
+
 
 model_share = dbc.Modal(
     [
@@ -174,37 +214,38 @@ model_share = dbc.Modal(
     is_open=False,
 )
 
-card_gas_layer = dbc.Card([
-    dbc.CardHeader("Gas layer"),
-    dbc.CardBody(   
-        dbc.Form(
-            dbc.Row(
-                [
-                    dbc.Label("Gas", width="auto"),
-                    dbc.Col(
-                        dbc.Select(
-                            id=EnergyLayoutID.SELECT_GAS, 
-                            value = 'air',
-                            options=[{"label": k, "value": k} for k in igdb.GASES],
+def card_gas_layer():
+    return dbc.Card([
+        dbc.CardHeader("Gas layer"),
+        dbc.CardBody(   
+            dbc.Form(
+                dbc.Row(
+                    [
+                        dbc.Label("Gas", width="auto"),
+                        dbc.Col(
+                            dbc.Select(
+                                id=EnergyLayoutID.SELECT_GAS, 
+                                value = 'Air',
+                                options=[{"label": k, "value": k} for k in igdb.GASES_NFRC_LOOKUP],
+                            ),
+                            className="me-3",
                         ),
-                        className="me-3",
-                    ),
-                    dbc.Label("Gap width (mm)", width="auto"),
-                    dbc.Col(
-                        dbc.Input(
-                            id=EnergyLayoutID.INPUT_GAP,
-                            type="number", 
-                            value="12"
-                        ),
-                        
-                        className="me-3",
-                    )
-                ],
-                className="g-2"
-            )
-        ))],
-        className="mb-2",
-    )
+                        dbc.Label("Gap width (mm)", width="auto"),
+                        dbc.Col(
+                            dbc.Input(
+                                id=EnergyLayoutID.INPUT_GAP,
+                                type="number", 
+                                value="12"
+                            ),
+                            
+                            className="me-3",
+                        )
+                    ],
+                    className="g-2"
+                )
+            ))],
+            className="mb-2",
+        )
 
 card_selected_layer = dbc.Card([
         dbc.CardHeader("Outer glass layer (user selected)"),
@@ -228,6 +269,34 @@ card_selected_layer = dbc.Card([
         ])],
         className="mb-2",
     )
+
+
+def card_results():
+    return dbc.Card([
+        dbc.CardHeader("Glass properties"),
+                dbc.CardBody(   
+                    dbc.Form(
+                        [dbc.Row([
+                            dbc.Label("Standard", width="auto"),
+                            dbc.Col(
+                               dbc.Select(
+                                        id=EnergyLayoutID.SELECT_STANDARD, 
+                                        value = "en",
+                                        options=[
+                                                {"label": "NFRC", "value": "nfrc"},
+                                                {"label": "EN419 and EN673", "value": "en"},
+                                        ],
+                                    )
+                            , className="me-3",)
+                        ], className="mb-3"),
+                        dbc.Row(
+                            dbc.Col(
+                                [dbc.Spinner(results_table, color="dark", type="grow")]
+                            )
+                        )]
+                    )
+                )]
+            )
 
 card_inner_layer = dbc.Card([
         dbc.CardHeader("Inner glass layer"),
@@ -270,24 +339,6 @@ div_buttons = html.Div([
     )
 
 
-table_header = [
-    html.Thead(html.Tr([html.Th("Parameter"), html.Th("Value")]))
-]
-
-row_u = html.Tr([html.Td(["U-value (W/m²K)"]), html.Td(id = EnergyLayoutID.TABLE_CELL_UVALUE)])
-row_shgc = html.Tr([html.Td("SHGC"), html.Td(id = EnergyLayoutID.TABLE_CELL_SHGC)])
-
-row_vlt = html.Tr([html.Td(["T",html.Sub("vis")]), html.Td(id = EnergyLayoutID.TABLE_CELL_TVIS)])
-row_rout = html.Tr([html.Td(["R",html.Sub("out")]), html.Td(id = EnergyLayoutID.TABLE_CELL_ROUT)])
-row_rin = html.Tr([html.Td(["R",html.Sub("in")]), html.Td(id = EnergyLayoutID.TABLE_CELL_RIN)])
-row_color1 = html.Tr([html.Td("Transmitted colour"), html.Td(id = EnergyLayoutID.TABLE_CELL_COLOR_TRANS)])
-row_color2 = html.Tr([html.Td("Reflected colour"), html.Td(id = EnergyLayoutID.TABLE_CELL_COLOR_REFL)])
-
-table_body = [html.Tbody([row_u, row_shgc,row_vlt,row_rout,row_rin,row_color1,row_color2])]
-
-results_table = dbc.Table(
-    table_header + table_body, 
-    bordered=True)
 
 def init_graph():
 

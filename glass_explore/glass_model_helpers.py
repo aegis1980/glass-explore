@@ -40,9 +40,9 @@ def lites_from_dict(di : Dict) -> List[GlassBuildup]:
 
 def gaslayers_from_dict(_dict : Dict) -> GasLayer:
     gases = []
-    for l in _dict['gas_layers']:
-        t = float(l['thickness'])
-        g = GAS_LOOKUP[l['gas']]
+    for layer in _dict['gas_layers']:
+        t = float(layer['thickness'])
+        g = GAS_LOOKUP[layer['gas']]
         gas = GasLayer(g,t)
         gases.append(gas)
     

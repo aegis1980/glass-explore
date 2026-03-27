@@ -18,7 +18,7 @@ nav img {
 }
 
 .radio-group {
-   font-size: 14px;
+   font-size: 13px;
 }
 
 .nav-link {
@@ -35,4 +35,9 @@ nav img {
 
 td:has(~ .dash-cell.cell--selected.focused), .dash-cell.cell--selected.focused ~ td {
   background-color: #A86561 !important; 
+}
+
+
+.card-body {
+    padding: 10px
 }

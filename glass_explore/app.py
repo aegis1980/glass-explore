@@ -2,6 +2,8 @@
 
 """
 entry point for the glass explore dash (multipage) app
+
+Run this file for development. For production, use gunicorn or similar to run the server instance directly (production.py).
 """
 
 
