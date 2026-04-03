@@ -23,6 +23,8 @@ pywincalc = "3.3.1"
 scikit-image = "0.26.0"
 pyodbc = "5.3.0"
 pyarrow = "23.0.1"
+thefuzz = "^0.22.1"
+python-levenshtein = "^0.27.3"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]

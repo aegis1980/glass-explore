@@ -2,6 +2,7 @@
 
 import dash
 from dash import html, dcc
+from dash import dash_table
 import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
 
@@ -148,30 +149,99 @@ def modal_glass_search():
     [
         dbc.ModalHeader(dbc.ModalTitle("GLASS EXPLORE | Energy")),
         dbc.ModalBody([
-            html.P(["This app is only intended as a playground - consult manufacturer's published data or use a tool such as LBNL Window to verify."]),
+            html.P(["Search by LBNL ID or product name."]),
             dbc.Row([
                 dbc.Col([
-                    html.Label("Search Glass Database:"),
                   dbc.Input(
                         id=EnergyLayoutID.INPUT_GLASS_SEARCH,
                         type="search",
-                        placeholder="Search" ,
-                        list="search-suggestions",
-                        placeholder="Type to search...",
-                        debounce=True, # Prevents hitting SQLite on every single keystroke
-                    ),
-                    html.Datalist(id=EnergyLayoutID.DATALIST_GLASS_SEARCH_SUGGESTIONS)
-                ], width=6),
+                        placeholder="Search IGDB" ,
+                        debounce=False
+                    )
+                ])
             ]),
-            html.P(["The source code for this webapp is available on request, under the AGPL-3.0 license. If you want to use any of the code, or have suggestions for improvements, please get in touch."]),
+            dbc.Row([
+                dbc.Col([
+                    dash_table.DataTable(
+                        id=EnergyLayoutID.DATATABLE_SEARCH_GLASS_RESULTS,
+
+                        row_selectable="single",  # Enables the selection logic
+                        selected_rows=[],         # Initial state
+                        style_data_conditional=[
+                            {
+                                'if': {'state': 'selected'}, # This highlights the entire row
+                                'backgroundColor': 'rgba(0, 116, 217, 0.2)',
+                                'border': '1px solid #0074D9'
+                            },
+                            # 2. Force the active cell to look exactly like the selected row
+                            # This removes the unique 'active cell' highlight
+                            {
+                                'if': {'state': 'active'},
+                                'backgroundColor': 'rgba(0, 116, 217, 0.2)',
+                                'border': '1px solid #0074D9'
+                            }
+                        ],
+
+                        columns=[
+                            {"name": "ID", "id": "ID"},
+                            {"name": "Name", "id": "Name"},
+                            {"name": "Product Name", "id": "ProductName"},
+                            {"name": "Manufacturer", "id": "Manufacturer"},
+                            {"name": "Thickness (mm)", "id": "Thickness"},
+                        ],
+                        data=[], # Starts empty
+
+                        # 1. Compact Styling
+                        style_cell={
+                            'fontSize': '10px',      # Smaller text
+                            'fontFamily': 'sans-serif',
+                            'padding': '2px 5px',    # Tighten vertical/horizontal padding
+                            'textAlign': 'left',
+                            'minWidth': '40px',      # Minimum width for stability
+                            'maxWidth': '150px',     # Prevent columns from growing too wide
+                            'overflow': 'hidden',
+                            'textOverflow': 'ellipsis', # Add '...' to long text
+                        },
+
+                        # 2. Specific Column Adjustments
+                        style_cell_conditional=[
+                            {'if': {'column_id': 'ID'}, 'width': '50px'},
+                            {'if': {'column_id': 'Thickness'}, 'width': '60px'},
+                            {'if': {'column_id': 'Manufacturer'}, 'width': '100px'},
+                        ],
+
+                        # 3. Overall Table Constraints
+                        style_table={
+                            'overflowX': 'auto',
+                            'overflowY': 'auto', 
+                            'maxHeight': '400px',
+                            'maxWidth': '100%'
+                        },
+
+                        # 4. Header Styling
+                        style_header={
+                            'fontWeight': 'bold',
+                            'fontSize': '10px'
+                        },
+
+
+                        # Add filtering/sorting if required
+                        sort_action="native",
+                    )
+                ])
+            ]),
         ]),
-        dbc.ModalFooter(
+        dbc.ModalFooter([
             dbc.Button(
-                "Close", id=EnergyLayoutID.MODAL_SEARCH_IGDB_CLOSE, className="ms-auto", n_clicks=0
+                "Ok", id=EnergyLayoutID.MODAL_SEARCH_IGDB_OK, n_clicks=0, color="success",outline=True, disabled=True
+            ),           
+            dbc.Button(
+                "Cancel", id=EnergyLayoutID.MODAL_SEARCH_IGDB_CLOSE, className="ms-auto", color="danger",n_clicks=0
             )
-        ),
+        ]),
     ],
     id=EnergyLayoutID.MODAL_SEARCH_IGDB,
+    size="lg",
     is_open=False,
 )
 

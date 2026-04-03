@@ -1,17 +1,19 @@
 #(c)2026 Jon Robinson. All Rights Reserved.
 
 import json
+import re
 import urllib.parse
 
 import dash
 
-from dash import Input, Output, State, clientside_callback, callback, no_update, html
+from dash import Input, Output, State, clientside_callback, callback, no_update, html,ctx
 from dash.exceptions import PreventUpdate
 
 import pandas as pd
+from thefuzz import process, fuzz
 
 
-from glass_explore import (ALL_MANUFACTURERS, OG_DESCRIPTION, URL, DF_GLASS_TABLE, DEFAULT_GRAPH_GLASS,Buildup, EnergyLayoutID, WebPaths,
+from glass_explore import (ALL_MANUFACTURERS, OG_DESCRIPTION, URL, DF_GLASS_TABLE, DEFAULT_GRAPH_GLASS,SEARCH_GLASS_TABLE,Buildup, EnergyLayoutID, WebPaths,
                            caching as caching, callback_helpers, igdb,COLORSPACE_RGB,COLORSPACE_LAB,
                            mywincalc, standards, svg_glass, utils, glass_model_helpers)
 
@@ -103,17 +105,6 @@ def toggle_about_modal(n1, n2, is_open):
 
 
 
-@callback(
-    Output(EnergyLayoutID.MODAL_SEARCH_IGDB, "is_open"),
-    [Input(EnergyLayoutID.MODAL_SEARCH_IGDB_CLOSE, "n_clicks"),Input(EnergyLayoutID.BUTTON_IGDB_SEARCH, "n_clicks")],
-    [State(EnergyLayoutID.MODAL_SEARCH_IGDB, "is_open")],
-)
-def toggle_search_igdb_modal(n1, n2, is_open):
-    if n1 :
-        return not is_open
-    if n2 :
-        return not is_open
-    return is_open
 
 
 
@@ -138,8 +129,7 @@ def store_in_hidden_div(pt_data):
     Input(EnergyLayoutID.SELECT_GAS,"value"),
     Input(EnergyLayoutID.INPUT_GAP,"value"),
     Input(EnergyLayoutID.SELECT_INNERLAYER_SUBSTRATE,"value"), # clear or ultraclear
-    Input(EnergyLayoutID.SELECT_INNERLAYER_THICKNESS,"value")
-
+    Input(EnergyLayoutID.SELECT_INNERLAYER_THICKNESS,"value"),
 )
 def glass_to_store(pt_data,flipped, gas, gap_thickness, inner_substrate, inner_thickness):
     """
@@ -323,53 +313,178 @@ def toggle_navbar_collapse(n, is_open):
     Output(EnergyLayoutID.SELECT_INNERLAYER_SUBSTRATE,"value"), # clear or ultraclear
     Output(EnergyLayoutID.SELECT_INNERLAYER_THICKNESS,"value"),
     Input(EnergyLayoutID.URL, 'href'),
-    State(EnergyLayoutID.URL,'pathname'),
-    State(EnergyLayoutID.URL,'search') 
+    Input(EnergyLayoutID.MODAL_SEARCH_IGDB_OK, 'n_clicks'),
+    State(EnergyLayoutID.URL,'search'),
+    State(EnergyLayoutID.MODAL_SEARCH_IGDB_OK,'value')
+
+
     )
-def onload_parse_url(href, pathname,search):
+def onload_parse_url_and_search_table(
+    href, 
+    btn_click,
+    search,
+    model_search_id
+):
+    
+    
     """
     Mocks a user data point click on the default loadup glass
     to trigger analysis on first load of webapp.
 
     Selected point in graph is not triggered by this - hard coded in hidden div.
     """
-    if href is None:
+    if not ctx.triggered_id:
         raise PreventUpdate
-    else:
-        if search:
-            parsed = urllib.parse.urlparse(href)
-            g_str = urllib.parse.parse_qs(parsed.query)['g'][0]
-            igu = GlassBuildup.make_glass(g_str)
-            return glass_model_helpers.callback_return(igu)
+
+    triggered = ctx.triggered_id
+    
+    if triggered == EnergyLayoutID.URL:
+        if href is None:
+            raise PreventUpdate
         else:
+            if search:
+                parsed = urllib.parse.urlparse(href)
+                g_str = urllib.parse.parse_qs(parsed.query)['g'][0]
+                igu = GlassBuildup.make_glass(g_str)
+                return glass_model_helpers.callback_return(igu)
+            else:
+                return \
+                    {'points' :[{'customdata': DEFAULT_GRAPH_GLASS}]}, \
+                    False, \
+                    'air', \
+                    12, \
+                    'clear', \
+                    6
+            
+    elif triggered == EnergyLayoutID.MODAL_SEARCH_IGDB_OK:
+        if model_search_id is None:
+            raise PreventUpdate
+        else:
+            id = int(model_search_id)
             return \
-                {'points' :[{'customdata': DEFAULT_GRAPH_GLASS}]}, \
-                False, \
-                'air', \
-                12, \
-                'clear', \
-                6
-        
+                {'points' :[{'customdata': DF_GLASS_TABLE.loc[id]}]}, \
+                no_update, \
+                no_update, \
+                no_update, \
+                no_update, \
+                no_update
+
+#############################################################################################
+#
+# Search Modal Callbacks
+#
+############################################################################################
+
 @callback(
-    Output(EnergyLayoutID.DATALIST_GLASS_SEARCH_SUGGESTIONS, "children"),
+    Output(EnergyLayoutID.MODAL_SEARCH_IGDB, "is_open"),
+    [Input(EnergyLayoutID.MODAL_SEARCH_IGDB_CLOSE, "n_clicks"),Input(EnergyLayoutID.BUTTON_IGDB_SEARCH, "n_clicks"),Input(EnergyLayoutID.MODAL_SEARCH_IGDB_OK, "n_clicks")],
+    [State(EnergyLayoutID.MODAL_SEARCH_IGDB, "is_open")],
+)
+def toggle_igdb_search_modal(n1, n2, n3,is_open):
+    if n1 or n3:
+        return not is_open
+    if n2 :
+        return not is_open
+    return is_open
+
+
+@callback(
+    Output(EnergyLayoutID.MODAL_SEARCH_IGDB, "is_open"),
+    [Input(EnergyLayoutID.MODAL_SEARCH_IGDB_OK, "n_clicks")],
+)
+def toggle_igdb_search_modal(n1, n2, n3,is_open):
+    if n1 or n3:
+        return not is_open
+    if n2 :
+        return not is_open
+    return is_open
+
+
+@callback(
+    Output(EnergyLayoutID.DATATABLE_SEARCH_GLASS_RESULTS, "data"), # Target the 'data' property
     Input(EnergyLayoutID.INPUT_GLASS_SEARCH, "value")
 )
-def update_suggestions(search_value):
+def update_table_from_user_input(search_value):
+    # 1. Guard Clause
     if not search_value or len(search_value) < 2:
+        return [] # Returns an empty list to clear the table
+
+    # 2. Define search and display columns
+    cols_to_search = ['ID', 'Name', 'ProductName']
+    cols_to_return  = ['ID', 'Name', 'ProductName', 'Manufacturer', 'Thickness']
+
+
+    if re.match(r'^\d+', search_value):
+        # 3a. Dynamic Masking
+        # Ensure all columns are treated as strings to avoid errors with numeric IDs/Thickness
+        mask = DF_GLASS_TABLE[cols_to_search].astype(str).apply(
+            lambda col: col.str.contains(search_value, case=False, na=False)
+        ).any(axis=1)
+
+        # 4a. Filter and Format
+        # Select only the specific columns you want the table to show
+        results = DF_GLASS_TABLE.loc[mask, cols_to_return].head(30)
+
+    else:
+        # 3b. Execute Fuzzy Match
+        # Extract matches based on the 'Token Set Ratio' (handles out-of-order words)
+        matches = process.extract(
+            search_value, 
+            SEARCH_GLASS_TABLE, 
+            scorer=fuzz.token_set_ratio,
+            limit=30
+        )
+
+        # 4b. Filter DataFrame by resulting indices
+        # 'matches' returns a list of tuples: (string, score, index)
+        match_indices = [m[2] for m in matches] #if m[1] > 50] # Only keep scores > 50%
+        
+        results = DF_GLASS_TABLE.loc[match_indices,cols_to_return]
+
+    results['Thickness'] = results['Thickness'].round(1)
+        
+    # 5. Return as a list of dictionaries (records format)
+    return results.to_dict('records')
+
+
+@callback(
+    Output(EnergyLayoutID.MODAL_SEARCH_IGDB_OK, "value"), # Store id for the selected row data
+    Output(EnergyLayoutID.MODAL_SEARCH_IGDB_OK, "outline"), # Store id for the selected row data
+    Output(EnergyLayoutID.MODAL_SEARCH_IGDB_OK, "disabled"), # Store id for the selected row data
+    Output(EnergyLayoutID.MODAL_SEARCH_IGDB_OK, "children"), # Store id for the selected row data
+    Input(EnergyLayoutID.DATATABLE_SEARCH_GLASS_RESULTS, "active_cell"),
+    State(EnergyLayoutID.DATATABLE_SEARCH_GLASS_RESULTS, "data"),
+    prevent_initial_call=True
+)
+def handle_search_result_row_click(active_cell, table_data):
+    # 1. Check if a cell was actually clicked
+    if not active_cell:
+        return  no_update, True, True, "No glass selected" # No row selected, return default value and no update for outline
+
+    # 2. Extract the row index from the click event
+    # 'row' is the relative index (0 to 14 if you limited to 15 results)
+    row_index = active_cell['row']
+
+    # 3. Retrieve the full row dictionary from the table data
+    if row_index < len(table_data):
+        selected_row = table_data[row_index]
+        
+        # Example: Print the ID or Name of the clicked glass
+        id = selected_row.get('ID')
+        
+        return id, False, False, f"Glass selected [ID: {id}]" # Return the selected row data and set outline to True
+
+    return no_update, True, True, "No glass selected"
+
+
+@callback(
+    Output(EnergyLayoutID.DATATABLE_SEARCH_GLASS_RESULTS, "selected_rows"),
+    Input(EnergyLayoutID.DATATABLE_SEARCH_GLASS_RESULTS, "active_cell"),
+    prevent_initial_call=True
+)
+def sync_row_selection(active_cell):
+    if not active_cell:
         return []
-
-
-    # Logic: Search across multiple specific columns
-    # Example: 'Manufacturer', 'Product_Name', and 'Thickness'
-    cols_to_search = ['Manufacturer', 'Product_Name']
     
-    # Efficient filtering across multiple columns
-    mask = pd.concat([
-        DF_GLASS_TABLE[col].str.contains(search_value, case=False, na=False) 
-        for col in cols_to_search
-    ], axis=1).any(axis=1)
-
-    # Extract unique values from the primary display column or a combined label
-    suggestions = DF_GLASS_TABLE[mask]['Product_Name'].unique()[:15]
-    
-    return [{"label": s, "value": s} for s in suggestions]
+    # Return the index of the row
+    return [active_cell['row']]

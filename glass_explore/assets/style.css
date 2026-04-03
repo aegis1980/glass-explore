@@ -37,7 +37,6 @@ td:has(~ .dash-cell.cell--selected.focused), .dash-cell.cell--selected.focused ~
   background-color: #A86561 !important; 
 }
 
-
 .card-body {
     padding: 10px
 }

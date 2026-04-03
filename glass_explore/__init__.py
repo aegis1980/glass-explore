@@ -70,6 +70,16 @@ DATATABLE_COLUMNS = ['ID','ProductName','Manufacturer','Thickness','Tvis','Tsol'
 
 try:
     DF_GLASS_TABLE = pd.read_parquet(PARQUET_GLASS_PATH, engine='pyarrow',)
+
+    DF_GLASS_TABLE['_search_blob'] = (
+            DF_GLASS_TABLE.index.astype(str) + " " + 
+            DF_GLASS_TABLE['Name'].fillna('') + " " + 
+            DF_GLASS_TABLE['ProductName'].fillna('')
+        ).str.lower()
+
+
+    SEARCH_GLASS_TABLE = DF_GLASS_TABLE[['ID', 'Name', 'ProductName']].astype(str).agg(' '.join, axis=1)
+
     CLEAR_6 = 103
     DEFAULT_GRAPH_GLASS = DF_GLASS_TABLE.loc[CLEAR_6]
 except FileNotFoundError:
@@ -118,8 +128,9 @@ class EnergyLayoutID:
 
     MODAL_SEARCH_IGDB = "modal-search-igdb"
     MODAL_SEARCH_IGDB_CLOSE = "modal-search-igdb-close"
+    MODAL_SEARCH_IGDB_OK = "modal-search-igdb-ok"
     INPUT_GLASS_SEARCH = "input-glass-search"
-    DATALIST_GLASS_SEARCH_SUGGESTIONS = "datalist-glass-search-suggestions"
+    DATATABLE_SEARCH_GLASS_RESULTS = "table-search-glass-results"
 
     SELECT_STANDARD = "select-standard"
 
