@@ -292,3 +292,7 @@ def populate_datatable(selected_id: int,df : pd.DataFrame, manufacturer : str,th
 def get_root_netloc(url) -> str:
     r = urlparse(url)
     return f'{r.scheme}://{r.netloc}'
+
+
+def round_to_nearest_even(x : float) -> int:
+    return int(round(x / 2.) * 2)

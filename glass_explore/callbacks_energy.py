@@ -9,7 +9,6 @@ import dash
 from dash import Input, Output, State, clientside_callback, callback, no_update, html,ctx
 from dash.exceptions import PreventUpdate
 
-import pandas as pd
 from thefuzz import process, fuzz
 
 
@@ -17,22 +16,22 @@ from glass_explore import (ALL_MANUFACTURERS, OG_DESCRIPTION, URL, DF_GLASS_TABL
                            caching as caching, callback_helpers, igdb,COLORSPACE_RGB,COLORSPACE_LAB,
                            mywincalc, standards, svg_glass, utils, glass_model_helpers)
 
-import glass_explore
 from glass_explore.glass_model import (GlassBuildup, InsulatedGlass)
 
-clientside_callback(
-    """
-    function(h,w) {
-        ht = self.innerHeight - 245;
-        s = "height:" + ht + "px";
-        document.getElementById('graph-ts-tv').setAttribute("style",s);
-        return window.dash_clientside.no_update;
-    }
-    """,
-    Output(EnergyLayoutID.DIV_HIDDEN_WINDOW_HT, "children"),
-    Input(EnergyLayoutID.DIV_DISPLAY_RESIZE,"height"),
-    Input(EnergyLayoutID.DIV_DISPLAY_RESIZE,"width")
-)
+# Dynamic resize graph on window resize 
+# clientside_callback(
+#     """
+#     function(h,w) {
+#         ht = self.innerHeight - 245;
+#         s = "height:" + ht + "px";
+#         document.getElementById('graph-ts-tv').setAttribute("style",s);
+#         return window.dash_clientside.no_update;
+#     }
+#     """,
+#     Output(EnergyLayoutID.DIV_HIDDEN_WINDOW_HT, "children"),
+#     Input(EnergyLayoutID.DIV_DISPLAY_RESIZE,"height"),
+#     Input(EnergyLayoutID.DIV_DISPLAY_RESIZE,"width")
+# )
 
 
 @callback(
@@ -45,8 +44,6 @@ clientside_callback(
     State(EnergyLayoutID.DIV_HIDDEN_SELECTED_ID, 'children'),  
 )
 def update_igdb_data_display(active_tabs, manufacturer, thickness,selected_id):
-
-
     out_fig = dash.no_update
     df = caching.thickness_cached_df(thickness)
     if active_tabs == EnergyLayoutID.TAB_GRAPH_TS_TV:
@@ -102,12 +99,6 @@ def toggle_about_modal(n1, n2, is_open):
     if n2 :
         return not is_open
     return is_open
-
-
-
-
-
-
 
 
 @callback(
@@ -184,10 +175,11 @@ def update_outer_lite_productdata(ts, buildup):
     buildup = json.loads(buildup)
     props = buildup[Buildup.SOLID_LAYERS][0]['props']
 
-    outer_layer_info = f"""
-            {props['ProductName']}
-            ({props['Manufacturer']})
-        """ 
+    outer_layer_info = [
+            f"ID{props['ID']}:",
+            html.Strong(f"{props['ProductName']}, {props['Name']}"),
+            f"({props['Manufacturer']}, {props['Thickness']:.1f}mm)"
+    ]
 
     return outer_layer_info   
 
@@ -270,6 +262,20 @@ def run_analysis_and_update_results(ts, standard, buildup):
 
 
 @callback(
+    Output(EnergyLayoutID.CARD_HEADER_COATED,"children"),
+    Output(EnergyLayoutID.CARD_HEADER_NONCOATED,"children"),
+    Input(EnergyLayoutID.SWITCH_LOWE_SIDE,"value")
+)
+def update_user_layer_card_header(side):
+    if not side:
+        return "Coated outer glass layer", "Non-coated inner glass layer"
+    else:
+        return "Coated inner glass layer  selected)", "Non-coated outer glass layer"
+
+
+
+
+@callback(
     Output(EnergyLayoutID.LINK_GSTR,"children"),Output(EnergyLayoutID.LINK_GSTR,"href"),
     Input(EnergyLayoutID.STORE_BUILDUP_IN_SESSION,"modified_timestamp"),
     State(EnergyLayoutID.STORE_BUILDUP_IN_SESSION,"data"),
@@ -307,6 +313,8 @@ def toggle_navbar_collapse(n, is_open):
 
 @callback(
     Output(EnergyLayoutID.GRAPH_IGDB, "clickData"),
+    Output(EnergyLayoutID.SELECT_MANUFACTURER,"value"),
+    Output(EnergyLayoutID.RADIO_THICKNESS,"value"),
     Output(EnergyLayoutID.CHECKBOX_FLIP_OUTERLAYER, "value"),
     Output(EnergyLayoutID.SELECT_GAS,"value"),
     Output(EnergyLayoutID.INPUT_GAP,"value"),
@@ -319,7 +327,7 @@ def toggle_navbar_collapse(n, is_open):
 
 
     )
-def onload_parse_url_and_search_table(
+def onload_parse_url_and_search_table_ok(
     href, 
     btn_click,
     search,
@@ -350,6 +358,8 @@ def onload_parse_url_and_search_table(
             else:
                 return \
                     {'points' :[{'customdata': DEFAULT_GRAPH_GLASS}]}, \
+                    ALL_MANUFACTURERS, \
+                    6, \
                     False, \
                     'air', \
                     12, \
@@ -363,6 +373,8 @@ def onload_parse_url_and_search_table(
             id = int(model_search_id)
             return \
                 {'points' :[{'customdata': DF_GLASS_TABLE.loc[id]}]}, \
+                DF_GLASS_TABLE.loc[id]['Manufacturer'], \
+                callback_helpers.round_to_nearest_even(DF_GLASS_TABLE.loc[id]['Thickness']), \
                 no_update, \
                 no_update, \
                 no_update, \
@@ -386,19 +398,6 @@ def toggle_igdb_search_modal(n1, n2, n3,is_open):
     if n2 :
         return not is_open
     return is_open
-
-
-@callback(
-    Output(EnergyLayoutID.MODAL_SEARCH_IGDB, "is_open"),
-    [Input(EnergyLayoutID.MODAL_SEARCH_IGDB_OK, "n_clicks")],
-)
-def toggle_igdb_search_modal(n1, n2, n3,is_open):
-    if n1 or n3:
-        return not is_open
-    if n2 :
-        return not is_open
-    return is_open
-
 
 @callback(
     Output(EnergyLayoutID.DATATABLE_SEARCH_GLASS_RESULTS, "data"), # Target the 'data' property

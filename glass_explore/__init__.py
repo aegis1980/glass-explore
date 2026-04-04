@@ -108,6 +108,8 @@ class EnergyLayoutID:
     BUTTON_REPORT = "button-report"
     BUTTON_IGDB_SEARCH = "button-igdb-search"
 
+    CARD_HEADER_COATED = "card-coated"
+    CARD_HEADER_NONCOATED = "card-non-coated"
 
     DIV_HIDDEN_WINDOW_HT = "div-hidden-window-ht"
     DIV_HIDDEN_SELECTED_ID = "div-selected-id-hidden"
@@ -133,10 +135,12 @@ class EnergyLayoutID:
     DATATABLE_SEARCH_GLASS_RESULTS = "table-search-glass-results"
 
     SELECT_STANDARD = "select-standard"
+    SELECT_MANUFACTURER = "select-manufacturer"
 
     SELECT_GAS = "select-gas"
     INPUT_GAP = "input-gap"
 
+    SWITCH_LOWE_SIDE = "switch-lowe-side"
 
     CHECKBOX_FLIP_OUTERLAYER = "checkbox-flip-outerlayer"
     CHECKBOX_ADVANCED_OPTICAL_STANDARD = "checkbox-advance-standard"
@@ -153,6 +157,8 @@ class EnergyLayoutID:
     NAVLINK_GRAPHTYPE_TS_TV = 1
     NAVLINK_GRAPHTYPE_LAB = 2 
     NAVLINK_GRAPHTYPE_RGB = 3
+
+    RADIO_THICKNESS = "radio-thickness"
 
     SELECT_INNERLAYER_THICKNESS = "select-innerlayer-thickness"
     SELECT_INNERLAYER_SUBSTRATE = "select-innerlayer-substrate"

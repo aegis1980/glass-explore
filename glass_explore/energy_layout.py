@@ -5,9 +5,10 @@ from dash import html, dcc
 from dash import dash_table
 import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
+import numpy as np
 
 import glass_explore
-from glass_explore import EnergyLayoutID, callback_helpers, igdb, OG_DESCRIPTION
+from glass_explore import EnergyLayoutID, callback_helpers, igdb, OG_DESCRIPTION, ALL_MANUFACTURERS, DF_GLASS_TABLE
 
 FITC_LOGO = 'balloon_white_h30px.png'
 COFFEE = 'coffee.svg'
@@ -41,6 +42,11 @@ table_body = [html.Tbody([row_u, row_shgc,row_vlt,row_rout,row_rin,row_color1,ro
 results_table = dbc.Table(
     table_header + table_body, 
     bordered=True)
+
+
+manufacturers = np.sort(DF_GLASS_TABLE.Manufacturer.unique())
+manufacturers = np.insert(manufacturers,0,ALL_MANUFACTURERS)
+
 
 def navbar():
 
@@ -87,17 +93,31 @@ def navbar():
     )
 
 
-radio_thickness = html.Div([
-    dbc.Label("Substrate thickness:"),
-     dbc.RadioItems(
+
+def select_manufacturer():
+    return html.Div([
+    dbc.Label("Manufacturer:"),
+    dbc.Select(
+        id=EnergyLayoutID.SELECT_MANUFACTURER, value = ALL_MANUFACTURERS,
+        options=[{"label": m, "value": m} for m in manufacturers]
+    ),
+    dbc.FormText(id = 'formtext-manufacturer',color='red'),
+])
+
+
+def radio_thickness():
+    return html.Div([
+        dbc.Label("Substrate thickness:"),
+        dbc.RadioItems(
             options=[
                 {"label": "4mm", "value": 4},
                 {"label": "6mm", "value": 6},
                 {"label": "8mm", "value": 8},
                 {"label": "10mm", "value": 10},
+                {"label": "12mm", "value": 12}
             ],
             value=6,
-            id="radio-thickness",
+            id=EnergyLayoutID.RADIO_THICKNESS,
         ),
     ]
 )
@@ -156,9 +176,9 @@ def modal_glass_search():
                         id=EnergyLayoutID.INPUT_GLASS_SEARCH,
                         type="search",
                         placeholder="Search IGDB" ,
-                        debounce=False
+                        debounce=False,
                     )
-                ])
+                ],className="mb-3")
             ]),
             dbc.Row([
                 dbc.Col([
@@ -317,21 +337,23 @@ def card_gas_layer():
             className="mb-2",
         )
 
-card_selected_layer = dbc.Card([
-        dbc.CardHeader("Outer glass layer (user selected)"),
+def card_coated_layer():
+    return dbc.Card([
+        dbc.CardHeader("Coated outer glass layer", id = EnergyLayoutID.CARD_HEADER_COATED),
         dbc.CardBody([
             dbc.Form(
                 dbc.Row(
                     [
                         dbc.Col(
-                           html.Div(id=EnergyLayoutID.DIV_OUTERLITE_PRODUCT)
+                           html.Div(id=EnergyLayoutID.DIV_OUTERLITE_PRODUCT),width=8
                         ),
                         dbc.Col(
                             dbc.Checkbox(
                                 id=EnergyLayoutID.CHECKBOX_FLIP_OUTERLAYER,
                                 label="Flip layer",
                                 value=False,
-                            )
+                            ),
+                            width=4,
                         )
                     ]
                 )
@@ -368,8 +390,9 @@ def card_results():
                 )]
             )
 
-card_inner_layer = dbc.Card([
-        dbc.CardHeader("Inner glass layer"),
+def card_noncoated_layer():
+    return dbc.Card([
+        dbc.CardHeader("Non-coated inner glass layer",id = EnergyLayoutID.CARD_HEADER_NONCOATED),
         dbc.CardBody(   
             dbc.Form(
                 dbc.Row(
@@ -427,7 +450,8 @@ def init_graph():
     )
 
 
-tabs = html.Div(
+def graph_tabs():
+    return html.Div(
     [
         dbc.Tabs(
             [
@@ -439,6 +463,6 @@ tabs = html.Div(
             active_tab=EnergyLayoutID.TAB_GRAPH_TS_TV,
         ),
         html.Div([init_graph()],id=EnergyLayoutID.TAB_CONTENT)
-    ]
+    ],className="mt-auto"
 )
 

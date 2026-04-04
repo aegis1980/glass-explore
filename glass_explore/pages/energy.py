@@ -17,9 +17,6 @@ from glass_explore import (ALL_MANUFACTURERS, OG_DESCRIPTION, URL, DF_GLASS_TABL
 
 from glass_explore import callbacks_energy
 
-manufacturers = np.sort(DF_GLASS_TABLE.Manufacturer.unique())
-manufacturers = np.insert(manufacturers,0,ALL_MANUFACTURERS)
-
 
 dash.register_page(
     __name__, 
@@ -28,14 +25,6 @@ dash.register_page(
 )
 
 
-select_manufacturer = html.Div([
-    dbc.Label("Manufacturer:"),
-    dbc.Select(
-        id="select-manufacturer", value = ALL_MANUFACTURERS,
-        options=[{"label": m, "value": m} for m in manufacturers]
-    ),
-    dbc.FormText(id = 'formtext-manufacturer',color='red'),
-])
 
 
 def layout(g = None): 
@@ -53,21 +42,35 @@ def layout(g = None):
         energy_layout.navbar(),
         dbc.Container([
             dbc.Row([
+                # Left column - search, manufacturer, thickness and graph tabs
                 dbc.Col([
                     dbc.Row([
                         dbc.Col([
                             dbc.Button("Search IGDB by glass name, id etc", color="secondary",size="sm", id=EnergyLayoutID.BUTTON_IGDB_SEARCH,className="mb-2"),
-                            select_manufacturer
+                            energy_layout.select_manufacturer()
                         ], xl=6),
-                        dbc.Col(energy_layout.radio_thickness, xl = 6)
+                        dbc.Col(energy_layout.radio_thickness(), xl = 6)
                     ]),
-                    energy_layout.tabs
-                ], xl = 8),
+                    energy_layout.graph_tabs()
+                ], xl = 8, className="d-flex flex-column vh-100 border-end"),
+
+                # Right column - buildup svg and layer cards including results
                 dbc.Col([
-                    dbc.Row(dbc.Col(html.Div(id=EnergyLayoutID.DIV_BUILDUP_SVG_CONTAINER),className="mb-2")),
-                    dbc.Row(dbc.Col(energy_layout.card_selected_layer)),
+                    dbc.Row([   
+                        dbc.Col([
+                            html.Div(id=EnergyLayoutID.DIV_BUILDUP_SVG_CONTAINER),
+                            dbc.Switch(
+                                id=EnergyLayoutID.SWITCH_LOWE_SIDE,
+                                value=False,
+                                className="static-switch"
+                            )
+                        ],className="ms-auto")
+                        ],
+                        className="mb-2"
+                    ),
+                    dbc.Row(dbc.Col(energy_layout.card_coated_layer())),
                     dbc.Row(dbc.Col(energy_layout.card_gas_layer())),
-                    dbc.Row(dbc.Col(energy_layout.card_inner_layer)),
+                    dbc.Row(dbc.Col(energy_layout.card_noncoated_layer)),
                     dbc.Row(dbc.Col(energy_layout.card_results()))
                 ],xl = 4)
             ]),
