@@ -22,19 +22,12 @@ def background_callback_manager():
     else:
         return DiskcacheManager(cache, cache_by=[lambda: launch_uid], expire=120)
 
-# 3. Use a custom memoize function instead of the broken @pandas_cache
+
 def thickness_cached_df(thickness):
     cache_key = f"thickness_{thickness}"
     result = cache.get(cache_key)
     if result is None:
-        result = DF_GLASS_TABLE[DF_GLASS_TABLE['Thickness'].between(thickness - 0.75, thickness + 0.75)]
+        result = DF_GLASS_TABLE[DF_GLASS_TABLE['Thickness'].between(thickness - 0.95, thickness + 0.95)]
         cache.set(cache_key, result, expire=3600) # Cache for 1 hour
     return result
 
-def thickness_cached_readable_df(thickness):
-    cache_key = f"readable_thickness_{thickness}"
-    result = cache.get(cache_key)
-    if result is None:
-        result = DF_READABLE_GLASS_TABLE[DF_READABLE_GLASS_TABLE['Thickness'].between(thickness - 0.75, thickness + 0.75)]
-        cache.set(cache_key, result, expire=3600)
-    return result

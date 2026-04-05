@@ -31,7 +31,7 @@ def populate_standards(include_interesting):
     return options
     
 
-def populate_graph_ts_tv(selected_id : int, df: pd.DataFrame, manufacturer, thickness):
+def populate_graph_ts_tv(selected_id : int, df: pd.DataFrame, manufacturer, thickness: int):
     """
     Generates Tsolar vs Tvisible graph
 
@@ -39,7 +39,7 @@ def populate_graph_ts_tv(selected_id : int, df: pd.DataFrame, manufacturer, thic
         selected_id (int) : id of selected glass
         df (_type_): _description_
         manufacturer (_type_): _description_
-        thickness (_type_): _description_
+        thickness (int): _description_
     """
     fig = go.Figure()
     if manufacturer == ALL_MANUFACTURERS:
@@ -266,7 +266,7 @@ def populate_graph_colorspace(selected_id,df, manufacturer, thickness, colorspac
     return fig, msg, msg_color  
 
 
-def populate_datatable(selected_id: int,df : pd.DataFrame, manufacturer : str,thickness : float) -> pd.DataFrame:
+def populate_datatable(df : pd.DataFrame, manufacturer : str,thickness : float) -> pd.DataFrame:
     """_summary_
 
     Args:

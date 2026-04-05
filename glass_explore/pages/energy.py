@@ -47,10 +47,14 @@ def layout(g = None):
                     dbc.Row([
                         dbc.Col([
                             dbc.Button("Search IGDB by glass name, id etc", color="secondary",size="sm", id=EnergyLayoutID.BUTTON_IGDB_SEARCH,className="mb-2"),
+                        ], width=12),
+                    ]),
+                    dbc.Row([
+                        dbc.Col([
                             energy_layout.select_manufacturer()
                         ], xl=6),
-                        dbc.Col(energy_layout.radio_thickness(), xl = 6)
-                    ]),
+                        dbc.Col(energy_layout.select_thickness(), xl = 6)
+                    ],className="mb-2"),
                     energy_layout.graph_tabs()
                 ], xl = 8, className="d-flex flex-column vh-100 border-end"),
 
@@ -59,24 +63,38 @@ def layout(g = None):
                     dbc.Row([   
                         dbc.Col([
                             html.Div(id=EnergyLayoutID.DIV_BUILDUP_SVG_CONTAINER),
-                            dbc.Switch(
-                                id=EnergyLayoutID.SWITCH_LOWE_SIDE,
-                                value=False,
-                                className="static-switch"
-                            )
-                        ],className="ms-auto")
+                            html.Div([
+                                dbc.Switch(
+                                    id=EnergyLayoutID.SWITCH_LOWE_SIDE,
+                                    value=False,
+                                    className="static-switch",
+                                ),
+                            ],className="d-flex justify-content-center", style={"width":"fit-content"}),
+                            dbc.Popover(
+                                "Swap position of coated layer in IGU outside <-> inside",
+                                target=EnergyLayoutID.SWITCH_LOWE_SIDE,
+                                body=True,
+                                trigger="hover",
+                                placement="bottom"
+                            ),
+                        ],width=10),
+                        dbc.Col([
+                             dbc.Button("", color="light", className="me-1 bi bi-share-fill", id=EnergyLayoutID.BUTTON_SHARE, size="sm"),
+                        ],width=2),
                         ],
                         className="mb-2"
                     ),
                     dbc.Row(dbc.Col(energy_layout.card_coated_layer())),
                     dbc.Row(dbc.Col(energy_layout.card_gas_layer())),
-                    dbc.Row(dbc.Col(energy_layout.card_noncoated_layer)),
+                    dbc.Row(dbc.Col(energy_layout.card_noncoated_layer())),
                     dbc.Row(dbc.Col(energy_layout.card_results()))
-                ],xl = 4)
+                ],
+                id= EnergyLayoutID.COLUMN_RHS,
+                xl = 4)
             ]),
             energy_layout.modal_about(),
             energy_layout.modal_glass_search(),
-            energy_layout.model_share
+            energy_layout.modal_share()
         
         ], fluid=True )],
        

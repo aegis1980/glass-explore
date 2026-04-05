@@ -6,7 +6,7 @@ import urllib.parse
 
 import dash
 
-from dash import Input, Output, State, clientside_callback, callback, no_update, html,ctx
+from dash import Input, Output, State, clientside_callback, callback, no_update, html,ctx,Patch
 from dash.exceptions import PreventUpdate
 
 from thefuzz import process, fuzz
@@ -36,15 +36,19 @@ from glass_explore.glass_model import (GlassBuildup, InsulatedGlass)
 
 @callback(
     Output(EnergyLayoutID.GRAPH_IGDB, "figure"),
-    Output("formtext-manufacturer","children"), 
-    Output("formtext-manufacturer","color"),
+    Output(EnergyLayoutID.FORMTEXT_SELECT_COATED_MANUFACTURER,"children"), 
+    Output(EnergyLayoutID.FORMTEXT_SELECT_COATED_MANUFACTURER,"color"),
     Input(EnergyLayoutID.TABS, "active_tab"),
-    Input("select-manufacturer", "value"),
-    Input("radio-thickness", "value"),
+    Input(EnergyLayoutID.SELECT_COATED_MANUFACTURER, "value"),
+    Input(EnergyLayoutID.SELECT_COATED_THICKNESS, "value"),
     State(EnergyLayoutID.DIV_HIDDEN_SELECTED_ID, 'children'),  
 )
 def update_igdb_data_display(active_tabs, manufacturer, thickness,selected_id):
     out_fig = dash.no_update
+
+    if thickness:
+        thickness = int(thickness)
+
     df = caching.thickness_cached_df(thickness)
     if active_tabs == EnergyLayoutID.TAB_GRAPH_TS_TV:
         out_fig, out_msg, out_msgcolor = callback_helpers.populate_graph_ts_tv(selected_id,df, manufacturer,thickness)
@@ -116,13 +120,14 @@ def store_in_hidden_div(pt_data):
 @callback(
     Output(EnergyLayoutID.STORE_BUILDUP_IN_SESSION, 'data'),  
     Input(EnergyLayoutID.GRAPH_IGDB, "clickData"),
+    Input(EnergyLayoutID.SWITCH_LOWE_SIDE,"value"),
     Input(EnergyLayoutID.CHECKBOX_FLIP_OUTERLAYER, "value"),
     Input(EnergyLayoutID.SELECT_GAS,"value"),
     Input(EnergyLayoutID.INPUT_GAP,"value"),
-    Input(EnergyLayoutID.SELECT_INNERLAYER_SUBSTRATE,"value"), # clear or ultraclear
-    Input(EnergyLayoutID.SELECT_INNERLAYER_THICKNESS,"value"),
+    Input(EnergyLayoutID.SELECT_UNCOATED_SUBSTRATE,"value"), # clear or ultraclear
+    Input(EnergyLayoutID.SELECT_UNCOATED_THICKNESS,"value"),
 )
-def glass_to_store(pt_data,flipped, gas, gap_thickness, inner_substrate, inner_thickness):
+def glass_to_store(pt_data, coated_side_inside, coated_layer_flipped, gas, gap_thickness, uncoated_substrate, uncoated_thickness):
     """
     Stores current user selected buildup in session storage.
     """
@@ -134,17 +139,23 @@ def glass_to_store(pt_data,flipped, gas, gap_thickness, inner_substrate, inner_t
     else:
         return dash.no_update, 'no glass id'
 
-    props_outer = igdb.lookup_glass_props(id)
+    props_coated = igdb.lookup_glass_props(id)
+    props_uncoated = mywincalc.generic_uncoated_glass_props(int(uncoated_thickness),uncoated_substrate == 'ultraclear') # note inntersubstrate taking a bool!
     
-    buildup[Buildup.SOLID_LAYERS][0]['color'] = DF_GLASS_TABLE.loc[int(id)]['CssColor']
-    buildup[Buildup.SOLID_LAYERS][0]['flipped'] = flipped
-    utils.populate_buildup_with_glass_props(buildup,props_outer,0)
+    if coated_side_inside:
+        a=1
+        b=0
+    else:
+        a=0
+        b=1
 
-    
-    props_inner = mywincalc.generic_uncoated_glass_props(int(inner_thickness),inner_substrate == 'ultraclear') # note inntersubstrate taking a bool!
-    buildup[Buildup.SOLID_LAYERS][1]['color'] = DF_GLASS_TABLE.loc[props_inner['NFRC_ID']]['CssColor']
-    buildup[Buildup.SOLID_LAYERS][1]['flipped'] = False
-    utils.populate_buildup_with_glass_props(buildup,props_inner,1)
+    buildup[Buildup.SOLID_LAYERS][a]['color'] = DF_GLASS_TABLE.loc[int(id)]['CssColor']
+    buildup[Buildup.SOLID_LAYERS][a]['flipped'] = coated_layer_flipped
+    utils.populate_buildup_with_glass_props(buildup,props_coated,a)
+
+    buildup[Buildup.SOLID_LAYERS][b]['color'] = DF_GLASS_TABLE.loc[props_uncoated['NFRC_ID']]['CssColor']
+    buildup[Buildup.SOLID_LAYERS][b]['flipped'] = False
+    utils.populate_buildup_with_glass_props(buildup,props_uncoated,b)
 
     buildup[Buildup.GAS_LAYERS][0]['gas'] = gas
     buildup[Buildup.GAS_LAYERS][0]['thickness'] = gap_thickness
@@ -205,7 +216,7 @@ def update_results_labels(standard):
         return ["Visible transmittance, T",html.Sub("vis")], ["SHGC"]
     else:
         return ["Visible transmittance, τᵥ"], ["Solar factor, g"]
-
+    
 
 
 @callback(
@@ -224,8 +235,6 @@ def run_analysis_and_update_results(ts, standard, buildup):
     if ts is None or buildup is None:
         raise PreventUpdate
     buildup = json.loads(buildup)
-
-    print("Running analysis for buildup:",standard)
 
     if standard == "nfrc":   
         glazing_system_u_environment, glazing_system_solar_environment= mywincalc.run_nfrc_analysis(buildup)
@@ -266,13 +275,11 @@ def run_analysis_and_update_results(ts, standard, buildup):
     Output(EnergyLayoutID.CARD_HEADER_NONCOATED,"children"),
     Input(EnergyLayoutID.SWITCH_LOWE_SIDE,"value")
 )
-def update_user_layer_card_header(side):
-    if not side:
+def update_card_headers_on_igu_flip(coated_side_in):
+    if not coated_side_in:
         return "Coated outer glass layer", "Non-coated inner glass layer"
     else:
-        return "Coated inner glass layer  selected)", "Non-coated outer glass layer"
-
-
+        return "Coated inner glass layer", "Non-coated outer glass layer"
 
 
 @callback(
@@ -313,13 +320,13 @@ def toggle_navbar_collapse(n, is_open):
 
 @callback(
     Output(EnergyLayoutID.GRAPH_IGDB, "clickData"),
-    Output(EnergyLayoutID.SELECT_MANUFACTURER,"value"),
-    Output(EnergyLayoutID.RADIO_THICKNESS,"value"),
+    Output(EnergyLayoutID.SELECT_COATED_MANUFACTURER,"value"),
+    Output(EnergyLayoutID.SELECT_COATED_THICKNESS,"value"),
     Output(EnergyLayoutID.CHECKBOX_FLIP_OUTERLAYER, "value"),
     Output(EnergyLayoutID.SELECT_GAS,"value"),
     Output(EnergyLayoutID.INPUT_GAP,"value"),
-    Output(EnergyLayoutID.SELECT_INNERLAYER_SUBSTRATE,"value"), # clear or ultraclear
-    Output(EnergyLayoutID.SELECT_INNERLAYER_THICKNESS,"value"),
+    Output(EnergyLayoutID.SELECT_UNCOATED_SUBSTRATE,"value"), # clear or ultraclear
+    Output(EnergyLayoutID.SELECT_UNCOATED_THICKNESS,"value"),
     Input(EnergyLayoutID.URL, 'href'),
     Input(EnergyLayoutID.MODAL_SEARCH_IGDB_OK, 'n_clicks'),
     State(EnergyLayoutID.URL,'search'),
@@ -389,42 +396,67 @@ def onload_parse_url_and_search_table_ok(
 
 @callback(
     Output(EnergyLayoutID.MODAL_SEARCH_IGDB, "is_open"),
-    [Input(EnergyLayoutID.MODAL_SEARCH_IGDB_CLOSE, "n_clicks"),Input(EnergyLayoutID.BUTTON_IGDB_SEARCH, "n_clicks"),Input(EnergyLayoutID.MODAL_SEARCH_IGDB_OK, "n_clicks")],
-    [State(EnergyLayoutID.MODAL_SEARCH_IGDB, "is_open")],
+    Output(EnergyLayoutID.MODAL_SEARCH_SELECT_COATED_MANUFACTURER,"value"),
+    Output(EnergyLayoutID.MODAL_SEARCH_SELECT_COATED_THICKNESS,"value"),
+    Input(EnergyLayoutID.MODAL_SEARCH_IGDB_CLOSE, "n_clicks"),
+    Input(EnergyLayoutID.BUTTON_IGDB_SEARCH, "n_clicks"),
+    Input(EnergyLayoutID.MODAL_SEARCH_IGDB_OK, "n_clicks"),
+    State(EnergyLayoutID.MODAL_SEARCH_IGDB, "is_open"),
+    State(EnergyLayoutID.SELECT_COATED_MANUFACTURER,"value"),
+    State(EnergyLayoutID.SELECT_COATED_THICKNESS,"value"),
 )
-def toggle_igdb_search_modal(n1, n2, n3,is_open):
+def toggle_igdb_search_modal(n1, open_search_modal_button, n3,is_open,manufacturer, thickness):
     if n1 or n3:
-        return not is_open
-    if n2 :
-        return not is_open
-    return is_open
+        return not is_open,no_update,no_update
+    if open_search_modal_button:
+        return not is_open,manufacturer, int(thickness)
+    return is_open,no_update,no_update
+
+
 
 @callback(
-    Output(EnergyLayoutID.DATATABLE_SEARCH_GLASS_RESULTS, "data"), # Target the 'data' property
-    Input(EnergyLayoutID.INPUT_GLASS_SEARCH, "value")
+    Output(EnergyLayoutID.MODAL_SEARCH_DATATABLE, "data"), # Target the 'data' property
+    Output(EnergyLayoutID.MODAL_SEARCH_FORMTEXT_SELECT_COATED_MANUFACTURER, "children"),
+    Output(EnergyLayoutID.MODAL_SEARCH_FORMTEXT_SELECT_COATED_MANUFACTURER, "color"),
+    Input(EnergyLayoutID.MODAL_SEARCH_IGDB, "is_open"),
+    Input(EnergyLayoutID.MODAL_SEARCH_INPUT_GLASS_SEARCH, "value"),
+    Input(EnergyLayoutID.MODAL_SEARCH_SELECT_COATED_MANUFACTURER,"value"),
+    Input(EnergyLayoutID.MODAL_SEARCH_SELECT_COATED_THICKNESS,"value"),
+    prevent_initial_call=True
 )
-def update_table_from_user_input(search_value):
+def update_table_from_user_input(modal_open,search_value, manufacturer, thickness):
+
+    if not modal_open:
+        raise PreventUpdate
+
+    if thickness:
+        thickness = int(thickness)
+
+    df = caching.thickness_cached_df(thickness)
+    df,msg,msg_color = callback_helpers.populate_datatable(df, manufacturer, thickness)
+
     # 1. Guard Clause
-    if not search_value or len(search_value) < 2:
-        return [] # Returns an empty list to clear the table
+  #  if not search_value or len(search_value) < 2:
+  #      return [] # Returns an empty list to clear the table
 
     # 2. Define search and display columns
     cols_to_search = ['ID', 'Name', 'ProductName']
     cols_to_return  = ['ID', 'Name', 'ProductName', 'Manufacturer', 'Thickness']
 
 
-    if re.match(r'^\d+', search_value):
+    if search_value and re.match(r'^\d+', search_value):
         # 3a. Dynamic Masking
         # Ensure all columns are treated as strings to avoid errors with numeric IDs/Thickness
-        mask = DF_GLASS_TABLE[cols_to_search].astype(str).apply(
+        mask = df[cols_to_search].astype(str).apply(
             lambda col: col.str.contains(search_value, case=False, na=False)
         ).any(axis=1)
 
         # 4a. Filter and Format
         # Select only the specific columns you want the table to show
-        results = DF_GLASS_TABLE.loc[mask, cols_to_return].head(30)
+        results = df.loc[mask, cols_to_return].head(30)
 
-    else:
+    elif search_value:
+
         # 3b. Execute Fuzzy Match
         # Extract matches based on the 'Token Set Ratio' (handles out-of-order words)
         matches = process.extract(
@@ -438,12 +470,17 @@ def update_table_from_user_input(search_value):
         # 'matches' returns a list of tuples: (string, score, index)
         match_indices = [m[2] for m in matches] #if m[1] > 50] # Only keep scores > 50%
         
-        results = DF_GLASS_TABLE.loc[match_indices,cols_to_return]
+        results = df.loc[match_indices,cols_to_return]
+
+    else:
+
+        # no search value, return default top results based on manufacturer/thickness filter
+        results = df.loc[:,cols_to_return]
 
     results['Thickness'] = results['Thickness'].round(1)
         
     # 5. Return as a list of dictionaries (records format)
-    return results.to_dict('records')
+    return results.to_dict('records'),msg,msg_color
 
 
 @callback(
@@ -451,8 +488,8 @@ def update_table_from_user_input(search_value):
     Output(EnergyLayoutID.MODAL_SEARCH_IGDB_OK, "outline"), # Store id for the selected row data
     Output(EnergyLayoutID.MODAL_SEARCH_IGDB_OK, "disabled"), # Store id for the selected row data
     Output(EnergyLayoutID.MODAL_SEARCH_IGDB_OK, "children"), # Store id for the selected row data
-    Input(EnergyLayoutID.DATATABLE_SEARCH_GLASS_RESULTS, "active_cell"),
-    State(EnergyLayoutID.DATATABLE_SEARCH_GLASS_RESULTS, "data"),
+    Input(EnergyLayoutID.MODAL_SEARCH_DATATABLE, "active_cell"),
+    State(EnergyLayoutID.MODAL_SEARCH_DATATABLE, "data"),
     prevent_initial_call=True
 )
 def handle_search_result_row_click(active_cell, table_data):
@@ -477,8 +514,8 @@ def handle_search_result_row_click(active_cell, table_data):
 
 
 @callback(
-    Output(EnergyLayoutID.DATATABLE_SEARCH_GLASS_RESULTS, "selected_rows"),
-    Input(EnergyLayoutID.DATATABLE_SEARCH_GLASS_RESULTS, "active_cell"),
+    Output(EnergyLayoutID.MODAL_SEARCH_DATATABLE, "selected_rows"),
+    Input(EnergyLayoutID.MODAL_SEARCH_DATATABLE, "active_cell"),
     prevent_initial_call=True
 )
 def sync_row_selection(active_cell):

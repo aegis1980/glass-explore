@@ -94,21 +94,28 @@ def navbar():
 
 
 
-def select_manufacturer():
+def select_manufacturer(
+    select_id:str = EnergyLayoutID.SELECT_COATED_MANUFACTURER,
+    formtext_id:str = EnergyLayoutID.FORMTEXT_SELECT_COATED_MANUFACTURER
+):
+
     return html.Div([
-    dbc.Label("Manufacturer:"),
-    dbc.Select(
-        id=EnergyLayoutID.SELECT_MANUFACTURER, value = ALL_MANUFACTURERS,
-        options=[{"label": m, "value": m} for m in manufacturers]
-    ),
-    dbc.FormText(id = 'formtext-manufacturer',color='red'),
-])
+        dbc.Label("Manufacturer:"),
+        dbc.Select(
+            id=select_id, value = ALL_MANUFACTURERS,
+            options=[{"label": m, "value": m} for m in manufacturers]
+        ),
+        dbc.FormText(id = formtext_id,color='red'),
+    ])
 
 
-def radio_thickness():
+def select_thickness(
+    select_id:str = EnergyLayoutID.SELECT_COATED_THICKNESS
+):
+
     return html.Div([
         dbc.Label("Substrate thickness:"),
-        dbc.RadioItems(
+        dbc.Select(
             options=[
                 {"label": "4mm", "value": 4},
                 {"label": "6mm", "value": 6},
@@ -117,7 +124,7 @@ def radio_thickness():
                 {"label": "12mm", "value": 12}
             ],
             value=6,
-            id=EnergyLayoutID.RADIO_THICKNESS,
+            id=select_id,
         ),
     ]
 )
@@ -173,7 +180,7 @@ def modal_glass_search():
             dbc.Row([
                 dbc.Col([
                   dbc.Input(
-                        id=EnergyLayoutID.INPUT_GLASS_SEARCH,
+                        id=EnergyLayoutID.MODAL_SEARCH_INPUT_GLASS_SEARCH,
                         type="search",
                         placeholder="Search IGDB" ,
                         debounce=False,
@@ -182,9 +189,22 @@ def modal_glass_search():
             ]),
             dbc.Row([
                 dbc.Col([
+                    select_manufacturer(
+                        EnergyLayoutID.MODAL_SEARCH_SELECT_COATED_MANUFACTURER, 
+                        EnergyLayoutID.MODAL_SEARCH_FORMTEXT_SELECT_COATED_MANUFACTURER
+                    )
+                ],width=6),
+                dbc.Col([
+                    select_thickness(EnergyLayoutID.MODAL_SEARCH_SELECT_COATED_THICKNESS)
+                ],width=6)
+            ],className="mb-3"),
+            dbc.Row([
+                dbc.Col([
                     dash_table.DataTable(
-                        id=EnergyLayoutID.DATATABLE_SEARCH_GLASS_RESULTS,
-
+                        id=EnergyLayoutID.MODAL_SEARCH_DATATABLE,
+                        page_action='none', # Disable Pagination
+                        virtualization=True,
+                        fixed_rows={'headers': True},
                         row_selectable="single",  # Enables the selection logic
                         selected_rows=[],         # Initial state
                         style_data_conditional=[
@@ -266,7 +286,8 @@ def modal_glass_search():
 )
 
 
-model_share = dbc.Modal(
+def modal_share():
+    return dbc.Modal(
     [
         dbc.ModalHeader(dbc.ModalTitle("Share IGU buildup ")),
         dbc.ModalBody([
@@ -392,7 +413,7 @@ def card_results():
 
 def card_noncoated_layer():
     return dbc.Card([
-        dbc.CardHeader("Non-coated inner glass layer",id = EnergyLayoutID.CARD_HEADER_NONCOATED),
+        dbc.CardHeader(["Non-coated inner glass layer"],id = EnergyLayoutID.CARD_HEADER_NONCOATED),
         dbc.CardBody(   
             dbc.Form(
                 dbc.Row(
@@ -400,7 +421,7 @@ def card_noncoated_layer():
                         dbc.Label("Thickness", width="auto"),
                         dbc.Col(
                             dbc.Select(
-                                id=EnergyLayoutID.SELECT_INNERLAYER_THICKNESS, 
+                                id=EnergyLayoutID.SELECT_UNCOATED_THICKNESS, 
                                 value = 6,
                                 options=[{"label" : f"{t}mm", "value" : t} for t in igdb.CLEAR_LOOKUP]
                             )
@@ -408,7 +429,7 @@ def card_noncoated_layer():
                         dbc.Label("Substrate", width="auto"),
                         dbc.Col(
                             dbc.Select(
-                                id=EnergyLayoutID.SELECT_INNERLAYER_SUBSTRATE, 
+                                id=EnergyLayoutID.SELECT_UNCOATED_SUBSTRATE, 
                                 value = 'clear',
                                 options=[
                                     {"label": "clear", "value": 'clear'},

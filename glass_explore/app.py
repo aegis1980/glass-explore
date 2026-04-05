@@ -22,7 +22,7 @@ def index_redirect():
 app = Dash(
     __name__, 
     use_pages=True,
-    external_stylesheets=[dbc.themes.BOOTSTRAP],
+    external_stylesheets=[dbc.themes.BOOTSTRAP,dbc.icons.BOOTSTRAP],
     server=server,
     assets_external_path="/"
 )

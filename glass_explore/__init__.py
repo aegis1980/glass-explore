@@ -111,6 +111,9 @@ class EnergyLayoutID:
     CARD_HEADER_COATED = "card-coated"
     CARD_HEADER_NONCOATED = "card-non-coated"
 
+    COLUMN_LHS = "column-lhs"
+    COLUMN_RHS = "column-rhs"
+
     DIV_HIDDEN_WINDOW_HT = "div-hidden-window-ht"
     DIV_HIDDEN_SELECTED_ID = "div-selected-id-hidden"
     DIV_GRAPH_IGDB = "div-graph-igdb"
@@ -131,11 +134,18 @@ class EnergyLayoutID:
     MODAL_SEARCH_IGDB = "modal-search-igdb"
     MODAL_SEARCH_IGDB_CLOSE = "modal-search-igdb-close"
     MODAL_SEARCH_IGDB_OK = "modal-search-igdb-ok"
-    INPUT_GLASS_SEARCH = "input-glass-search"
-    DATATABLE_SEARCH_GLASS_RESULTS = "table-search-glass-results"
+    MODAL_SEARCH_INPUT_GLASS_SEARCH = "modal-search-input-glass-search"
+    MODAL_SEARCH_DATATABLE = "modal-search-datatable"
+    MODAL_SEARCH_SELECT_COATED_MANUFACTURER = "modal-search-select-coated-manufacturer"
+    MODAL_SEARCH_FORMTEXT_SELECT_COATED_MANUFACTURER = "modal-search-formtext-select-coated-manufacturer"
+    MODAL_SEARCH_SELECT_COATED_THICKNESS = "modal-search-select-coated-thickness"
+
+
 
     SELECT_STANDARD = "select-standard"
-    SELECT_MANUFACTURER = "select-manufacturer"
+
+    SELECT_COATED_MANUFACTURER = "select-manufacturer"
+    FORMTEXT_SELECT_COATED_MANUFACTURER = "formtext-select-manufacturer"
 
     SELECT_GAS = "select-gas"
     INPUT_GAP = "input-gap"
@@ -158,11 +168,12 @@ class EnergyLayoutID:
     NAVLINK_GRAPHTYPE_LAB = 2 
     NAVLINK_GRAPHTYPE_RGB = 3
 
-    RADIO_THICKNESS = "radio-thickness"
+    SELECT_COATED_THICKNESS = "select-thickness"
 
-    SELECT_INNERLAYER_THICKNESS = "select-innerlayer-thickness"
-    SELECT_INNERLAYER_SUBSTRATE = "select-innerlayer-substrate"
-    SELECT_MANUFACTURER = "select-manufacturer"
+    SELECT_UNCOATED_THICKNESS = "select-innerlayer-thickness"
+    SELECT_UNCOATED_SUBSTRATE = "select-innerlayer-substrate"
+
+    SELECT_COATED_MANUFACTURER = "select-manufacturer"
     SELECT_OPTICAL_STANDARD = "select-standard"
 
     DUMMY_FOR_CALLBACK = "dummy-for-callback"
