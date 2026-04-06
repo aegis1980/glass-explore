@@ -176,23 +176,25 @@ def update_buildup_svg(ts, buildup):
 
 
 @callback(
-    Output(EnergyLayoutID.DIV_OUTERLITE_PRODUCT,"children"),
+    Output(EnergyLayoutID.LINK_COATED_LITE_ID,"children"),
+    Output(EnergyLayoutID.LINK_COATED_LITE_ID,"value"),
+    Output(EnergyLayoutID.DIV_COATED_LITE_PRODUCT,"children"),
     Input(EnergyLayoutID.STORE_BUILDUP_IN_SESSION,"modified_timestamp"),
     State(EnergyLayoutID.STORE_BUILDUP_IN_SESSION,"data")
 )
-def update_outer_lite_productdata(ts, buildup):
-    if ts is None or buildup is None:
+def update_coated_lite_productdata(timestamp, buildup):
+    if timestamp is None or buildup is None:
         raise PreventUpdate
+    
     buildup = json.loads(buildup)
     props = buildup[Buildup.SOLID_LAYERS][0]['props']
 
     outer_layer_info = [
-            f"ID{props['ID']}:",
             html.Strong(f"{props['ProductName']}, {props['Name']}"),
             f"({props['Manufacturer']}, {props['Thickness']:.1f}mm)"
     ]
 
-    return outer_layer_info   
+    return  f"[ID#{props['ID']}]:",props['ID'],outer_layer_info, 
 
 
 @callback(
@@ -329,8 +331,10 @@ def toggle_navbar_collapse(n, is_open):
     Output(EnergyLayoutID.SELECT_UNCOATED_THICKNESS,"value"),
     Input(EnergyLayoutID.URL, 'href'),
     Input(EnergyLayoutID.MODAL_SEARCH_IGDB_OK, 'n_clicks'),
+    Input(EnergyLayoutID.LINK_COATED_LITE_ID, 'n_clicks'),
     State(EnergyLayoutID.URL,'search'),
-    State(EnergyLayoutID.MODAL_SEARCH_IGDB_OK,'value')
+    State(EnergyLayoutID.MODAL_SEARCH_IGDB_OK,'value'),
+    State(EnergyLayoutID.LINK_COATED_LITE_ID,"value"),
 
 
     )
@@ -338,7 +342,8 @@ def onload_parse_url_and_search_table_ok(
     href, 
     btn_click,
     search,
-    model_search_id
+    model_search_id,
+    link_id
 ):
     
     
@@ -372,21 +377,29 @@ def onload_parse_url_and_search_table_ok(
                     12, \
                     'clear', \
                     6
-            
-    elif triggered == EnergyLayoutID.MODAL_SEARCH_IGDB_OK:
+
+    id = -1        
+    if triggered == EnergyLayoutID.MODAL_SEARCH_IGDB_OK:
         if model_search_id is None:
             raise PreventUpdate
         else:
             id = int(model_search_id)
-            return \
-                {'points' :[{'customdata': DF_GLASS_TABLE.loc[id]}]}, \
-                DF_GLASS_TABLE.loc[id]['Manufacturer'], \
-                callback_helpers.round_to_nearest_even(DF_GLASS_TABLE.loc[id]['Thickness']), \
-                no_update, \
-                no_update, \
-                no_update, \
-                no_update, \
-                no_update
+
+    if triggered == EnergyLayoutID.LINK_COATED_LITE_ID:
+        if link_id is None:
+            raise PreventUpdate 
+        else:    
+            id = int(link_id)
+
+    return \
+        {'points' :[{'customdata': DF_GLASS_TABLE.loc[id]}]}, \
+        DF_GLASS_TABLE.loc[id]['Manufacturer'], \
+        callback_helpers.round_to_nearest_even(DF_GLASS_TABLE.loc[id]['Thickness']), \
+        no_update, \
+        no_update, \
+        no_update, \
+        no_update, \
+        no_update
 
 #############################################################################################
 #
@@ -407,6 +420,7 @@ def onload_parse_url_and_search_table_ok(
 )
 def toggle_igdb_search_modal(n1, open_search_modal_button, n3,is_open,manufacturer, thickness):
     if n1 or n3:
+        #close modal
         return not is_open,no_update,no_update
     if open_search_modal_button:
         return not is_open,manufacturer, int(thickness)
@@ -516,11 +530,24 @@ def handle_search_result_row_click(active_cell, table_data):
 @callback(
     Output(EnergyLayoutID.MODAL_SEARCH_DATATABLE, "selected_rows"),
     Input(EnergyLayoutID.MODAL_SEARCH_DATATABLE, "active_cell"),
+    Input(EnergyLayoutID.MODAL_SEARCH_IGDB, "is_open"),
     prevent_initial_call=True
 )
-def sync_row_selection(active_cell):
+def sync_row_selection(active_cell, is_open):
     if not active_cell:
         return []
     
     # Return the index of the row
     return [active_cell['row']]
+
+
+
+@callback(
+    Output(EnergyLayoutID.MODAL_SEARCH_DATATABLE, "active_cell"),
+    Input(EnergyLayoutID.MODAL_SEARCH_IGDB, "is_open"),
+    prevent_initial_call=True
+)
+def deselect_on_modal_open_close(is_open):
+
+    #Deactivate cell (also triggers callback to clear selected_rows)
+    return None

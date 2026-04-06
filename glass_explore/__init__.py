@@ -122,6 +122,8 @@ class EnergyLayoutID:
     GRAPH_IGDB = "graph-ts-tv"
     GRAPH_LAB = "graph-lab"
 
+    LINK_COATED_LITE_ID = "link-coated-lite-id"
+
     MODAL_ABOUT = "modal-splash"
     MODAL_ABOUT_CLOSE = "modal-splash-close"
 
@@ -155,7 +157,7 @@ class EnergyLayoutID:
     CHECKBOX_FLIP_OUTERLAYER = "checkbox-flip-outerlayer"
     CHECKBOX_ADVANCED_OPTICAL_STANDARD = "checkbox-advance-standard"
 
-    DIV_OUTERLITE_PRODUCT = "div-outerlite-product"
+    DIV_COATED_LITE_PRODUCT = "div-outerlite-product"
     DIV_BUILDUP_SVG_CONTAINER = "div-buildup-svg-container"
     LINK_GSTR = "div-gstr"
 

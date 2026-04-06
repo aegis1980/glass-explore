@@ -365,9 +365,18 @@ def card_coated_layer():
             dbc.Form(
                 dbc.Row(
                     [
-                        dbc.Col(
-                           html.Div(id=EnergyLayoutID.DIV_OUTERLITE_PRODUCT),width=8
-                        ),
+                        dbc.Col([
+                            html.A([], 
+                                id = EnergyLayoutID.LINK_COATED_LITE_ID,
+                                style={
+                                    "color": "blue", 
+                                    "textDecoration": "underline", 
+                                    "cursor": "pointer"
+                                }
+                            ),
+                            html.Br(),
+                            html.Div(id=EnergyLayoutID.DIV_COATED_LITE_PRODUCT)
+                        ],width=8),
                         dbc.Col(
                             dbc.Checkbox(
                                 id=EnergyLayoutID.CHECKBOX_FLIP_OUTERLAYER,
