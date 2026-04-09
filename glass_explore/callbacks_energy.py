@@ -106,6 +106,18 @@ def toggle_about_modal(n1, n2, is_open):
 
 
 @callback(
+    Output(EnergyLayoutID.MODAL_SHARE, "is_open"),
+    [Input(EnergyLayoutID.MODAL_SHARE_CLOSE, "n_clicks"),Input(EnergyLayoutID.BUTTON_SHARE, "n_clicks")],
+    [State(EnergyLayoutID.MODAL_SHARE, "is_open")],
+)
+def toggle_share_modal(n1, n2, is_open):
+    if n1 :
+        return not is_open
+    if n2 :
+        return not is_open
+    return is_open
+
+@callback(
     Output(EnergyLayoutID.DIV_HIDDEN_SELECTED_ID, 'children'),  
     Input(EnergyLayoutID.GRAPH_IGDB, "clickData"),
 )
@@ -191,7 +203,7 @@ def update_coated_lite_productdata(timestamp, buildup):
 
     outer_layer_info = [
             html.Strong(f"{props['ProductName']}, {props['Name']}"),
-            f"({props['Manufacturer']}, {props['Thickness']:.1f}mm)"
+            f" ( {props['Manufacturer']}, {props['Thickness']:.1f}mm)"
     ]
 
     return  f"[ID#{props['ID']}]:",props['ID'],outer_layer_info, 
@@ -341,6 +353,7 @@ def toggle_navbar_collapse(n, is_open):
 def onload_parse_url_and_search_table_ok(
     href, 
     btn_click,
+    link_click,
     search,
     model_search_id,
     link_id

@@ -55,6 +55,17 @@ def navbar():
         [
             dbc.NavItem(dbc.NavLink( "About",id = EnergyLayoutID.NAVLINK_ABOUT)),
             dbc.NavItem(dbc.NavLink( "GLASS EXPLORE | Structure",id = EnergyLayoutID.NAVLINK_STRUCTURE)),
+            dbc.Popover(
+                [
+                    html.Strong("Glass Explore | Structure"),
+                    html.Br(),
+                    "Coming at some point..."
+                ],
+                target=EnergyLayoutID.NAVLINK_STRUCTURE,
+                body=True,
+                trigger="hover",
+                placement="bottom"
+            ),
         ],
         className="g-0 ms-auto flex-nowrap mt-3 mt-md-0",
     )
@@ -291,6 +302,7 @@ def modal_share():
     [
         dbc.ModalHeader(dbc.ModalTitle("Share IGU buildup ")),
         dbc.ModalBody([
+            html.P(["Using the URL below to share"]),
             dbc.Alert(
                 [dcc.Link(
                     '',
@@ -309,11 +321,6 @@ def modal_share():
                     },
                 )],color = "light"
             ),
-             html.P(["Using the URL above will rebuild the IGU buildup, so share/ save that link to recreate. The icon on the right will copy to your clipboard"]),
-                        html.P([
-                            "The protocol used for the buildup shorthand is documented here & python implementation is MIT license - ",
-                            html.A("here", href=LINK_GLASSMODEL, className="alert-link", target="_blank")          
-                        ]),
         ]),
         dbc.ModalFooter(
             dbc.Button(
