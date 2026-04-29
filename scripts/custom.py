@@ -1,6 +1,10 @@
+import logging
 import os
+
 import pywincalc
 from glass_explore import PATH_PRODUCTS, results_printer,PATH_STANDARDS
+
+logging.basicConfig(level=logging.INFO, format="%(message)s")
 
 def convert(filename):
     in_data = False
@@ -93,7 +97,7 @@ glazing_system_shgc_environment = pywincalc.GlazingSystem(optical_standard=optic
                                                           environment=pywincalc.nfrc_shgc_environments())
 
 results_name = "Results for a single-layer system with a single glazing layer made from user-defined spectral data."
-print("*" * len(results_name))
-print(results_name)
-print("*" * len(results_name))
+logging.info("*" * len(results_name))
+logging.info(results_name)
+logging.info("*" * len(results_name))
 results_printer.print_results(glazing_system_u_environment, glazing_system_shgc_environment)

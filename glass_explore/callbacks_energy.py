@@ -132,8 +132,8 @@ def store_in_hidden_div(pt_data):
 @callback(
     Output(EnergyLayoutID.STORE_BUILDUP_IN_SESSION, 'data'),  
     Input(EnergyLayoutID.GRAPH_IGDB, "clickData"),
-    Input(EnergyLayoutID.SWITCH_LOWE_SIDE,"value"),
-    Input(EnergyLayoutID.CHECKBOX_FLIP_OUTERLAYER, "value"),
+    Input(EnergyLayoutID.SWITCH_COATED_GLASS_SIDE,"value"),
+    Input(EnergyLayoutID.CHECKBOX_FLIP_COATEDLAYER, "value"),
     Input(EnergyLayoutID.SELECT_GAS,"value"),
     Input(EnergyLayoutID.INPUT_GAP,"value"),
     Input(EnergyLayoutID.SELECT_UNCOATED_SUBSTRATE,"value"), # clear or ultraclear
@@ -149,7 +149,7 @@ def glass_to_store(pt_data, coated_side_inside, coated_layer_flipped, gas, gap_t
     if pt_data:
         id = pt_data['points'][0]['customdata'][0]
     else:
-        return dash.no_update, 'no glass id'
+        return dash.no_update
 
     props_coated = igdb.lookup_glass_props(id)
     props_uncoated = mywincalc.generic_uncoated_glass_props(int(uncoated_thickness),uncoated_substrate == 'ultraclear') # note inntersubstrate taking a bool!
@@ -201,9 +201,15 @@ def update_coated_lite_productdata(timestamp, buildup):
     buildup = json.loads(buildup)
     props = buildup[Buildup.SOLID_LAYERS][0]['props']
 
+    if props['Coating_Name'] and props['Coating_Name'] != "N/A" and props['Coating_Name'] != "Unknowen":
+        product = html.Strong(f"{props['ProductName']}, {props['Coating_Name']}")
+    else:
+        product = html.Strong(f"{props['ProductName']}")
+
     outer_layer_info = [
-            html.Strong(f"{props['ProductName']}, {props['Name']}"),
-            f" ( {props['Manufacturer']}, {props['Thickness']:.1f}mm)"
+            product,
+            html.Br(),
+            f" ( {props['Manufacturer']}, {props['Thickness']:.1f}mm, {props['Name']})"
     ]
 
     return  f"[ID#{props['ID']}]:",props['ID'],outer_layer_info, 
@@ -259,17 +265,11 @@ def run_analysis_and_update_results(ts, standard, buildup):
     
     uvalue = f'{glazing_system_u_environment.u():.3f}'
 
-    try:
+    if standard == "nfrc":  
         shgc = f'{glazing_system_solar_environment.shgc():.3f}'
-    except Exception as e:
-        solar = glazing_system_u_environment.optical_method_results("SOLAR")
-        tau_e = solar.system_results.front.transmittance.direct_direct
-
-        absorptances = [
-            layer.front.absorptance.total_direct
-            for layer in solar.layer_results
-        ]
-        g = tau_e + 0.5 * sum(absorptances)
+    else:
+        solar = glazing_system_solar_environment.optical_method_results("SOLAR")
+        g =solar.system_results.g_value
         shgc = f'{g:.3f}'
   
     tvis = f'{optical.front.transmittance.direct_direct:.3f}'
@@ -287,7 +287,7 @@ def run_analysis_and_update_results(ts, standard, buildup):
 @callback(
     Output(EnergyLayoutID.CARD_HEADER_COATED,"children"),
     Output(EnergyLayoutID.CARD_HEADER_NONCOATED,"children"),
-    Input(EnergyLayoutID.SWITCH_LOWE_SIDE,"value")
+    Input(EnergyLayoutID.SWITCH_COATED_GLASS_SIDE,"value")
 )
 def update_card_headers_on_igu_flip(coated_side_in):
     if not coated_side_in:
@@ -336,7 +336,8 @@ def toggle_navbar_collapse(n, is_open):
     Output(EnergyLayoutID.GRAPH_IGDB, "clickData"),
     Output(EnergyLayoutID.SELECT_COATED_MANUFACTURER,"value"),
     Output(EnergyLayoutID.SELECT_COATED_THICKNESS,"value"),
-    Output(EnergyLayoutID.CHECKBOX_FLIP_OUTERLAYER, "value"),
+    Output(EnergyLayoutID.SWITCH_COATED_GLASS_SIDE, "value"),
+    Output(EnergyLayoutID.CHECKBOX_FLIP_COATEDLAYER, "value"),
     Output(EnergyLayoutID.SELECT_GAS,"value"),
     Output(EnergyLayoutID.INPUT_GAP,"value"),
     Output(EnergyLayoutID.SELECT_UNCOATED_SUBSTRATE,"value"), # clear or ultraclear
@@ -376,15 +377,18 @@ def onload_parse_url_and_search_table_ok(
             raise PreventUpdate
         else:
             if search:
+                
                 parsed = urllib.parse.urlparse(href)
                 g_str = urllib.parse.parse_qs(parsed.query)['g'][0]
                 igu = GlassBuildup.make_glass(g_str)
-                return glass_model_helpers.callback_return(igu)
+                
+                return glass_model_helpers.callback_return_from_igu(igu)
             else:
                 return \
                     {'points' :[{'customdata': DEFAULT_GRAPH_GLASS}]}, \
                     ALL_MANUFACTURERS, \
                     6, \
+                    False, \
                     False, \
                     'air', \
                     12, \
@@ -412,7 +416,19 @@ def onload_parse_url_and_search_table_ok(
         no_update, \
         no_update, \
         no_update, \
+        no_update, \
         no_update
+
+
+@callback(
+    Output(EnergyLayoutID.URL,'search'),
+    Input(EnergyLayoutID.URL,'search'),
+    prevent_initial_call=True
+)
+def clear_url(search):
+    if search:
+        return ""  # removes ?... from URL
+    return dash.no_update
 
 #############################################################################################
 #

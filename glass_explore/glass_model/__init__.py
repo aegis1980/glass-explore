@@ -118,7 +118,7 @@ class GasLayer(_BaseLayer):
     GAS_MIXTURES = [AIR,ARGON,XENON,KRYPTON]
     THICKNESSES = [12, 13.2, 14] # corresponds to 15/32" 1/2", 9/16" spacers
 
-    gas_mix: str = None
+    gas_mixture: str = None
 
     def __init__(
         self,
@@ -131,7 +131,7 @@ class GasLayer(_BaseLayer):
 
         super(GasLayer, self).__init__(gas_mixture, t)
 
-        self.gas_mix = self.descriptor
+        self.gas_mixture = self.descriptor
 
 
 # ******************************************************************************************************************
@@ -145,7 +145,7 @@ class GlassBuildup(_BaseLayer):
     _height = None
     _width = None
     _support = None
-    igdbcode = None
+    igdbcode: int = None
     igdbflip = False
 
     @staticmethod
@@ -155,6 +155,8 @@ class GlassBuildup(_BaseLayer):
         """
         given string description of glass will return glass appropriate glass-subclass object
         """
+
+        g_str = g_str.strip() #ignore all white space
         if Protocol.GAS_SEPARATOR in g_str:
             return InsulatedGlass.init_from_g_str(g_str)
         else:
@@ -249,7 +251,8 @@ class GlassBuildup(_BaseLayer):
                 _x = g_str[1:last_br_pair[0]]
 
                 self.igdbflip = _x.endswith(Protocol.IGDB_FLIP)
-                self.igdbcode = _x.split(Protocol.IGDB_FLIP)[0]
+                self.igdbcode = int(_x.split(Protocol.IGDB_FLIP)[0])
+                                    
                 return g_str[last_br_pair[0]+1:last_br_pair[1]]
         # default return is unchanged str
         return g_str
@@ -492,7 +495,7 @@ class InsulatedGlass(MultiLayerGlassBuildup):
         igu = cls([],[]) #just a dummy
 
         g_str = igu.parse_meta(g_str)
-        g_str = igu.parse_igdbcode(g_str)
+        #g_str = igu.parse_igdbcode(g_str)
 
 
         for i, g in enumerate(g_str.split(Protocol.GAS_SEPARATOR)):

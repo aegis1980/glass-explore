@@ -1,6 +1,11 @@
+import logging
+import os
+
 import pywincalc
 from glass_explore import results_printer,PATH_PRODUCTS,PATH_STANDARDS
-import os
+
+logging.basicConfig(level=logging.INFO, format="%(message)s")
+
 # Path to the optical standard file.  All other files referenced by the standard file must be in the same directory
 # Note:  While all optical standards packaged with WINDOW should work with optical calculations care should be
 # taken to use NFRC standards if NFRC thermal results are desired.  This is because for thermal calculations currently
@@ -29,7 +34,7 @@ glazing_system_single_layer_u_environment = pywincalc.GlazingSystem(optical_stan
                                                                     width_meters=width,
                                                                     height_meters=height)
 u_value = glazing_system_single_layer_u_environment.u()  # calculate U-value according to ISO15099
-print("Single Layer U-value: {u}".format(u=u_value))
+logging.info("Single Layer U-value: {u}".format(u=u_value))
 
 # To calculate SHGC use the NFRC SHGC environments for the glazing system instead
 glazing_system_single_layer_shgc_environment = pywincalc.GlazingSystem(optical_standard=optical_standard,
@@ -38,15 +43,15 @@ glazing_system_single_layer_shgc_environment = pywincalc.GlazingSystem(optical_s
                                                                        height_meters=height,
                                                                        environment=pywincalc.nfrc_shgc_environments())
 shgc_result = glazing_system_single_layer_shgc_environment.shgc()  # calculate SHGC according to ISO15099
-print("Single Layer SHGC: {shgc}".format(shgc=shgc_result))
+logging.info("Single Layer SHGC: {shgc}".format(shgc=shgc_result))
 
 # It is possible to calculate U and SHGC for any environmental conditions.
 # E.G. The SHGC for the NFRC U environmental conditions is
 u_environment_shgc = glazing_system_single_layer_u_environment.shgc()
-print("SHGC for the NFRC U-value environmental conditions: {shgc}".format(shgc=u_environment_shgc))
+logging.info("SHGC for the NFRC U-value environmental conditions: {shgc}".format(shgc=u_environment_shgc))
 # And the u-value for the SHGC environment is
 shgc_environment_u = glazing_system_single_layer_shgc_environment.u()
-print("U for the NFRC SHGC environmental conditions: {u}".format(u=shgc_environment_u))
+logging.info("U for the NFRC SHGC environmental conditions: {u}".format(u=shgc_environment_u))
 
 # Other thermal results available:
 
@@ -55,20 +60,20 @@ print("U for the NFRC SHGC environmental conditions: {u}".format(u=shgc_environm
 # When SHGC system is passed as a parameter solar ration is taken into account
 shgc_layer_temperatures_with_solar_radiation = glazing_system_single_layer_shgc_environment.layer_temperatures(
     pywincalc.TarcogSystemType.SHGC)
-print("Layer 1 temperature in SHGC environment with solar radiation: {v}".format(
+logging.info("Layer 1 temperature in SHGC environment with solar radiation: {v}".format(
     v=shgc_layer_temperatures_with_solar_radiation))
 shgc_layer_temperatures_without_solar_radiation = glazing_system_single_layer_shgc_environment.layer_temperatures(
     pywincalc.TarcogSystemType.U)
-print("Layer 1 temperature in SHGC environment without solar radiation: {v}".format(
+logging.info("Layer 1 temperature in SHGC environment without solar radiation: {v}".format(
     v=shgc_layer_temperatures_without_solar_radiation))
 
 shgc_environment_solid_layer_effective_conductivities_with_solar_radiation = glazing_system_single_layer_shgc_environment.solid_layers_effective_conductivities(
     (pywincalc.TarcogSystemType.SHGC))
-print("Layer 1 effective conductivity in SHGC environment with solar radiation: {v}".format(
+logging.info("Layer 1 effective conductivity in SHGC environment with solar radiation: {v}".format(
     v=shgc_environment_solid_layer_effective_conductivities_with_solar_radiation))
 shgc_environment_solid_layer_effective_conductivities_without_solar_radiation = glazing_system_single_layer_shgc_environment.solid_layers_effective_conductivities(
     (pywincalc.TarcogSystemType.U))
-print("Layer 1 effective conductivity in SHGC environment without solar radiation: {v}".format(
+logging.info("Layer 1 effective conductivity in SHGC environment without solar radiation: {v}".format(
     v=shgc_environment_solid_layer_effective_conductivities_without_solar_radiation))
 
 # Single layer systems do not have gaps.  For glazing systems with gaps the effective conductivity of gaps is available
@@ -76,16 +81,16 @@ print("Layer 1 effective conductivity in SHGC environment without solar radiatio
 
 system_effective_conductivity_with_solar_radiation = glazing_system_single_layer_shgc_environment.system_effective_conductivity(
     pywincalc.TarcogSystemType.SHGC)
-print("System effective conductivity with solar radiation: {v}".format(
+logging.info("System effective conductivity with solar radiation: {v}".format(
     v=system_effective_conductivity_with_solar_radiation))
 system_effective_conductivity_without_solar_radiation = glazing_system_single_layer_shgc_environment.system_effective_conductivity(
     pywincalc.TarcogSystemType.U)
-print("System effective conductivity without solar radiation: {v}".format(
+logging.info("System effective conductivity without solar radiation: {v}".format(
     v=system_effective_conductivity_without_solar_radiation))
 
 # Relative heat gain does not take a system type as a parameter
 relative_heat_gain = glazing_system_single_layer_shgc_environment.relative_heat_gain()
-print("Relative heat gain: {v}".format(v=relative_heat_gain))
+logging.info("Relative heat gain: {v}".format(v=relative_heat_gain))
 
 # Optical results are calculated based on methods defined by the optical standard loaded above.
 # Methods available for calculation depend on the standard.  Not all methods may be implemented in every standard
@@ -104,54 +109,54 @@ solar_results = glazing_system_single_layer_u_environment.optical_method_results
 # This prints out all available optical results for the solar method.  The same results are available
 # for any other method in the optical standards file except for the color methods (method names starting with COLOR_)
 system_solar_results = solar_results.system_results
-print("Direct-direct front solar transmittance: {v}".format(
+logging.info("Direct-direct front solar transmittance: {v}".format(
     v=system_solar_results.front.transmittance.direct_direct))
-print("Direct-diffuse front solar transmittance: {v}".format(
+logging.info("Direct-diffuse front solar transmittance: {v}".format(
     v=system_solar_results.front.transmittance.direct_direct))
-print("Direct-hemispherical front solar transmittance: {v}".format(
+logging.info("Direct-hemispherical front solar transmittance: {v}".format(
     v=system_solar_results.front.transmittance.direct_hemispherical))
-print("Diffuse-diffuse front solar transmittance: {v}".format(
+logging.info("Diffuse-diffuse front solar transmittance: {v}".format(
     v=system_solar_results.front.transmittance.diffuse_diffuse))
-print("Direct-direct front solar reflectance: {v}".format(
+logging.info("Direct-direct front solar reflectance: {v}".format(
     v=system_solar_results.front.reflectance.direct_direct))
-print("Direct-diffuse front solar reflectance: {v}".format(
+logging.info("Direct-diffuse front solar reflectance: {v}".format(
     v=system_solar_results.front.reflectance.direct_direct))
-print("Direct-hemispherical front solar reflectance: {v}".format(
+logging.info("Direct-hemispherical front solar reflectance: {v}".format(
     v=system_solar_results.front.reflectance.direct_hemispherical))
-print("Diffuse-diffuse front solar reflectance: {v}".format(
+logging.info("Diffuse-diffuse front solar reflectance: {v}".format(
     v=system_solar_results.front.reflectance.diffuse_diffuse))
-print("Direct-direct back solar transmittance: {v}".format(
+logging.info("Direct-direct back solar transmittance: {v}".format(
     v=system_solar_results.back.transmittance.direct_direct))
-print("Direct-diffuse back solar transmittance: {v}".format(
+logging.info("Direct-diffuse back solar transmittance: {v}".format(
     v=system_solar_results.back.transmittance.direct_direct))
-print("Direct-hemispherical back solar transmittance: {v}".format(
+logging.info("Direct-hemispherical back solar transmittance: {v}".format(
     v=system_solar_results.back.transmittance.direct_hemispherical))
-print("Diffuse-diffuse back solar transmittance: {v}".format(
+logging.info("Diffuse-diffuse back solar transmittance: {v}".format(
     v=system_solar_results.back.transmittance.diffuse_diffuse))
-print("Direct-direct back solar reflectance: {v}".format(
+logging.info("Direct-direct back solar reflectance: {v}".format(
     v=system_solar_results.back.reflectance.direct_direct))
-print("Direct-diffuse back solar reflectance: {v}".format(
+logging.info("Direct-diffuse back solar reflectance: {v}".format(
     v=system_solar_results.back.reflectance.direct_direct))
-print("Direct-hemispherical back solar reflectance: {v}".format(
+logging.info("Direct-hemispherical back solar reflectance: {v}".format(
     v=system_solar_results.back.reflectance.direct_hemispherical))
-print("Diffuse-diffuse back solar reflectance: {v}".format(
+logging.info("Diffuse-diffuse back solar reflectance: {v}".format(
     v=system_solar_results.back.reflectance.diffuse_diffuse))
 
 # Currently only absorptance results are provided for each layer.  Direct and diffuse absportances are
 # provided for each side of each layer.
 solar_results_per_layer = solar_results.layer_results
-print("Layer 1 front direct solar absorptance: {v}".format(v=solar_results_per_layer[0].front.absorptance.direct))
-print("Layer 1 front diffuse solar absorptance: {v}".format(v=solar_results_per_layer[0].front.absorptance.diffuse))
-print("Layer 1 back direct solar absorptance: {v}".format(v=solar_results_per_layer[0].back.absorptance.direct))
-print("Layer 1 back diffuse solar absorptance: {v}".format(v=solar_results_per_layer[0].back.absorptance.diffuse))
+logging.info("Layer 1 front direct solar absorptance: {v}".format(v=solar_results_per_layer[0].front.absorptance.direct))
+logging.info("Layer 1 front diffuse solar absorptance: {v}".format(v=solar_results_per_layer[0].front.absorptance.diffuse))
+logging.info("Layer 1 back direct solar absorptance: {v}".format(v=solar_results_per_layer[0].back.absorptance.direct))
+logging.info("Layer 1 back diffuse solar absorptance: {v}".format(v=solar_results_per_layer[0].back.absorptance.diffuse))
 
 # Similarly for visible results calculate using the Photopic method
 visible_results = glazing_system_single_layer_u_environment.optical_method_results("PHOTOPIC")
-print("Direct-direct front visible transmittance: {v}".format(
+logging.info("Direct-direct front visible transmittance: {v}".format(
     v=visible_results.system_results.front.transmittance.direct_direct))
-print("Direct-hemispheric back visible reflectance: {v}".format(
+logging.info("Direct-hemispheric back visible reflectance: {v}".format(
     v=visible_results.system_results.back.reflectance.direct_hemispherical))
-print("Layer 1 front diffuse visible absorptance: {v}".format(
+logging.info("Layer 1 front diffuse visible absorptance: {v}".format(
     v=visible_results.layer_results[0].front.absorptance.diffuse))
 # etc...
 
@@ -162,15 +167,15 @@ color_results = glazing_system_single_layer_u_environment.color()
 # Color results follow the same layout as the other optical system results except each value is offered in
 # the Trichromatic, Lab, and RGB color spaces.
 direct_direct_front_transmittace_rgb_color = color_results.system_results.front.transmittance.direct_direct.rgb
-print("Direct-direct front color transmittance in RGB: ({r}, {g}, {b})".format(
+logging.info("Direct-direct front color transmittance in RGB: ({r}, {g}, {b})".format(
     r=direct_direct_front_transmittace_rgb_color.R, g=direct_direct_front_transmittace_rgb_color.G,
     b=direct_direct_front_transmittace_rgb_color.B))
 direct_hemispherical_back_reflectance_lab_color = color_results.system_results.back.reflectance.direct_hemispherical.lab
-print("Direct-hemispheric back color reflectance in Lab: ({l}, {a}, {b})".format(
+logging.info("Direct-hemispheric back color reflectance in Lab: ({l}, {a}, {b})".format(
     l=direct_hemispherical_back_reflectance_lab_color.L, a=direct_hemispherical_back_reflectance_lab_color.a,
     b=direct_hemispherical_back_reflectance_lab_color.b))
 diffuse_diffuse_front_reflectance_trichromatic_color = color_results.system_results.front.reflectance.diffuse_diffuse.trichromatic
-print("Diffuse-diffuse front color reflectance in trichromatic: ({x}, {y}, {z})".format(
+logging.info("Diffuse-diffuse front color reflectance in trichromatic: ({x}, {y}, {z})".format(
     x=diffuse_diffuse_front_reflectance_trichromatic_color.X, y=diffuse_diffuse_front_reflectance_trichromatic_color.Y,
     z=diffuse_diffuse_front_reflectance_trichromatic_color.Z))
 # etc...
@@ -183,10 +188,10 @@ phi = 270
 
 # Calculate SHGC at theta and phi
 shgc_value = glazing_system_single_layer_shgc_environment.shgc(theta, phi)
-print("SHGC at theta = {t} phi = {p}: {v}".format(t=theta, p=phi, v=shgc_value))
+logging.info("SHGC at theta = {t} phi = {p}: {v}".format(t=theta, p=phi, v=shgc_value))
 
 # Calculate solar optical results at theta and phi
 solar_results = glazing_system_single_layer_u_environment.optical_method_results("SOLAR", theta, phi)
 direct_direct_front_transmittance = solar_results.system_results.front.transmittance.direct_direct
-print("Direct-direct front solar transmittance at theta = {t} phi = {p}: {v}".format(t=theta, p=phi,
+logging.info("Direct-direct front solar transmittance at theta = {t} phi = {p}: {v}".format(t=theta, p=phi,
                                                                                      v=direct_direct_front_transmittance))

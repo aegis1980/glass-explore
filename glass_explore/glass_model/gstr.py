@@ -12,6 +12,7 @@ __copyright__ = "Copyright 2020, Jon Robinson. All rights reserved"
 __email__ = "jonrobinson1980@gmail.com"
 
 
+import logging
 from typing import List, Union
 import re
 
@@ -66,10 +67,10 @@ def find_enclosed_brackets(s):
 
 
             else:
-                print("Error: Unmatched closing bracket at index", i)
+                logging.info("Error: Unmatched closing bracket at index %s", i)
 
     if stack:
-        print("Error: Unmatched opening brackets at indices", stack)
+        logging.info("Error: Unmatched opening brackets at indices %s", stack)
 
     return enclosed_pairs
 

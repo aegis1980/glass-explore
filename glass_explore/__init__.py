@@ -2,6 +2,7 @@
 
 import functools
 import json
+import logging
 import os
 import subprocess
 
@@ -30,20 +31,20 @@ if is_railway:
     IGDB_SQLITE_PATH = os.path.join(BASE_VOLUME_PATH,SUB_FOLDER,'data', 'igdb.sqlite')
     PARQUET_GLASS_PATH = os.path.join(BASE_VOLUME_PATH,SUB_FOLDER,'data', 'glass.parquet')
     PARQUET_READABLE_GLASS_PATH= os.path.join(BASE_VOLUME_PATH,SUB_FOLDER,  'data','readable_glass.parquet')
-    print("Railway environment detected, using paths for railway deployment")
-    print(f"IGDB_SQLITE_PATH: {IGDB_SQLITE_PATH}")
-    print(f"PARQUET_GLASS_PATH: {PARQUET_GLASS_PATH}")    
-    print(f"PARQUET_READABLE_GLASS_PATH: {PARQUET_READABLE_GLASS_PATH}")
+    logging.info("Railway environment detected, using paths for railway deployment")
+    logging.info(f"IGDB_SQLITE_PATH: {IGDB_SQLITE_PATH}")
+    logging.info(f"PARQUET_GLASS_PATH: {PARQUET_GLASS_PATH}")    
+    logging.info(f"PARQUET_READABLE_GLASS_PATH: {PARQUET_READABLE_GLASS_PATH}")
 
-    print(f"Checking path: {PARQUET_GLASS_PATH}")
+    logging.info(f"Checking path: {PARQUET_GLASS_PATH}")
     
     # Debugging check: Does the file actually exist?
     if not os.path.exists(PARQUET_GLASS_PATH):
-        print(f"WARNING: {PARQUET_GLASS_PATH} not found. Contents of {BASE_VOLUME_PATH}:")
+        logging.info(f"WARNING: {PARQUET_GLASS_PATH} not found. Contents of {BASE_VOLUME_PATH}:")
         try:
-            print(os.listdir(BASE_VOLUME_PATH))
+            logging.info(os.listdir(BASE_VOLUME_PATH))
         except Exception as e:
-            print(f"Could not list volume: {e}")
+            logging.info(f"Could not list volume: {e}")
 
 else:
     CACHE_PATH =  os.path.join('cache')
@@ -51,7 +52,7 @@ else:
     IGDB_SQLITE_PATH = os.path.join('data', 'igdb.sqlite')
     PARQUET_GLASS_PATH = os.path.join('data','glass.parquet')
     PARQUET_READABLE_GLASS_PATH= os.path.join('data','readable_glass.parquet')
-    print("Local environment detected, using local paths")
+    logging.info("Local environment detected, using local paths")
 
 PATH_DATA = os.path.join('data')
 PATH_STANDARDS = os.path.join('data','standards')
@@ -83,12 +84,12 @@ try:
     CLEAR_6 = 103
     DEFAULT_GRAPH_GLASS = DF_GLASS_TABLE.loc[CLEAR_6]
 except FileNotFoundError:
-    print("Glass table Parquet file not found")
+    logging.info("Glass table Parquet file not found")
 
 try:
     DF_READABLE_GLASS_TABLE = pd.read_parquet(PARQUET_READABLE_GLASS_PATH, engine='pyarrow')
 except FileNotFoundError:
-    print("Readable glass table Parquet file not found")
+    logging.info("Readable glass table Parquet file not found")
 
 
 class Buildup:
@@ -152,9 +153,9 @@ class EnergyLayoutID:
     SELECT_GAS = "select-gas"
     INPUT_GAP = "input-gap"
 
-    SWITCH_LOWE_SIDE = "switch-lowe-side"
+    SWITCH_COATED_GLASS_SIDE = "switch-lowe-side"
 
-    CHECKBOX_FLIP_OUTERLAYER = "checkbox-flip-outerlayer"
+    CHECKBOX_FLIP_COATEDLAYER = "checkbox-flip-outerlayer"
     CHECKBOX_ADVANCED_OPTICAL_STANDARD = "checkbox-advance-standard"
 
     DIV_COATED_LITE_PRODUCT = "div-outerlite-product"

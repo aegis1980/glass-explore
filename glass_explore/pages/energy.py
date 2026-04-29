@@ -64,13 +64,13 @@ def layout(g = None):
                         dbc.Col([
                             html.Div(id=EnergyLayoutID.DIV_BUILDUP_SVG_CONTAINER),
                             dbc.Switch(
-                                id=EnergyLayoutID.SWITCH_LOWE_SIDE,
+                                id=EnergyLayoutID.SWITCH_COATED_GLASS_SIDE,
                                 value=False,
                                 className="static-switch",
                             ),
                             dbc.Popover(
                                 "Swap position of coated layer in IGU outside <-> inside",
-                                target=EnergyLayoutID.SWITCH_LOWE_SIDE,
+                                target=EnergyLayoutID.SWITCH_COATED_GLASS_SIDE,
                                 body=True,
                                 trigger="hover",
                                 placement="bottom"

@@ -7,8 +7,7 @@ import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
 import numpy as np
 
-import glass_explore
-from glass_explore import EnergyLayoutID, callback_helpers, igdb, OG_DESCRIPTION, ALL_MANUFACTURERS, DF_GLASS_TABLE
+from glass_explore import EnergyLayoutID,  igdb, OG_DESCRIPTION, ALL_MANUFACTURERS, DF_GLASS_TABLE
 
 FITC_LOGO = 'balloon_white_h30px.png'
 COFFEE = 'coffee.svg'
@@ -343,7 +342,7 @@ def card_gas_layer():
                         dbc.Col(
                             dbc.Select(
                                 id=EnergyLayoutID.SELECT_GAS, 
-                                value = 'Air',
+                                value = 'air',
                                 options=[{"label": k, "value": k} for k in igdb.GASES_NFRC_LOOKUP],
                             ),
                             className="me-3",
@@ -386,7 +385,7 @@ def card_coated_layer():
                         ],width=8),
                         dbc.Col(
                             dbc.Checkbox(
-                                id=EnergyLayoutID.CHECKBOX_FLIP_OUTERLAYER,
+                                id=EnergyLayoutID.CHECKBOX_FLIP_COATEDLAYER,
                                 label="Flip layer",
                                 value=False,
                             ),
@@ -413,7 +412,7 @@ def card_results():
                                         value = "en",
                                         options=[
                                                 {"label": "NFRC", "value": "nfrc"},
-                                                {"label": "EN419 and EN673", "value": "en"},
+                                                {"label": "EN410 and EN673", "value": "en"},
                                         ],
                                     )
                             , className="me-3",)

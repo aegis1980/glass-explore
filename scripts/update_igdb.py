@@ -14,7 +14,7 @@ Also create h5 file for glass table (for performance)
 Usage: just run this file for defaults.
 """
 
-
+import logging
 import os
 import sqlite3
 import pyodbc
@@ -28,6 +28,8 @@ import pandas as pd
 from colorama import Fore,Style
 
 from glass_explore import IGDB_SQLITE_PATH,PARQUET_GLASS_PATH,PARQUET_READABLE_GLASS_PATH, utils
+
+logging.basicConfig(level=logging.INFO, format="%(message)s")
 
 DEFAULT_LBNL_WINDOWS_MDB_FILE_PATH = "c:/Users/Public/LBNL/WINDOW7.8/w7.mdb"
 
@@ -63,7 +65,18 @@ def parquet_from_glass_table(datasource :str = 'sqlite', path :str = IGDB_SQLITE
     elif datasource == 'sqlite' :
         # Create a SQL connection to our SQLite database
         cxn = sqlite3.connect(path)
-        sql = 'select * from Glass' 
+
+        sql = """
+            SELECT 
+                g.*, 
+                gp.Coated_Side, 
+                gp.Coating_Name, 
+                gp.GlazingTypeID
+            FROM Glass g
+            INNER JOIN GlazingProperties gp ON g.ID = gp.NFRC_ID
+        """
+
+        #sql = 'select * from Glass' 
         raw_df = pd.read_sql(sql,cxn)
 
     elif datasource == 'csv':
@@ -111,7 +124,7 @@ def convert_mdb_to_sqlite(filename_in : str,filename_out:str):
             tables.append(t)
 
     for t in tables:
-        print("    Converting table: " + t.name + " ... ", end="")
+        logging.info("    Converting table: %s ...", t.name)
     
         # SQLite tables must being with a character or _
         t_name = t.name
@@ -131,7 +144,7 @@ def convert_mdb_to_sqlite(filename_in : str,filename_out:str):
                 columns.append('{} INT'.format(col_name))
 
         cols = ', '.join(columns)
-        #print(cols)    
+        #logging.info(cols)    
         # create the table in SQLite
         c.execute('DROP TABLE IF EXISTS "{}"'.format(t_name))
         c.execute('CREATE TABLE "{}" ({})'.format(t_name, cols))
@@ -152,7 +165,7 @@ def convert_mdb_to_sqlite(filename_in : str,filename_out:str):
             v = ', '.join(['?']*len(values))
             sql = 'INSERT INTO "{}" VALUES(' + v + ')'
             c.execute(sql.format(t_name), values)
-        print(Fore.GREEN + "done" + Style.RESET_ALL)
+        logging.info(Fore.GREEN + "done" + Style.RESET_ALL)
 
 
     conn.commit()
@@ -179,15 +192,23 @@ def readable_glass_table(df, parquet_file_path = PARQUET_READABLE_GLASS_PATH):
     return df
 
 if __name__ == "__main__":
+    convert_access_file = False
+    create_parquet_file = True
 
+    if convert_access_file:
     
-    print ("Starting IGDB prep script...")
-    convert_mdb_to_sqlite(DEFAULT_LBNL_WINDOWS_MDB_FILE_PATH,IGDB_SQLITE_PATH)
-    print ("...MDB to SQLITE conversion complete")
-    print("Creating parquet file for glass table...")
-    df = parquet_from_glass_table()
-    print ("...parquet file for glass table created")
-    print("Creating readable glass table...")
-    df = readable_glass_table(df)
-    print ("...readable glass table created")
-    print ("IGDB prep script complete")
+        print ("Starting IGDB prep script...")
+        convert_mdb_to_sqlite(DEFAULT_LBNL_WINDOWS_MDB_FILE_PATH,IGDB_SQLITE_PATH)
+        print ("...MDB to SQLITE conversion complete")
+
+    if create_parquet_file:
+        logging.info("Creating parquet file for glass table...")
+        df = parquet_from_glass_table()
+        print ("...parquet file for glass table created")
+        logging.info(len(df))
+    
+    #logging.info("Creating readable glass table...")
+    #df = readable_glass_table(df)
+    #print ("...readable glass table created")
+    #print ("IGDB prep script complete")
+

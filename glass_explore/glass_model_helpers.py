@@ -1,9 +1,11 @@
 #(c)2026 Jon Robinson. All Rights Reserved.
 
+import logging
 from typing import Dict, List, Tuple
 
-from glass_explore import DF_GLASS_TABLE
+from glass_explore import DF_GLASS_TABLE, igdb
 
+from glass_explore import callback_helpers
 from glass_explore.glass_model import InsulatedGlass,MonoGlass,HeatTreatment,GlassBuildup,GasLayer
 
 GAS_LOOKUP = {
@@ -49,14 +51,34 @@ def gaslayers_from_dict(_dict : Dict) -> GasLayer:
     return gases
 
 
-def callback_return(igu : InsulatedGlass) -> Tuple:
-    gas = GAS_LOOKUP.keys()[list(GAS_LOOKUP.values()).index(igu.gases[0].gas_mixture)] #reverse lookup 
-    outer_igdb_id = igu.lites[0].igdbcode
-    inner_igdb_id = igu.lites[1].igdbcode
-    return \
-        {'points' :[{'customdata': DF_GLASS_TABLE.loc[outer_igdb_id]}]}, \
-        igu.lites[0].igdbflip, \
+def callback_return_from_igu(igu : InsulatedGlass) -> Tuple:
+
+    gas_idx =list(GAS_LOOKUP.values()).index(igu.gases[0].gas_mixture)
+    gas = list(GAS_LOOKUP.keys())[gas_idx] #reverse lookup 
+
+    #detect coated side
+
+    if igu.lites[0].igdbcode in igdb.CLEAR_LOOKUP.values() or igu.lites[0].igdbcode in igdb.ULTRACLEAR_LOOKUP.values():
+        coated_idx = 1 #ie inner
+        uncoated_idx = 0
+    else:
+        coated_idx = 0 #ie outer
+        uncoated_idx = 1
+
+
+    coated_igdb_id = igu.lites[coated_idx].igdbcode
+    uncoated_igdb_id = igu.lites[uncoated_idx].igdbcode
+    logging.info(f"Coated IGDB ID: {coated_igdb_id}, Uncoated IGDB ID: {uncoated_igdb_id}")
+
+    result= \
+        {'points' :[{'customdata': DF_GLASS_TABLE.loc[coated_igdb_id]}]}, \
+        DF_GLASS_TABLE.loc[coated_igdb_id]['Manufacturer'], \
+        callback_helpers.round_to_nearest_even(DF_GLASS_TABLE.loc[coated_igdb_id]['Thickness']),\
+        igu.lites[coated_idx].igdbflip, \
+        bool(coated_idx), \
         gas, \
         igu.gases[0].t_actual, \
-        'clear', \
-        6
+        'clear' if uncoated_igdb_id in igdb.CLEAR_LOOKUP.values() else 'ultraclear', \
+        callback_helpers.round_to_nearest_even(DF_GLASS_TABLE.loc[uncoated_igdb_id]['Thickness'])
+    
+    return result

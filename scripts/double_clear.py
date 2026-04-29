@@ -1,6 +1,10 @@
-import pywincalc
+import logging
 import os
+
+import pywincalc
 from glass_explore import PATH_STANDARDS, optics, results_printer,PATH_PRODUCTS,igdb
+
+logging.basicConfig(level=logging.INFO, format="%(message)s")
 
 # Path to the optical standard file.  All other files referenced by the standard file must be in the same directory
 # Note:  While all optical standards packaged with WINDOW should work with optical calculations care should be
@@ -51,7 +55,7 @@ glazing_system_shgc_environment = pywincalc.GlazingSystem(optical_standard=optic
                                                                        environment=pywincalc.nfrc_shgc_environments())
 
 results_name = "Results for a double-clear system"
-print("*" * len(results_name))
-print(results_name)
-print("*" * len(results_name))
+logging.info("*" * len(results_name))
+logging.info(results_name)
+logging.info("*" * len(results_name))
 results_printer.print_results(glazing_system_u_environment, glazing_system_shgc_environment)

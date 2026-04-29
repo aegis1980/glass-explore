@@ -1,5 +1,6 @@
 #(c)2026 Jon Robinson. All Rights Reserved.
 
+import logging
 from typing import Dict, Tuple
 
 from skimage.color import rgb2lab
@@ -76,5 +77,5 @@ def populate_buildup_with_glass_props(buildup: Dict, props:Dict, i : int) -> Dic
 if __name__ == "__main__":
     color_code = 628991
     csshex = base10color_to_csshex(color_code)
-    print(csshex)
-    print(csshex_to_rgb(csshex))
+    logging.info(csshex)
+    logging.info(csshex_to_rgb(csshex))
