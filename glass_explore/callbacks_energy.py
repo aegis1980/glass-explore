@@ -12,7 +12,7 @@ from dash.exceptions import PreventUpdate
 from thefuzz import process, fuzz
 
 
-from glass_explore import (ALL_MANUFACTURERS, OG_DESCRIPTION, URL, DF_GLASS_TABLE, DEFAULT_GRAPH_GLASS,SEARCH_GLASS_TABLE,Buildup, EnergyLayoutID, WebPaths,
+from glass_explore import (ALL_MANUFACTURERS, OG_DESCRIPTION, URL, DF_GLASS_TABLE, DEFAULT_GRAPH_GLASS,Buildup, EnergyLayoutID, WebPaths,
                            caching as caching, callback_helpers, igdb,COLORSPACE_RGB,COLORSPACE_LAB,
                            mywincalc, standards, svg_glass, utils, glass_model_helpers)
 
@@ -41,7 +41,7 @@ from glass_explore.glass_model import (GlassBuildup, InsulatedGlass)
     Input(EnergyLayoutID.TABS, "active_tab"),
     Input(EnergyLayoutID.SELECT_COATED_MANUFACTURER, "value"),
     Input(EnergyLayoutID.SELECT_COATED_THICKNESS, "value"),
-    State(EnergyLayoutID.DIV_HIDDEN_SELECTED_ID, 'children'),  
+    Input(EnergyLayoutID.DIV_HIDDEN_SELECTED_ID, 'children'),
 )
 def update_igdb_data_display(active_tabs, manufacturer, thickness,selected_id):
     out_fig = dash.no_update
@@ -257,29 +257,33 @@ def run_analysis_and_update_results(ts, standard, buildup):
     buildup = json.loads(buildup)
 
     if standard == "nfrc":   
-        glazing_system_u_environment, glazing_system_solar_environment= mywincalc.run_nfrc_analysis(buildup)
-    else:
-        glazing_system_u_environment, glazing_system_solar_environment= mywincalc.run_cen_analysis(buildup)
-
-    optical = glazing_system_u_environment.optical_method_results("PHOTOPIC").system_results
-    
-    uvalue = f'{glazing_system_u_environment.u():.3f}'
-
-    if standard == "nfrc":  
+        glazing_system_u_environment, glazing_system_solar_environment, _ = mywincalc.run_nfrc_analysis(buildup)
+        uvalue = f'{glazing_system_u_environment.u():.3f}'
         shgc = f'{glazing_system_solar_environment.shgc():.3f}'
+
+        color_t = glazing_system_solar_environment.color().system_results.front.transmittance.direct_direct.rgb
+        color_r = glazing_system_solar_environment.color().system_results.front.reflectance.direct_direct.rgb
+
     else:
-        solar = glazing_system_solar_environment.optical_method_results("SOLAR")
-        g =solar.system_results.g_value
-        shgc = f'{g:.3f}'
-  
+        glazing_system_u_environment, glazing_system_solar_environment,glazing_system_optical_environment = mywincalc.run_cen_analysis(buildup)
+        uvalue = f'{glazing_system_u_environment.u():.3f}'
+        shgc = f'{glazing_system_solar_environment.shgc():.3f}'
+
+        color_results = glazing_system_optical_environment.color(tristimulus_x_method="CRI_X",
+                                     tristimulus_y_method="CRI_Y",
+                                     tristimulus_z_method="CRI_Z")
+        color_t = color_results.system_results.front.transmittance.direct_direct.rgb
+        color_r = color_results.system_results.front.reflectance.direct_direct.rgb
+        
+    optical = glazing_system_solar_environment.optical_method_results("PHOTOPIC").system_results
+
     tvis = f'{optical.front.transmittance.direct_direct:.3f}'
     rout = f'{optical.front.reflectance.direct_direct:.3f}'
     rin = f'{optical.back.reflectance.direct_direct:.3f}'
 
-    color_t = glazing_system_u_environment.color().system_results.front.transmittance.direct_direct.rgb
-    color_r = glazing_system_u_environment.color().system_results.front.reflectance.direct_direct.rgb
     color_t = utils.rgb_to_csshex(color_t.R,color_t.G,color_t.B)
     color_r = utils.rgb_to_csshex(color_r.R,color_r.G,color_r.B)
+
 
     return uvalue,shgc,tvis,rout,rin,{'background-color' : color_t},{'background-color' : color_r}
 
@@ -294,6 +298,14 @@ def update_card_headers_on_igu_flip(coated_side_in):
         return "Coated outer glass layer", "Non-coated inner glass layer"
     else:
         return "Coated inner glass layer", "Non-coated outer glass layer"
+
+
+def _gstr_from_search(search):
+    if not search:
+        return None
+
+    query = urllib.parse.urlparse(search).query or search.lstrip("?")
+    return urllib.parse.parse_qs(query).get("g", [None])[0]
 
 
 @callback(
@@ -342,20 +354,24 @@ def toggle_navbar_collapse(n, is_open):
     Output(EnergyLayoutID.INPUT_GAP,"value"),
     Output(EnergyLayoutID.SELECT_UNCOATED_SUBSTRATE,"value"), # clear or ultraclear
     Output(EnergyLayoutID.SELECT_UNCOATED_THICKNESS,"value"),
-    Input(EnergyLayoutID.URL, 'href'),
+    Input(EnergyLayoutID.URL, 'pathname'),
+    Input(EnergyLayoutID.URL, "search"),
+    Input(EnergyLayoutID.STORE_GSTR_FROM_URL, "modified_timestamp"),
     Input(EnergyLayoutID.MODAL_SEARCH_IGDB_OK, 'n_clicks'),
     Input(EnergyLayoutID.LINK_COATED_LITE_ID, 'n_clicks'),
-    State(EnergyLayoutID.URL,'search'),
+    State(EnergyLayoutID.STORE_GSTR_FROM_URL, "data"),
     State(EnergyLayoutID.MODAL_SEARCH_IGDB_OK,'value'),
     State(EnergyLayoutID.LINK_COATED_LITE_ID,"value"),
 
 
     )
 def onload_parse_url_and_search_table_ok(
-    href, 
+    _pathname,
+    url_search,
+    _gstr_timestamp,
     btn_click,
     link_click,
-    search,
+    gstr_from_url,
     model_search_id,
     link_id
 ):
@@ -367,33 +383,32 @@ def onload_parse_url_and_search_table_ok(
 
     Selected point in graph is not triggered by this - hard coded in hidden div.
     """
-    if not ctx.triggered_id:
-        raise PreventUpdate
+    triggered = ctx.triggered_id or EnergyLayoutID.URL
 
-    triggered = ctx.triggered_id
-    
     if triggered == EnergyLayoutID.URL:
-        if href is None:
+        gstr = _gstr_from_search(url_search)
+        if gstr:
+            igu = GlassBuildup.make_glass(gstr)
+            return glass_model_helpers.callback_return_from_igu(igu)
+
+    if triggered == EnergyLayoutID.STORE_GSTR_FROM_URL:
+        if not gstr_from_url:
             raise PreventUpdate
-        else:
-            if search:
-                
-                parsed = urllib.parse.urlparse(href)
-                g_str = urllib.parse.parse_qs(parsed.query)['g'][0]
-                igu = GlassBuildup.make_glass(g_str)
-                
-                return glass_model_helpers.callback_return_from_igu(igu)
-            else:
-                return \
-                    {'points' :[{'customdata': DEFAULT_GRAPH_GLASS}]}, \
-                    ALL_MANUFACTURERS, \
-                    6, \
-                    False, \
-                    False, \
-                    'air', \
-                    12, \
-                    'clear', \
-                    6
+
+        igu = GlassBuildup.make_glass(gstr_from_url)
+        return glass_model_helpers.callback_return_from_igu(igu)
+
+    if triggered == EnergyLayoutID.URL:
+        return \
+            {'points' :[{'customdata': DEFAULT_GRAPH_GLASS}]}, \
+            ALL_MANUFACTURERS, \
+            6, \
+            False, \
+            False, \
+            'air', \
+            12, \
+            'clear', \
+            6
 
     id = -1        
     if triggered == EnergyLayoutID.MODAL_SEARCH_IGDB_OK:
@@ -421,14 +436,34 @@ def onload_parse_url_and_search_table_ok(
 
 
 @callback(
-    Output(EnergyLayoutID.URL,'search'),
-    Input(EnergyLayoutID.URL,'search'),
+    Output(EnergyLayoutID.STORE_GSTR_FROM_URL, "data"),
+    Input(EnergyLayoutID.URL, "search"),
+)
+def store_gstr_from_url(search):
+    gstr = _gstr_from_search(search)
+    if not gstr:
+        raise PreventUpdate
+
+    return gstr
+
+
+clientside_callback(
+    """
+    function(timestamp, gstr, pathname) {
+        if (timestamp === undefined || timestamp === null || !gstr) {
+            return window.dash_clientside.no_update;
+        }
+
+        window.history.replaceState(null, "", pathname || "/energy");
+        return window.dash_clientside.no_update;
+    }
+    """,
+    Output(EnergyLayoutID.DUMMY_FOR_CALLBACK, "data"),
+    Input(EnergyLayoutID.STORE_GSTR_FROM_URL, "modified_timestamp"),
+    State(EnergyLayoutID.STORE_GSTR_FROM_URL, "data"),
+    State(EnergyLayoutID.URL, "pathname"),
     prevent_initial_call=True
 )
-def clear_url(search):
-    if search:
-        return ""  # removes ?... from URL
-    return dash.no_update
 
 #############################################################################################
 #
@@ -502,9 +537,10 @@ def update_table_from_user_input(modal_open,search_value, manufacturer, thicknes
 
         # 3b. Execute Fuzzy Match
         # Extract matches based on the 'Token Set Ratio' (handles out-of-order words)
+        search_table = df[cols_to_search].astype(str).agg(' '.join, axis=1)
         matches = process.extract(
-            search_value, 
-            SEARCH_GLASS_TABLE, 
+            search_value,
+            search_table,
             scorer=fuzz.token_set_ratio,
             limit=30
         )
@@ -512,7 +548,7 @@ def update_table_from_user_input(modal_open,search_value, manufacturer, thicknes
         # 4b. Filter DataFrame by resulting indices
         # 'matches' returns a list of tuples: (string, score, index)
         match_indices = [m[2] for m in matches] #if m[1] > 50] # Only keep scores > 50%
-        
+
         results = df.loc[match_indices,cols_to_return]
 
     else:

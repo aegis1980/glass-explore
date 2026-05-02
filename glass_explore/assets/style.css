@@ -61,3 +61,14 @@ td:has(~ .dash-cell.cell--selected.focused), .dash-cell.cell--selected.focused ~
     box-shadow: none;
     border-color: #adb5bd;
 }
+
+#tab-content,
+#div-graph-igdb,
+#div-graph-igdb .dash-spinner,
+#graph-ts-tv,
+#graph-ts-tv .js-plotly-plot,
+#graph-ts-tv .plot-container,
+#graph-ts-tv .svg-container {
+    min-height: calc(100vh - 185px);
+    height: calc(100vh - 185px) !important;
+}

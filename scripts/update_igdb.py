@@ -6,7 +6,7 @@
 r"""
 Preps Internaotnal Glass Database (IGBD) for use.
 File downloaded from LBNL is a password-protected Microsoft Access db file.
-All sorts of issues using this on Linux-based (Heroku) server.
+All sorts of issues using this on Linux-based production servers.
 
 Use this script to convert MDB file to SQLITE file. 
 Also create h5 file for glass table (for performance) 
@@ -192,7 +192,7 @@ def readable_glass_table(df, parquet_file_path = PARQUET_READABLE_GLASS_PATH):
     return df
 
 if __name__ == "__main__":
-    convert_access_file = False
+    convert_access_file = True
     create_parquet_file = True
 
     if convert_access_file:

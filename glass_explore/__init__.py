@@ -181,6 +181,7 @@ class EnergyLayoutID:
 
     DUMMY_FOR_CALLBACK = "dummy-for-callback"
     STORE_BUILDUP_IN_SESSION = "store-buildup-session"
+    STORE_GSTR_FROM_URL = "store-gstr-from-url"
     STORE_SETTINGS_IN_LOCAL = "store-settings-local"
 
     TABLE_CELL_UVALUE = "table-cell-uvalue"

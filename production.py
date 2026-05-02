@@ -1,6 +1,6 @@
 from glass_explore.app import app
 
-# Reference the underlying flask app (Used by gunicorn webserver in Heroku production deployment)
+# Reference the underlying Flask app for WSGI servers such as Gunicorn.
 server = app.server 
 
 # Run flask app

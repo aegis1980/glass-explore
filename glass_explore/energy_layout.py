@@ -146,7 +146,7 @@ def modal_about():
         dbc.ModalBody([
             html.P([OG_DESCRIPTION +f" using coatings and substrate data in the ",
                 html.A("IGDB database", href="https://windows.lbl.gov/igdb-downloads", className="alert-link", target="_blank"),
-                f" (Current database version: IGDB v{igdb.db_version()}). At the moment, app is only set up to run the NFRC 100-2010 environment."]),
+                f" (Current database version running in app: IGDB v{igdb.db_version()})."]),
             html.P(["This app is only intended as a playground - consult manufacturer's published data or use a tool such as LBNL Window to verify."]),
             dbc.Row([
                 dbc.Col([

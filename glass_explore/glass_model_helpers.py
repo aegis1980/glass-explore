@@ -74,8 +74,8 @@ def callback_return_from_igu(igu : InsulatedGlass) -> Tuple:
         {'points' :[{'customdata': DF_GLASS_TABLE.loc[coated_igdb_id]}]}, \
         DF_GLASS_TABLE.loc[coated_igdb_id]['Manufacturer'], \
         callback_helpers.round_to_nearest_even(DF_GLASS_TABLE.loc[coated_igdb_id]['Thickness']),\
-        igu.lites[coated_idx].igdbflip, \
         bool(coated_idx), \
+        igu.lites[coated_idx].igdbflip, \
         gas, \
         igu.gases[0].t_actual, \
         'clear' if uncoated_igdb_id in igdb.CLEAR_LOOKUP.values() else 'ultraclear', \

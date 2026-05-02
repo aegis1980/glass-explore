@@ -23,6 +23,8 @@ def load_optical_standard(filename):
 glazing_system_width = 1.0  # width of the glazing system in meters
 glazing_system_height = 1.0  # height of the glazing system in meters
 
+
+
 def coated_side(side : str):
     
     s = pywincalc.CoatedSide.NEITHER
@@ -175,22 +177,19 @@ def run_nfrc_analysis(buildup : Dict):
                                                             height_meters=glazing_system_height,
                                                             environment=pywincalc.nfrc_shgc_environments())
 
-
-    #results_printer.print_results(glazing_system_u_environment, glazing_system_shgc_environment)
-    #results_printer.print_optical_method_results(glazing_system_u_environment, "SOLAR", 0, 0, '')
-    return glazing_system_u_environment, glazing_system_shgc_environment
+    return glazing_system_u_environment, glazing_system_shgc_environment, None
 
 
 def run_cen_analysis(buildup : Dict):
-    
+
+
     optical_standard_EN410 = load_optical_standard(glass_explore.CEN_OPTICAL_STANDARD)
 
-
     # EN673-like Boundary Conditions
-    inside_environment_U = pywincalc.Environment(
-        air_temperature=293.15,   # 20 C
+    inside_env_EN673 = pywincalc.Environment(
+        air_temperature=273.15 + 20.0,   # 20 C
         pressure=101325.0,
-        convection_coefficient=7.7,
+        convection_coefficient=8.0,
         coefficient_model=pywincalc.BoundaryConditionsCoefficientModelType.H_PRESCRIBED,
         radiation_temperature=293.15, # ignored
         emissivity=1.0, # ignored
@@ -199,10 +198,10 @@ def run_cen_analysis(buildup : Dict):
         direct_solar_radiation=0.0,
     )
 
-    outside_environment_U = pywincalc.Environment(
+    outside_env_EN673 = pywincalc.Environment(
         air_temperature=273.15,   # 0 C
         pressure=101325.0,
-        convection_coefficient=25.0,
+        convection_coefficient=23.0,
         coefficient_model=pywincalc.BoundaryConditionsCoefficientModelType.H_PRESCRIBED,
         radiation_temperature=273.15, # ignored
         emissivity=1.0, # ignored
@@ -211,9 +210,39 @@ def run_cen_analysis(buildup : Dict):
         direct_solar_radiation=0.0,
     )
 
-    en673_env_U = pywincalc.Environments(
-        outside_environment_U,
-        inside_environment_U,
+    en673_env = pywincalc.Environments(
+        outside_env_EN673,
+        inside_env_EN673,
+    )
+
+   # EN410-like Boundary Conditions
+    inside_env_EN410 = pywincalc.Environment(
+        air_temperature=273.15 + 25.0,   # 25 C
+        pressure=101325.0,
+        convection_coefficient=2.5,
+        coefficient_model=pywincalc.BoundaryConditionsCoefficientModelType.H_PRESCRIBED,
+        radiation_temperature=293.15, # ignored
+        emissivity=1.0, # ignored
+        air_speed=0.0,
+        air_direction=pywincalc.AirHorizontalDirection.NONE,
+        direct_solar_radiation=0.0,
+    )
+
+    outside_env_EN410 = pywincalc.Environment(
+        air_temperature=273.15 + 30.0,   # 30 C
+        pressure=101325.0,
+        convection_coefficient=8.0,
+        coefficient_model=pywincalc.BoundaryConditionsCoefficientModelType.H_PRESCRIBED,
+        radiation_temperature=273.15, # ignored
+        emissivity=1.0, # ignored
+        air_speed=0.0,
+        air_direction=pywincalc.AirHorizontalDirection.NONE,
+        direct_solar_radiation=500.0,
+    )
+
+    en410_env = pywincalc.Environments(
+        outside_env_EN410,
+        inside_env_EN410,
     )
 
 
@@ -230,19 +259,29 @@ def run_cen_analysis(buildup : Dict):
         gap = gap_layer(g['gas'],'en673', g['thickness'])
         gap_layers.append(gap)
 
+
+
+    # 4. Construct the glazing system
     glazing_system_u_environment = pywincalc.GlazingSystem(
-                                                        solid_layers=solid_layers,
-                                                        gap_layers=gap_layers,
-                                                        width_meters=glazing_system_width,
-                                                        height_meters=glazing_system_height,
-                                                        environment=en673_env_U)
+        solid_layers=solid_layers,
+        gap_layers=gap_layers,
+        environment=en673_env
+    )
 
-    # In order to get EN410 results the
-    glazing_system_gfactor_environment = pywincalc.GlazingSystem(optical_standard=optical_standard_EN410,
-                                                            solid_layers=solid_layers,
-                                                            gap_layers=gap_layers,
-                                                            width_meters=glazing_system_width,
-                                                            height_meters=glazing_system_height
-                                                            )
+    glazing_system_shgc_environment = pywincalc.GlazingSystem(
+        solid_layers=solid_layers,
+        gap_layers=gap_layers,
+        optical_standard=optical_standard_EN410,
+        environment=en410_env
+    )
 
-    return glazing_system_u_environment, glazing_system_gfactor_environment
+    glazing_system_optical_environment = pywincalc.GlazingSystem(
+        solid_layers=solid_layers,
+        gap_layers=gap_layers,
+        optical_standard=optical_standard_EN410,
+    )
+
+
+    return glazing_system_u_environment, glazing_system_shgc_environment, glazing_system_optical_environment
+
+

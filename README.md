@@ -129,10 +129,6 @@ The current production paths are built from:
 /igdb/storage/data/readable_glass.parquet
 ```
 
-## Heroku
-
-Heroku deployment is no longer the active target. Older notes about `requirements.txt`, Git LFS, and Heroku buildpacks are historical only; Poetry and Railway are now the source of truth for deployment.
-
 ## License
 
 This project is licensed under AGPL-3.0. See `LICENSE`.

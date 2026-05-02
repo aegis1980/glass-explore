@@ -37,6 +37,7 @@ def layout(g = None):
         html.Div(f"{CLEAR_6}",id=EnergyLayoutID.DIV_HIDDEN_SELECTED_ID,className= "hidden"),
         dcc.Location(EnergyLayoutID.URL),
         dcc.Store(EnergyLayoutID.DUMMY_FOR_CALLBACK),
+        dcc.Store(EnergyLayoutID.STORE_GSTR_FROM_URL),
         dcc.Store(EnergyLayoutID.STORE_BUILDUP_IN_SESSION,  storage_type = "session"),
         dcc.Store(EnergyLayoutID.STORE_SETTINGS_IN_LOCAL,  storage_type = "local"),
         energy_layout.navbar(),
