@@ -12,7 +12,7 @@ DEBUG = False
 class WebPaths:
     ENERGY = '/energy'
 
-URL = "http://glass-explore.floatingintheclouds.com"
+URL = "https://glass-explore.floatingintheclouds.com"
 OG_DESCRIPTION = "Glass explore calculates thermal and optic properties of double-glazing"
 
 is_railway = os.getenv("RAILWAY_ENVIRONMENT") is not None

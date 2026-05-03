@@ -150,7 +150,9 @@ def modal_about():
             html.P([OG_DESCRIPTION +f" using coatings and substrate data in the ",
                 html.A("IGDB database", href="https://windows.lbl.gov/igdb-downloads", className="alert-link", target="_blank"),
                 f" (Current database version running in app: IGDB v{igdb.db_version()})."]),
-            html.P(["This app is only intended as a playground - consult manufacturer's published data or use a tool such as LBNL Window to verify."]),
+            html.P(["This app is only intended as a playground - consult manufacturers' published data or use a tool such as LBNL Window to verify."]),
+            html.P(["A bit more background information, some verifications and changelog ", html.A("here", href="https://floatingintheclouds.com/glass-explore/", className="alert-link", target="_blank")]),
+            
             dbc.Row([
                 dbc.Col([
                     html.A(
@@ -162,16 +164,15 @@ def modal_about():
                 ),
                 dbc.Col([
                     html.P([
-                        "Glass Explore took me a fair while to write (and check!). Server costs are not free either. If you do find this app useful, please consider ", 
+                        "Glass Explore took me a fair while to write (pre-AI...I know, right!). Servers are not free either. If you do find this app useful, please consider ", 
                         html.A("buying me a coffee", href=LINK_COFFEE, className="alert-link", target="_blank")
                     ]),
                     html.P([
-                        "I have a few bits and bobs I want to add, but if you have suggestions, contact me on ", 
+                        "Suggestions helpful, contact me on ", 
                         html.A("linkedin", href="https://www.linkedin.com/in/jon-robinson-nz/", className="alert-link", target="_blank")
                     ])
                 ]),
             ]),
-            html.P(["The source code for this webapp is available on request, under the AGPL-3.0 license. If you want to use any of the code, or have suggestions for improvements, please get in touch."]),
         ]),
         dbc.ModalFooter(
             dbc.Button(
@@ -180,7 +181,7 @@ def modal_about():
         ),
     ],
     id=EnergyLayoutID.MODAL_ABOUT,
-    is_open=False,
+    is_open=True,
 )
 
 
