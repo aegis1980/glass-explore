@@ -109,14 +109,14 @@ class Interlayer(_BaseLayer):
     THICKNESSES = [0.38, 0.76, 1.52]
 
 
-class GasLayer(_BaseLayer):
+class GasCavity(_BaseLayer):
     AIR = 'AIR'
     ARGON = 'AR'
     XENON = 'XE'
     KRYPTON = 'KR'
 
     GAS_MIXTURES = [AIR,ARGON,XENON,KRYPTON]
-    THICKNESSES = [12, 13.2, 14] # corresponds to 15/32" 1/2", 9/16" spacers
+    THICKNESSES = [12, 13.2, 14, 16] # corresponds to 15/32" 1/2", 9/16" spacers
 
     gas_mixture: str = None
 
@@ -125,11 +125,11 @@ class GasLayer(_BaseLayer):
         gas_mixture,
         t: float,
     ):
-        if gas_mixture not in GasLayer.GAS_MIXTURES:
-            raise errors.BuildupException( \
-                'Gas "{}" is not valid. Should be one of {}'.format(gas_mixture,GasLayer.GAS_MIXTURES))
+        #if gas_mixture not in GasCavity.GAS_MIXTURES:
+        #    raise errors.BuildupException( \
+        #        'Gas "{}" is not valid. Should be one of {}'.format(gas_mixture,GasCavity.GAS_MIXTURES))
 
-        super(GasLayer, self).__init__(gas_mixture, t)
+        super(GasCavity, self).__init__(gas_mixture, t)
 
         self.gas_mixture = self.descriptor
 
@@ -463,7 +463,7 @@ class InsulatedGlass(MultiLayerGlassBuildup):
     def __init__(
             self,
             lites: List[GlassBuildup],
-            gases: List[GasLayer]
+            gases: List[GasCavity]
     ):
 
         if lites and len(gases) != len(lites) - 1:
@@ -504,7 +504,7 @@ class InsulatedGlass(MultiLayerGlassBuildup):
                 lite = GlassBuildup.make_glass(g)
                 igu._layers.append(lite)
             else:  # gas
-                gas = GasLayer.init_from_g_str(g)
+                gas = GasCavity.init_from_g_str(g)
                 igu._layers.append(gas)
 
         return igu
@@ -520,7 +520,7 @@ class InsulatedGlass(MultiLayerGlassBuildup):
         return self._layers[0::2]
 
     @property
-    def gases(self) -> List[GasLayer]:
+    def gases(self) -> List[GasCavity]:
         """Return list of IGU buildup gass layers, out to in
 
         Returns:

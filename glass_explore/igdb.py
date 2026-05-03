@@ -34,19 +34,16 @@ ULTRACLEAR_LOOKUP = {
 }
 
 
-GASES_NFRC = {
-    "air" : pywincalc.PredefinedGasType.AIR,
-    "argon" : pywincalc.PredefinedGasType.ARGON,
-    "krypton" : pywincalc.PredefinedGasType.KRYPTON,
-    "xenon" : pywincalc.PredefinedGasType.XENON
-}
-
 # integers are ID in igdb table
 GASES_NFRC_LOOKUP = {
     "air" : 1,
     "argon" : 2,
     "krypton" : 3,
     "xenon" : 4,
+    "air(5%), ar(95%)" : 5,
+    "air(10%), ar(90%)" : 9,
+    "air(5%), kr(95%)" : 8,
+    "air(12%), ar(22%), kr(90%)" : 7,
 }
 
 GASES_EN673_LOOKUP = {
@@ -54,6 +51,10 @@ GASES_EN673_LOOKUP = {
     "argon" : 101,
     "krypton" : 102,
     "xenon" : 103,
+    "air(5%), ar(95%)" : 104,
+    "air(10%), ar(90%)" : 107,
+    "air(5%), kr(95%)" : 106,
+    "air(12%), ar(22%), kr(90%)" : 105,
 }
 
 @cache

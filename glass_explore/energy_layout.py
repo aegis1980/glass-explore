@@ -31,8 +31,8 @@ row_vlt = html.Tr(children = [
     html.Td(id = EnergyLayoutID.TABLE_CELL_TVIS_LABEL),
     html.Td(id = EnergyLayoutID.TABLE_CELL_TVIS)
     ])
-row_rout = html.Tr([html.Td(["R",html.Sub("out")]), html.Td(id = EnergyLayoutID.TABLE_CELL_ROUT)])
-row_rin = html.Tr([html.Td(["R",html.Sub("in")]), html.Td(id = EnergyLayoutID.TABLE_CELL_RIN)])
+row_rout = html.Tr([html.Td(["Reflection (ext), R",html.Sub("out")]), html.Td(id = EnergyLayoutID.TABLE_CELL_ROUT)])
+row_rin = html.Tr([html.Td(["Reflection (int), R",html.Sub("in")]), html.Td(id = EnergyLayoutID.TABLE_CELL_RIN)])
 row_color1 = html.Tr([html.Td("Transmitted colour"), html.Td(id = EnergyLayoutID.TABLE_CELL_COLOR_TRANS)])
 row_color2 = html.Tr([html.Td("Reflected colour"), html.Td(id = EnergyLayoutID.TABLE_CELL_COLOR_REFL)])
 
@@ -58,7 +58,10 @@ def navbar():
                 [
                     html.Strong("Glass Explore | Structure"),
                     html.Br(),
-                    "Coming at some point..."
+                    "Coming at some point...and...",
+                    html.Br(),
+                    html.Strong("Maths Explore"),
+                    " too."
                 ],
                 target=EnergyLayoutID.NAVLINK_STRUCTURE,
                 body=True,
@@ -217,6 +220,16 @@ def modal_glass_search():
                         fixed_rows={'headers': True},
                         row_selectable="single",  # Enables the selection logic
                         selected_rows=[],         # Initial state
+                        css=[
+                            {
+                                'selector': '.dash-select-header input, .dash-select-cell input',
+                                'rule': 'display: none;',
+                            },
+                            {
+                                'selector': '.dash-select-header, .dash-select-cell',
+                                'rule': 'width: 1px; min-width: 1px; max-width: 1px; padding: 0;',
+                            },
+                        ],
                         style_data_conditional=[
                             {
                                 'if': {'state': 'selected'}, # This highlights the entire row
@@ -333,7 +346,7 @@ def modal_share():
 
 def card_gas_layer():
     return dbc.Card([
-        dbc.CardHeader("Gas layer"),
+        dbc.CardHeader("Gas cavity"),
         dbc.CardBody(   
             dbc.Form(
                 dbc.Row(
@@ -411,8 +424,8 @@ def card_results():
                                         id=EnergyLayoutID.SELECT_STANDARD, 
                                         value = "en",
                                         options=[
-                                                {"label": "NFRC", "value": "nfrc"},
-                                                {"label": "EN410 and EN673", "value": "en"},
+                                                {"label": "USA: NFRC 100-2010", "value": "nfrc"},
+                                                {"label": "Europe: EN410 (optical/ solar) and EN673 (thermal)", "value": "en"},
                                         ],
                                     )
                             , className="me-3",)

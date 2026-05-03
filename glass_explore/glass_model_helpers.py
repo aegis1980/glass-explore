@@ -1,18 +1,19 @@
 #(c)2026 Jon Robinson. All Rights Reserved.
 
 import logging
+import re
 from typing import Dict, List, Tuple
 
 from glass_explore import DF_GLASS_TABLE, igdb
 
 from glass_explore import callback_helpers
-from glass_explore.glass_model import InsulatedGlass,MonoGlass,HeatTreatment,GlassBuildup,GasLayer
+from glass_explore.glass_model import InsulatedGlass,MonoGlass,HeatTreatment,GlassBuildup,GasCavity
 
 GAS_LOOKUP = {
-    'air' : GasLayer.AIR,
-    'argon' : GasLayer.ARGON,
-    'krypton' : GasLayer.KRYPTON,
-    'xenon' : GasLayer.XENON
+    'air' : GasCavity.AIR,
+    'argon' : GasCavity.ARGON,
+    'krypton' : GasCavity.KRYPTON,
+    'xenon' : GasCavity.XENON
 }
 
 
@@ -25,6 +26,7 @@ def lites_from_dict(di : Dict) -> List[GlassBuildup]:
     for l in di['layers']:
         _type = l['props']['GlazingTypeID']
         t = l['thickness']
+        lite = None
         if _type == 2 or _type == 3: # Monolithic or Coated
             t = find_nearest(MonoGlass.THICKNESSES,t)
             lite = MonoGlass(HeatTreatment.MONO,t)
@@ -40,12 +42,53 @@ def lites_from_dict(di : Dict) -> List[GlassBuildup]:
     return lites
 
 
-def gaslayers_from_dict(_dict : Dict) -> GasLayer:
+import re
+
+
+def _process_gasmix_gstr(gas_mixture: str):
+    """_summary_
+
+    Args:
+        gas_mixture (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
+
+    pattern = r'[a-zA-Z]+|[0-9]+\.[0-9]+|[0-9]+'
+    raw_list = re.findall(pattern, gas_mixture)
+    
+    # Convert numerical strings to actual float or int types
+    processed_list = []
+    for item in raw_list:
+        if '.' in item:
+            processed_list.append(float(item))
+        elif item.isdigit():
+            processed_list.append(int(item))
+        else:
+            processed_list.append(item)
+    
+    parts = []
+    for i in range(0, len(processed_list), 2):
+        label = processed_list[i]
+        value = processed_list[i+1]
+        parts.append(f"{label}({value}%)")
+    
+    return ", ".join(parts)
+
+
+
+def gaslayers_from_dict(_dict : Dict) -> GasCavity:
     gases = []
     for layer in _dict['gas_layers']:
         t = float(layer['thickness'])
-        g = GAS_LOOKUP[layer['gas']]
-        gas = GasLayer(g,t)
+
+        if layer['gas'] in GAS_LOOKUP:
+            g = GAS_LOOKUP[layer['gas']]
+        else:
+            g = re.sub(r'[\[\](){}\s%,]', '', layer['gas']).upper() # e.g "air(5%), ar(95%)" becomes "AIR5AR95"
+
+        gas = GasCavity(g,t)
         gases.append(gas)
     
     return gases
@@ -53,8 +96,14 @@ def gaslayers_from_dict(_dict : Dict) -> GasLayer:
 
 def callback_return_from_igu(igu : InsulatedGlass) -> Tuple:
 
-    gas_idx =list(GAS_LOOKUP.values()).index(igu.gases[0].gas_mixture)
-    gas = list(GAS_LOOKUP.keys())[gas_idx] #reverse lookup 
+    try:
+        gas_idx =list(GAS_LOOKUP.values()).index(igu.gases[0].gas_mixture)
+        gas = list(GAS_LOOKUP.keys())[gas_idx] #reverse lookup 
+    except ValueError as e:
+        mix =igu.gases[0].gas_mixture.lower()
+        gas = _process_gasmix_gstr(mix)
+
+
 
     #detect coated side
 

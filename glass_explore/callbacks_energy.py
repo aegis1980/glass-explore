@@ -13,8 +13,8 @@ from thefuzz import process, fuzz
 
 
 from glass_explore import (ALL_MANUFACTURERS, OG_DESCRIPTION, URL, DF_GLASS_TABLE, DEFAULT_GRAPH_GLASS,Buildup, EnergyLayoutID, WebPaths,
-                           caching as caching, callback_helpers, igdb,COLORSPACE_RGB,COLORSPACE_LAB,
-                           mywincalc, standards, svg_glass, utils, glass_model_helpers)
+                           caching, callback_helpers, en410, en673, igdb,COLORSPACE_RGB,COLORSPACE_LAB,
+                           mywincalc, svg_glass, utils, glass_model_helpers)
 
 from glass_explore.glass_model import (GlassBuildup, InsulatedGlass)
 
@@ -257,17 +257,29 @@ def run_analysis_and_update_results(ts, standard, buildup):
     buildup = json.loads(buildup)
 
     if standard == "nfrc":   
-        glazing_system_u_environment, glazing_system_solar_environment, _ = mywincalc.run_nfrc_analysis(buildup)
-        uvalue = f'{glazing_system_u_environment.u():.3f}'
-        shgc = f'{glazing_system_solar_environment.shgc():.3f}'
+        glazing_system_u_environment, glazing_system_solar_environment = mywincalc.run_nfrc_analysis(buildup)
+        uvalue = f'{glazing_system_u_environment.u():.1f}'
+        shgc = f'{glazing_system_solar_environment.shgc():.2f}'
 
         color_t = glazing_system_solar_environment.color().system_results.front.transmittance.direct_direct.rgb
         color_r = glazing_system_solar_environment.color().system_results.front.reflectance.direct_direct.rgb
 
-    else:
-        glazing_system_u_environment, glazing_system_solar_environment,glazing_system_optical_environment = mywincalc.run_cen_analysis(buildup)
-        uvalue = f'{glazing_system_u_environment.u():.3f}'
-        shgc = f'{glazing_system_solar_environment.shgc():.3f}'
+        optical = glazing_system_solar_environment.optical_method_results("PHOTOPIC").system_results
+
+    else: #CEN  EN 410:2011
+        _trial = True # set to True to compare our EN 673 implementation with pywincalc's (which is very slow due to the iteration in Python rather than C++)  
+        glazing_system_u_environment, glazing_system_optical_environment = mywincalc.run_cen_analysis(buildup)
+        
+        if _trial:
+            # For testing purposes, bypass the pywincalc EN 673 iteration and use our own implementation which is much faster and gives essentially the same result (within 0.001 W/m²K)
+            en673_result = en673.u_value(buildup, detailed_analysis=True)
+            u_en673 = en673_result.u
+        else:
+            u_en673 = glazing_system_u_environment.u()
+            
+        uvalue = f'{u_en673:.1f}'
+        en410result = en410.solar_factor(buildup, u_en673, detailed_analysis=True) # currently only returns solar factor, but also computes intermediate values that could be added to results display in future if desired
+        shgc = f'{en410result.g:.2f}'
 
         color_results = glazing_system_optical_environment.color(tristimulus_x_method="CRI_X",
                                      tristimulus_y_method="CRI_Y",
@@ -275,11 +287,11 @@ def run_analysis_and_update_results(ts, standard, buildup):
         color_t = color_results.system_results.front.transmittance.direct_direct.rgb
         color_r = color_results.system_results.front.reflectance.direct_direct.rgb
         
-    optical = glazing_system_solar_environment.optical_method_results("PHOTOPIC").system_results
+        optical = glazing_system_optical_environment.optical_method_results("PHOTOPIC").system_results
 
-    tvis = f'{optical.front.transmittance.direct_direct:.3f}'
-    rout = f'{optical.front.reflectance.direct_direct:.3f}'
-    rin = f'{optical.back.reflectance.direct_direct:.3f}'
+    tvis = f'{optical.front.transmittance.direct_direct:.2f}'
+    rout = f'{optical.front.reflectance.direct_direct:.2f}'
+    rin = f'{optical.back.reflectance.direct_direct:.2f}'
 
     color_t = utils.rgb_to_csshex(color_t.R,color_t.G,color_t.B)
     color_r = utils.rgb_to_csshex(color_r.R,color_r.G,color_r.B)
