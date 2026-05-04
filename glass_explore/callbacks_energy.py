@@ -41,13 +41,16 @@ from glass_explore.glass_model import (GlassBuildup, InsulatedGlass)
     Input(EnergyLayoutID.TABS, "active_tab"),
     Input(EnergyLayoutID.SELECT_COATED_MANUFACTURER, "value"),
     Input(EnergyLayoutID.SELECT_COATED_THICKNESS, "value"),
-    Input(EnergyLayoutID.DIV_HIDDEN_SELECTED_ID, 'children'),
+    State(EnergyLayoutID.DIV_HIDDEN_SELECTED_ID, 'children'),
+    State(EnergyLayoutID.GRAPH_IGDB, "clickData"),
 )
-def update_igdb_data_display(active_tabs, manufacturer, thickness,selected_id):
+def update_igdb_data_display(active_tabs, manufacturer, thickness, selected_id, click_data):
     out_fig = dash.no_update
 
     if thickness:
         thickness = int(thickness)
+
+    selected_id = _selected_id_from_clickdata(click_data) or selected_id
 
     df = caching.thickness_cached_df(thickness)
     if active_tabs == EnergyLayoutID.TAB_GRAPH_TS_TV:
@@ -62,6 +65,36 @@ def update_igdb_data_display(active_tabs, manufacturer, thickness,selected_id):
 
     return out_fig, out_msg, out_msgcolor
 
+
+def _selected_id_from_customdata(customdata):
+    if customdata is None:
+        return None
+
+    if isinstance(customdata, dict):
+        return customdata.get("ID")
+
+    if hasattr(customdata, "get"):
+        id_from_label = customdata.get("ID", None)
+        if id_from_label is not None:
+            return id_from_label
+
+    try:
+        return customdata[0]
+    except (KeyError, IndexError, TypeError):
+        return None
+
+
+def _selected_id_from_clickdata(pt_data):
+    if not pt_data:
+        return None
+
+    points = pt_data.get("points") if isinstance(pt_data, dict) else None
+    if not points:
+        return None
+
+    return _selected_id_from_customdata(points[0].get("customdata"))
+
+
 # CALLBACK 2: Handles the snappy highlight (Patch Only)
 @callback(
     Output(EnergyLayoutID.GRAPH_IGDB, "figure", allow_duplicate=True),
@@ -69,8 +102,13 @@ def update_igdb_data_display(active_tabs, manufacturer, thickness,selected_id):
     prevent_initial_call=True
 )
 def fast_highlight(click_data):
+    if not click_data or not click_data.get("points"):
+        raise PreventUpdate
 
     point = click_data['points'][0]
+    if "x" not in point or "y" not in point:
+        raise PreventUpdate
+
     new_x = [point.get("x")]
     new_y = [point.get("y")]
     new_z = [point.get("z")] if "z" in point else None
@@ -122,11 +160,11 @@ def toggle_share_modal(n1, n2, is_open):
     Input(EnergyLayoutID.GRAPH_IGDB, "clickData"),
 )
 def store_in_hidden_div(pt_data):
-    if pt_data:
-        id = pt_data['points'][0]['customdata'][0]
-        return id
-    else:
+    id = _selected_id_from_clickdata(pt_data)
+    if id is None:
         raise PreventUpdate
+
+    return id
 
     
 @callback(
@@ -146,9 +184,8 @@ def glass_to_store(pt_data, coated_side_inside, coated_layer_flipped, gas, gap_t
     buildup = {}
     buildup[Buildup.SOLID_LAYERS] = [{},{}]
     buildup[Buildup.GAS_LAYERS] = [{}]
-    if pt_data:
-        id = pt_data['points'][0]['customdata'][0]
-    else:
+    id = _selected_id_from_clickdata(pt_data)
+    if id is None:
         return dash.no_update
 
     props_coated = igdb.lookup_glass_props(id)
@@ -412,7 +449,7 @@ def onload_parse_url_and_search_table_ok(
 
     if triggered == EnergyLayoutID.URL:
         return \
-            {'points' :[{'customdata': DEFAULT_GRAPH_GLASS}]}, \
+            callback_helpers.clickdata_for_glass_id(DEFAULT_GRAPH_GLASS["ID"]), \
             ALL_MANUFACTURERS, \
             6, \
             False, \
@@ -436,7 +473,7 @@ def onload_parse_url_and_search_table_ok(
             id = int(link_id)
 
     return \
-        {'points' :[{'customdata': DF_GLASS_TABLE.loc[id]}]}, \
+        callback_helpers.clickdata_for_glass_id(id), \
         DF_GLASS_TABLE.loc[id]['Manufacturer'], \
         callback_helpers.round_to_nearest_even(DF_GLASS_TABLE.loc[id]['Thickness']), \
         no_update, \

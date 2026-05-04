@@ -11,6 +11,16 @@ import plotly.graph_objects as go
 import glass_explore
 from glass_explore import ALL_MANUFACTURERS, COLORSPACE_RGB,SelectedPointProps
 
+GRAPH_CUSTOMDATA_COLUMNS = ['ID', 'Manufacturer', 'ProductName']
+
+
+def graph_customdata(df: pd.DataFrame):
+    return df.loc[:, GRAPH_CUSTOMDATA_COLUMNS].to_numpy()
+
+
+def clickdata_for_glass_id(glass_id):
+    return {'points': [{'customdata': [int(glass_id)]}]}
+
 
 def number_of_glasses_message(df, manufacturer, thickness):
 
@@ -50,7 +60,7 @@ def populate_graph_ts_tv(selected_id : int, df: pd.DataFrame, manufacturer, thic
                 mode='markers',
                 x=df["Tsol"],
                 y=df["Tvis"],
-                customdata=df,
+                customdata=graph_customdata(df),
                 marker=dict(
                     color=df['CssColor'],
                     size=10,
@@ -60,8 +70,8 @@ def populate_graph_ts_tv(selected_id : int, df: pd.DataFrame, manufacturer, thic
                 hovertemplate = 
                     '<b>id</b>: %{customdata[0]}' + 
                     '<br>(<b>T_v</b>: %{y:.2f}' + ' <b>T_s</b>: %{x:.2f})'+
-                    '<br>%{customdata[17]}' + 
-                    '<br>%{customdata[18]}'
+                    '<br>%{customdata[1]}' +
+                    '<br>%{customdata[2]}'
             )
         )
        
@@ -92,7 +102,7 @@ def populate_graph_ts_tv(selected_id : int, df: pd.DataFrame, manufacturer, thic
                 mode='markers',
                 x=df[mask]["Tsol"],
                 y=df[mask]["Tvis"],
-                customdata=df[mask],
+                customdata=graph_customdata(df[mask]),
                 marker=dict(
                     color=df[mask]['CssColor'],
                     size=20,
@@ -105,8 +115,8 @@ def populate_graph_ts_tv(selected_id : int, df: pd.DataFrame, manufacturer, thic
                 hovertemplate = 
                     '<b>id</b>: %{customdata[0]}' + 
                     '<br>(<b>T_v</b>: %{y:.2f}' + ' <b>T_s</b>: %{x:.2f})'+
-                    '<br>%{customdata[17]}' + 
-                    '<br>%{customdata[18]}'
+                    '<br>%{customdata[1]}' +
+                    '<br>%{customdata[2]}'
             )
         )
    
@@ -119,7 +129,7 @@ def populate_graph_ts_tv(selected_id : int, df: pd.DataFrame, manufacturer, thic
                 mode='markers',
                 x=df[mask]["Tsol"],
                 y=df[mask]["Tvis"],
-                customdata=df[mask],
+                customdata=graph_customdata(df[mask]),
                 marker=dict(
                     color=df[mask]['CssColor'],
                     size=SelectedPointProps.SIZE_2D,
@@ -179,7 +189,7 @@ def populate_graph_colorspace(selected_id,df, manufacturer, thickness, colorspac
                 x=df["RColor"] if colorspace == COLORSPACE_RGB else df["lColor"],
                 y=df["GColor"] if colorspace == COLORSPACE_RGB else df["aColor"],
                 z=df['BColor'] if colorspace == COLORSPACE_RGB else df["bColor"],
-                customdata=df,
+                customdata=graph_customdata(df),
                 marker=dict(
                     color=df['CssColor'],
                     size=3,
@@ -189,8 +199,8 @@ def populate_graph_colorspace(selected_id,df, manufacturer, thickness, colorspac
                 hovertemplate = 
                     '<b>id</b>: %{customdata[0]}' + 
                     '<br>(<b>T_v</b>: %{y:.2f}' + ' <b>T_s</b>: %{x:.2f})'+
-                    '<br>%{customdata[17]}' + 
-                    '<br>%{customdata[18]}'
+                    '<br>%{customdata[1]}' +
+                    '<br>%{customdata[2]}'
             )
         )
         
@@ -221,7 +231,7 @@ def populate_graph_colorspace(selected_id,df, manufacturer, thickness, colorspac
                 x=df[mask]["RColor"] if colorspace == COLORSPACE_RGB else df[mask]["lColor"],
                 y=df[mask]["GColor"] if colorspace == COLORSPACE_RGB else df[mask]["aColor"],
                 z=df[mask]['BColor'] if colorspace == COLORSPACE_RGB else df[mask]["bColor"],
-                customdata=df[mask],
+                customdata=graph_customdata(df[mask]),
                 marker=dict(
                     color=df[mask]['CssColor'],
                     size=6,
@@ -234,13 +244,13 @@ def populate_graph_colorspace(selected_id,df, manufacturer, thickness, colorspac
                 hovertemplate = 
                     '<b>nfrc_id</b>: %{customdata[0]}' + 
                     '<br>(<b>T_v</b>: %{y:.2f}' + ' <b>T_s</b>: %{x:.2f})'+
-                    '<br>%{customdata[17]}' + 
-                    '<br>%{customdata[18]}'
+                    '<br>%{customdata[1]}' +
+                    '<br>%{customdata[2]}'
             )
         )
 
     if selected_id:
-        mask = (df['ID'] == selected_id)
+        mask = (df['ID'] == int(selected_id))
 
         fig.add_trace(
             go.Scatter3d(
@@ -248,7 +258,7 @@ def populate_graph_colorspace(selected_id,df, manufacturer, thickness, colorspac
                 x=df[mask]["RColor"] if colorspace == COLORSPACE_RGB else df[mask]["lColor"],
                 y=df[mask]["GColor"] if colorspace == COLORSPACE_RGB else df[mask]["aColor"],
                 z=df[mask]['BColor'] if colorspace == COLORSPACE_RGB else df[mask]["bColor"],
-                customdata=df[mask],
+                customdata=graph_customdata(df[mask]),
                 marker=dict(
                     color=df[mask]['CssColor'],
                     size=SelectedPointProps.SIZE_3D,
