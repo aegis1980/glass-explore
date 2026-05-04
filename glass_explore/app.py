@@ -25,7 +25,8 @@ app = Dash(
     external_stylesheets=[dbc.themes.BOOTSTRAP,dbc.icons.BOOTSTRAP],
     server=server,
     assets_external_path="/",
-    suppress_callback_exceptions=True
+    suppress_callback_exceptions=True,
+    compress=True
 )
 
 app.layout = html.Div([
