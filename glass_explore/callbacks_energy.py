@@ -359,12 +359,12 @@ def _gstr_from_search(search):
 
 @callback(
     Output(EnergyLayoutID.LINK_GSTR,"children"),Output(EnergyLayoutID.LINK_GSTR,"href"),
-    Input(EnergyLayoutID.STORE_BUILDUP_IN_SESSION,"modified_timestamp"),
+    Input(EnergyLayoutID.MODAL_SHARE, "is_open"),
     State(EnergyLayoutID.STORE_BUILDUP_IN_SESSION,"data"),
     State(EnergyLayoutID.URL, "href")
 )
-def update_gstr_url(ts, buildup, href):
-    if ts is None or buildup is None:
+def update_gstr_url(is_open, buildup, href):
+    if not is_open or buildup is None:
         raise PreventUpdate
     _buildup = json.loads(buildup)
     
