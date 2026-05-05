@@ -2,7 +2,7 @@ import logging
 import os
 
 import pywincalc
-from glass_explore import results_printer,PATH_PRODUCTS,PATH_STANDARDS
+from glass_explore import PATH_PRODUCTS, PATH_STANDARDS
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 

@@ -2,7 +2,7 @@ import logging
 import os
 
 import pywincalc
-from glass_explore import PATH_PRODUCTS, results_printer,PATH_STANDARDS
+from glass_explore import PATH_PRODUCTS, PATH_STANDARDS
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 
@@ -100,4 +100,3 @@ results_name = "Results for a single-layer system with a single glazing layer ma
 logging.info("*" * len(results_name))
 logging.info(results_name)
 logging.info("*" * len(results_name))
-results_printer.print_results(glazing_system_u_environment, glazing_system_shgc_environment)

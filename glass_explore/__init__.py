@@ -12,6 +12,10 @@ DEBUG = False
 APP_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 LOCAL_DATA_PATH = os.path.join(APP_ROOT, 'data')
 LOCAL_CACHE_PATH = os.path.join(APP_ROOT, 'cache')
+DATA_SOURCE_ENV = "GLASS_EXPLORE_DATA_SOURCE"
+DATA_SOURCE_BUNDLED = "bundled"
+DATA_SOURCE_VOLUME = "volume"
+DATA_SOURCE_AUTO = "auto"
 
 
 def _require_file(path, description, alternatives=()):
@@ -43,16 +47,33 @@ if is_railway:
     required_data_files = ('igdb.sqlite', 'glass.parquet', 'readable_glass.parquet')
     volume_data_ready = all(os.path.exists(os.path.join(VOLUME_DATA_PATH, name)) for name in required_data_files)
     local_data_ready = all(os.path.exists(os.path.join(LOCAL_DATA_PATH, name)) for name in required_data_files)
+    data_source = os.getenv(DATA_SOURCE_ENV, DATA_SOURCE_BUNDLED).lower()
 
-    data_path = VOLUME_DATA_PATH if volume_data_ready else LOCAL_DATA_PATH
+    if data_source not in (DATA_SOURCE_BUNDLED, DATA_SOURCE_VOLUME, DATA_SOURCE_AUTO):
+        raise ValueError(
+            f"{DATA_SOURCE_ENV} must be one of "
+            f"{DATA_SOURCE_BUNDLED!r}, {DATA_SOURCE_VOLUME!r}, or {DATA_SOURCE_AUTO!r}"
+        )
 
-    if not volume_data_ready and local_data_ready:
+    if data_source == DATA_SOURCE_VOLUME:
+        data_path = VOLUME_DATA_PATH
+    elif data_source == DATA_SOURCE_AUTO:
+        data_path = VOLUME_DATA_PATH if volume_data_ready else LOCAL_DATA_PATH
+    else:
+        data_path = LOCAL_DATA_PATH
+
+    if data_path == LOCAL_DATA_PATH and not local_data_ready:
+        logging.warning(f"Bundled data incomplete or unavailable at {LOCAL_DATA_PATH}")
+    if data_path == VOLUME_DATA_PATH and not volume_data_ready:
+        logging.warning(f"Railway data volume incomplete or unavailable at {VOLUME_DATA_PATH}")
+    if data_source == DATA_SOURCE_AUTO and not volume_data_ready and local_data_ready:
         logging.warning(f"Railway data volume incomplete or unavailable at {VOLUME_DATA_PATH}; using bundled data at {LOCAL_DATA_PATH}")
 
     IGDB_SQLITE_PATH = os.path.join(data_path, 'igdb.sqlite')
     PARQUET_GLASS_PATH = os.path.join(data_path, 'glass.parquet')
     PARQUET_READABLE_GLASS_PATH = os.path.join(data_path, 'readable_glass.parquet')
     logging.info("Railway environment detected, using paths for railway deployment")
+    logging.info(f"{DATA_SOURCE_ENV}: {data_source}")
     logging.info(f"IGDB_SQLITE_PATH: {IGDB_SQLITE_PATH}")
     logging.info(f"PARQUET_GLASS_PATH: {PARQUET_GLASS_PATH}")    
     logging.info(f"PARQUET_READABLE_GLASS_PATH: {PARQUET_READABLE_GLASS_PATH}")
