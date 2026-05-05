@@ -586,10 +586,9 @@ def update_table_from_user_input(modal_open,search_value, manufacturer, thicknes
 
         # 3b. Execute Fuzzy Match
         # Extract matches based on the 'Token Set Ratio' (handles out-of-order words)
-        search_table = df[cols_to_search].astype(str).agg(' '.join, axis=1)
         matches = process.extract(
-            search_value,
-            search_table,
+            search_value.lower(),
+            df['_search_blob'],
             scorer=fuzz.token_set_ratio,
             limit=30
         )
