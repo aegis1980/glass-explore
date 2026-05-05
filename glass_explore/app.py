@@ -8,10 +8,15 @@ Run this file for development. For production, use gunicorn or similar to run th
 
 
 import dash
+import os
 from dash import Dash, html, dcc
 
 import dash_bootstrap_components as dbc
 from flask import Flask, redirect,url_for
+
+RAILWAY_ENVIRONMENT_NAME = os.getenv("RAILWAY_ENVIRONMENT_NAME", "").lower()
+DASH_DEBUG = os.getenv("DASH_DEBUG", "").lower() in {"1", "true", "yes", "on"}
+DEBUG = DASH_DEBUG or RAILWAY_ENVIRONMENT_NAME == "staging"
 
 server = Flask(__name__)
 
@@ -29,9 +34,18 @@ app = Dash(
     compress=True
 )
 
+server.debug = DEBUG
+app.enable_dev_tools(
+    debug=DEBUG,
+    dev_tools_ui=DEBUG,
+    dev_tools_props_check=DEBUG,
+    dev_tools_serve_dev_bundles=DEBUG,
+    dev_tools_hot_reload=False,
+)
+
 app.layout = html.Div([
     dash.page_container
 ])
 
 if __name__ == "__main__":
-    app.run(debug=True, use_reloader=True)  
+    app.run(debug=DEBUG, use_reloader=DEBUG)
