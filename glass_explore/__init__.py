@@ -30,7 +30,7 @@ class WebPaths:
     ENERGY = '/energy'
 
 URL = "https://glass-explore.floatingintheclouds.com"
-OG_DESCRIPTION = "Glass explore calculates thermal and optic properties of double-glazing"
+OG_DESCRIPTION = "Glass explore calculates thermal, solar and optic properties of double-glazing"
 
 is_railway = os.getenv("RAILWAY_ENVIRONMENT") is not None
 
