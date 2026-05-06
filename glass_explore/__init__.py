@@ -47,7 +47,7 @@ if is_railway:
     required_data_files = ('igdb.sqlite', 'glass.parquet', 'readable_glass.parquet')
     volume_data_ready = all(os.path.exists(os.path.join(VOLUME_DATA_PATH, name)) for name in required_data_files)
     local_data_ready = all(os.path.exists(os.path.join(LOCAL_DATA_PATH, name)) for name in required_data_files)
-    data_source = os.getenv(DATA_SOURCE_ENV, DATA_SOURCE_BUNDLED).lower()
+    data_source = os.getenv(DATA_SOURCE_ENV, DATA_SOURCE_AUTO).lower()
 
     if data_source not in (DATA_SOURCE_BUNDLED, DATA_SOURCE_VOLUME, DATA_SOURCE_AUTO):
         raise ValueError(
