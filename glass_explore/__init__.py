@@ -136,12 +136,8 @@ DF_GLASS_TABLE['_search_blob'] = (
     ).str.lower()
 
 
-SEARCH_GLASS_TABLE = DF_GLASS_TABLE[['ID', 'Name', 'ProductName']].astype(str).agg(' '.join, axis=1)
-
 CLEAR_6 = 103
 DEFAULT_GRAPH_GLASS = DF_GLASS_TABLE.loc[CLEAR_6]
-
-DF_READABLE_GLASS_TABLE = pd.read_parquet(PARQUET_READABLE_GLASS_PATH, engine='pyarrow')
 
 
 class Buildup:

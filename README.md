@@ -144,6 +144,12 @@ The current production paths are built from:
 
 The diskcache keys include the `glass.parquet` file timestamp and size, so deploying updated bundled data will bypass stale cached graph/search data.
 
+### Web volume data on Railway
+
+To update the data files on Railway web-volume diconnent the Railway web-volume from main web service and connect to FileBrowser service. Go to FileBrowser remote URL and upload whole `data` directory as sub-directory in the remote root directory. 
+
+![alt text](image.png)
+
 ## License
 
 This project is licensed under AGPL-3.0. See `LICENSE`.
