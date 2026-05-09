@@ -1,4 +1,5 @@
 .claude/
+references/
 
 *.ldb
 *.mdb

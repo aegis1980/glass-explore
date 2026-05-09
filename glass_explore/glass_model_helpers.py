@@ -120,7 +120,7 @@ def callback_return_from_igu(igu : InsulatedGlass) -> Tuple:
     logging.info(f"Coated IGDB ID: {coated_igdb_id}, Uncoated IGDB ID: {uncoated_igdb_id}")
 
     result= \
-        {'points' :[{'customdata': DF_GLASS_TABLE.loc[coated_igdb_id]}]}, \
+        callback_helpers.clickdata_for_glass_id(coated_igdb_id), \
         DF_GLASS_TABLE.loc[coated_igdb_id]['Manufacturer'], \
         callback_helpers.round_to_nearest_even(DF_GLASS_TABLE.loc[coated_igdb_id]['Thickness']),\
         bool(coated_idx), \

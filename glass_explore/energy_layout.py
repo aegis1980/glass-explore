@@ -170,6 +170,16 @@ def modal_about():
                     html.P([
                         "Suggestions helpful, contact me on ", 
                         html.A("linkedin", href="https://www.linkedin.com/in/jon-robinson-nz/", className="alert-link", target="_blank")
+                    ]),
+                ]),
+            ]),
+            dbc.Row([
+                dbc.Col([
+                    html.P([
+                        "Source code is available on ",
+                        html.A("GitHub", href="https://github.com/jonrobinson/glass-explore", className="alert-link", target="_blank"),
+                        " under ",
+                        html.A("AGPL license", href="https://github.com/jonrobinson/glass-explore/blob/main/LICENSE", className="alert-link", target="_blank"),
                     ])
                 ]),
             ]),

@@ -113,9 +113,22 @@ Deployment assumptions:
 - Python 3.11
 - Poetry dependencies from `pyproject.toml` and `poetry.lock`
 - parquet files for fast app startup
-- SQLite IGDB database stored on a Railway volume
+- bundled parquet/SQLite data in `data/`
+- optional SQLite/parquet data stored on a Railway volume
 
-In Railway, the app detects `RAILWAY_ENVIRONMENT` and expects the mounted volume at:
+By default, Railway uses the bundled data deployed with the app. This keeps production in sync with repository updates. To force Railway to read from the mounted volume instead, set:
+
+```text
+GLASS_EXPLORE_DATA_SOURCE=volume
+```
+
+To prefer the volume when it is complete and fall back to bundled data otherwise, set:
+
+```text
+GLASS_EXPLORE_DATA_SOURCE=auto
+```
+
+When volume data is enabled, the app expects the mounted volume at:
 
 ```text
 /igdb
@@ -128,6 +141,14 @@ The current production paths are built from:
 /igdb/storage/data/glass.parquet
 /igdb/storage/data/readable_glass.parquet
 ```
+
+The diskcache keys include the `glass.parquet` file timestamp and size, so deploying updated bundled data will bypass stale cached graph/search data.
+
+### Web volume data on Railway
+
+To update the data files on Railway web-volume diconnent the Railway web-volume from main web service and connect to FileBrowser service. Go to FileBrowser remote URL and upload whole `data` directory as sub-directory in the remote root directory. 
+
+![alt text](image.png)
 
 ## License
 

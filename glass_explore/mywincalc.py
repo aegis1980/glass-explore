@@ -10,7 +10,7 @@ import pywincalc
 from glass_explore import PATH_STANDARDS, igdb, optics,Buildup
 import glass_explore
 
-
+@functools.cache
 def load_optical_standard(filename):
     # Path to the optical standard file.  All other files referenced by the standard file must be in the same directory
     # Note:  While all optical standards packaged with WINDOW should work with optical calculations care should be

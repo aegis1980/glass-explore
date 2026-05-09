@@ -9,11 +9,28 @@ import pandas as pd
 
 DEBUG = False
 
+APP_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+LOCAL_DATA_PATH = os.path.join(APP_ROOT, 'data')
+LOCAL_CACHE_PATH = os.path.join(APP_ROOT, 'cache')
+DATA_SOURCE_ENV = "GLASS_EXPLORE_DATA_SOURCE"
+DATA_SOURCE_BUNDLED = "bundled"
+DATA_SOURCE_VOLUME = "volume"
+DATA_SOURCE_AUTO = "auto"
+
+
+def _require_file(path, description, alternatives=()):
+    if os.path.exists(path):
+        return path
+
+    checked = [path, *alternatives]
+    checked_msg = "\n - ".join(checked)
+    raise FileNotFoundError(f"{description} not found. Checked:\n - {checked_msg}")
+
 class WebPaths:
     ENERGY = '/energy'
 
 URL = "https://glass-explore.floatingintheclouds.com"
-OG_DESCRIPTION = "Glass explore calculates thermal and optic properties of double-glazing"
+OG_DESCRIPTION = "Glass explore calculates thermal, solar and optic properties of double-glazing"
 
 is_railway = os.getenv("RAILWAY_ENVIRONMENT") is not None
 
@@ -23,14 +40,40 @@ if is_railway:
     # This points to the mount point at the root of the container
     BASE_VOLUME_PATH = '/igdb'
     SUB_FOLDER = 'storage'  # Adjust if your files are in a subfolder within the mounted volume
+    VOLUME_DATA_PATH = os.path.join(BASE_VOLUME_PATH, SUB_FOLDER, 'data')
 
+    CACHE_PATH = os.path.join(BASE_VOLUME_PATH, 'cache') if os.path.exists(BASE_VOLUME_PATH) else LOCAL_CACHE_PATH
 
-    CACHE_PATH = os.path.join(BASE_VOLUME_PATH, 'cache')
+    required_data_files = ('igdb.sqlite', 'glass.parquet', 'readable_glass.parquet')
+    volume_data_ready = all(os.path.exists(os.path.join(VOLUME_DATA_PATH, name)) for name in required_data_files)
+    local_data_ready = all(os.path.exists(os.path.join(LOCAL_DATA_PATH, name)) for name in required_data_files)
+    data_source = os.getenv(DATA_SOURCE_ENV, DATA_SOURCE_AUTO).lower()
 
-    IGDB_SQLITE_PATH = os.path.join(BASE_VOLUME_PATH,SUB_FOLDER,'data', 'igdb.sqlite')
-    PARQUET_GLASS_PATH = os.path.join(BASE_VOLUME_PATH,SUB_FOLDER,'data', 'glass.parquet')
-    PARQUET_READABLE_GLASS_PATH= os.path.join(BASE_VOLUME_PATH,SUB_FOLDER,  'data','readable_glass.parquet')
+    if data_source not in (DATA_SOURCE_BUNDLED, DATA_SOURCE_VOLUME, DATA_SOURCE_AUTO):
+        raise ValueError(
+            f"{DATA_SOURCE_ENV} must be one of "
+            f"{DATA_SOURCE_BUNDLED!r}, {DATA_SOURCE_VOLUME!r}, or {DATA_SOURCE_AUTO!r}"
+        )
+
+    if data_source == DATA_SOURCE_VOLUME:
+        data_path = VOLUME_DATA_PATH
+    elif data_source == DATA_SOURCE_AUTO:
+        data_path = VOLUME_DATA_PATH if volume_data_ready else LOCAL_DATA_PATH
+    else:
+        data_path = LOCAL_DATA_PATH
+
+    if data_path == LOCAL_DATA_PATH and not local_data_ready:
+        logging.warning(f"Bundled data incomplete or unavailable at {LOCAL_DATA_PATH}")
+    if data_path == VOLUME_DATA_PATH and not volume_data_ready:
+        logging.warning(f"Railway data volume incomplete or unavailable at {VOLUME_DATA_PATH}")
+    if data_source == DATA_SOURCE_AUTO and not volume_data_ready and local_data_ready:
+        logging.warning(f"Railway data volume incomplete or unavailable at {VOLUME_DATA_PATH}; using bundled data at {LOCAL_DATA_PATH}")
+
+    IGDB_SQLITE_PATH = os.path.join(data_path, 'igdb.sqlite')
+    PARQUET_GLASS_PATH = os.path.join(data_path, 'glass.parquet')
+    PARQUET_READABLE_GLASS_PATH = os.path.join(data_path, 'readable_glass.parquet')
     logging.info("Railway environment detected, using paths for railway deployment")
+    logging.info(f"{DATA_SOURCE_ENV}: {data_source}")
     logging.info(f"IGDB_SQLITE_PATH: {IGDB_SQLITE_PATH}")
     logging.info(f"PARQUET_GLASS_PATH: {PARQUET_GLASS_PATH}")    
     logging.info(f"PARQUET_READABLE_GLASS_PATH: {PARQUET_READABLE_GLASS_PATH}")
@@ -46,16 +89,16 @@ if is_railway:
             logging.info(f"Could not list volume: {e}")
 
 else:
-    CACHE_PATH =  os.path.join('cache')
+    CACHE_PATH = LOCAL_CACHE_PATH
 
-    IGDB_SQLITE_PATH = os.path.join('data', 'igdb.sqlite')
-    PARQUET_GLASS_PATH = os.path.join('data','glass.parquet')
-    PARQUET_READABLE_GLASS_PATH= os.path.join('data','readable_glass.parquet')
+    IGDB_SQLITE_PATH = os.path.join(LOCAL_DATA_PATH, 'igdb.sqlite')
+    PARQUET_GLASS_PATH = os.path.join(LOCAL_DATA_PATH,'glass.parquet')
+    PARQUET_READABLE_GLASS_PATH= os.path.join(LOCAL_DATA_PATH,'readable_glass.parquet')
     logging.info("Local environment detected, using local paths")
 
-PATH_DATA = os.path.join('data')
-PATH_STANDARDS = os.path.join('data','standards')
-PATH_PRODUCTS = os.path.join('data','products')
+PATH_DATA = LOCAL_DATA_PATH
+PATH_STANDARDS = os.path.join(LOCAL_DATA_PATH,'standards')
+PATH_PRODUCTS = os.path.join(LOCAL_DATA_PATH,'products')
 
 DEVTEMP = os.path.join(os.getcwd(),'temp') 
 
@@ -68,27 +111,33 @@ COLORSPACE_RGB = 3
 DATATABLE_COLUMNS = ['ID','ProductName','Manufacturer','Thickness','Tvis','Tsol','Rvis1','Rvis2']
 
 
-try:
-    DF_GLASS_TABLE = pd.read_parquet(PARQUET_GLASS_PATH, engine='pyarrow',)
+PARQUET_GLASS_PATH = _require_file(
+    PARQUET_GLASS_PATH,
+    "Glass table Parquet file",
+    alternatives=(os.path.join(LOCAL_DATA_PATH, 'glass.parquet'),)
+)
+PARQUET_READABLE_GLASS_PATH = _require_file(
+    PARQUET_READABLE_GLASS_PATH,
+    "Readable glass table Parquet file",
+    alternatives=(os.path.join(LOCAL_DATA_PATH, 'readable_glass.parquet'),)
+)
+IGDB_SQLITE_PATH = _require_file(
+    IGDB_SQLITE_PATH,
+    "IGDB SQLite file",
+    alternatives=(os.path.join(LOCAL_DATA_PATH, 'igdb.sqlite'),)
+)
 
-    DF_GLASS_TABLE['_search_blob'] = (
-            DF_GLASS_TABLE.index.astype(str) + " " + 
-            DF_GLASS_TABLE['Name'].fillna('') + " " + 
-            DF_GLASS_TABLE['ProductName'].fillna('')
-        ).str.lower()
+DF_GLASS_TABLE = pd.read_parquet(PARQUET_GLASS_PATH, engine='pyarrow',)
+
+DF_GLASS_TABLE['_search_blob'] = (
+        DF_GLASS_TABLE.index.astype(str) + " " +
+        DF_GLASS_TABLE['Name'].fillna('') + " " +
+        DF_GLASS_TABLE['ProductName'].fillna('')
+    ).str.lower()
 
 
-    SEARCH_GLASS_TABLE = DF_GLASS_TABLE[['ID', 'Name', 'ProductName']].astype(str).agg(' '.join, axis=1)
-
-    CLEAR_6 = 103
-    DEFAULT_GRAPH_GLASS = DF_GLASS_TABLE.loc[CLEAR_6]
-except FileNotFoundError:
-    logging.info("Glass table Parquet file not found")
-
-try:
-    DF_READABLE_GLASS_TABLE = pd.read_parquet(PARQUET_READABLE_GLASS_PATH, engine='pyarrow')
-except FileNotFoundError:
-    logging.info("Readable glass table Parquet file not found")
+CLEAR_6 = 103
+DEFAULT_GRAPH_GLASS = DF_GLASS_TABLE.loc[CLEAR_6]
 
 
 class Buildup:
