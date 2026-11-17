@@ -11,7 +11,7 @@ import os
 from dash import Dash, html
 
 import dash_bootstrap_components as dbc
-from flask import Flask, redirect,url_for
+from flask import Flask, redirect
 
 RAILWAY_ENVIRONMENT_NAME = os.getenv("RAILWAY_ENVIRONMENT_NAME", "").lower()
 RAILWAY_STAGING = (RAILWAY_ENVIRONMENT_NAME == "staging")
