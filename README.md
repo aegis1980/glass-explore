@@ -13,12 +13,12 @@ The app currently focuses on the `Energy` page:
 
 ## Requirements
 
-- Python 3.11
+- Python 3.12
 - Poetry
 - The data files under `data/`, including `data/igdb.sqlite`, which is not in the repository (see [Data Files](#data-files))
 - Microsoft Access Database Engine or Microsoft Access, only when converting a new IGDB `.mdb` file
 
-Python 3.11 is currently used because `pywincalc` has had install/runtime issues with Python 3.12.
+Python 3.12 needs `pywincalc` 3.3.1 or later; earlier `pywincalc` releases have no Python 3.12 builds and will not install. The project used Python 3.11 until November 2026.
 
 ## Local Development
 
@@ -139,7 +139,7 @@ Railway is the current deployment target.
 
 Deployment assumptions:
 
-- Python 3.11
+- Python 3.12, taken from `.python-version` (a Python version variable set in the Railway dashboard would override that file)
 - Poetry dependencies from `pyproject.toml` and `poetry.lock`
 - parquet files for fast app startup
 - all three data files (`igdb.sqlite`, `glass.parquet`, `readable_glass.parquet`) stored on a Railway volume

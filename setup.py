@@ -24,6 +24,6 @@ setup(
         'Topic :: Scientific/Engineering',
     ], 
     packages=find_packages(),
-    python_requires='>=3.5',
+    python_requires='>=3.12',
     url='https://github.com/aegis1980/glass_explore'
 )

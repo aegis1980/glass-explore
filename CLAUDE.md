@@ -15,7 +15,7 @@ poetry run python production.py          # production-style, 0.0.0.0:8050
 poetry run gunicorn production:server    # Linux only
 ```
 
-- Target Python is 3.11 (`.python-version`). `pyproject.toml` allows `^3.11`, but 3.12+ is untested with `pywincalc`.
+- Target Python is 3.12 (`.python-version`, and `python = "^3.12"` in `pyproject.toml`). See [Python 3.12 upgrade and rollback](#python-312-upgrade-and-rollback) if anything Python-version-related goes wrong.
 - There are no tests, no linter config and no CI. Verify changes by running the app and exercising the page. `en673.py`, `en410.py` and `glass_model/` are pure Python and are the easiest places to add tests.
 - Run everything from the repo root so `glass_explore` is importable and `data/` resolves.
 
@@ -103,3 +103,37 @@ Railway, detected through `RAILWAY_ENVIRONMENT`. `RAILWAY_ENVIRONMENT_NAME=stagi
 `GLASS_EXPLORE_DATA_SOURCE` is `bundled`, `volume` or `auto`; the code default is `auto` (use the volume when it has all three files, otherwise the deployed `data/`). A deploy contains no `igdb.sqlite`, so `bundled`, or `auto` with an incomplete volume, fails at startup. The parquet files are read from the volume as well, so a repo change to `glass.parquet` does not reach production until it is uploaded.
 
 There is no Procfile or Railway config in the repo, so the start command is set in the Railway dashboard.
+
+## Python 3.12 upgrade and rollback
+
+The project moved from Python 3.11 to 3.12 on 2026-11-19, in a single commit titled "Upgrade to Python 3.12". Find it with `git log --grep="Upgrade to Python 3.12"`.
+
+### What that commit changed
+
+| File | Before | After |
+| --- | --- | --- |
+| `.python-version` | `3.11` | `3.12` |
+| `pyproject.toml` | `python = "^3.11"` | `python = "^3.12"` |
+| `poetry.lock` | `python-versions = "^3.11"` | `python-versions = "^3.12"` (plus content hash and markers; no package versions changed) |
+| `setup.py` | `python_requires='>=3.5'` | `python_requires='>=3.12'` |
+| `README.md`, `CLAUDE.md` | said 3.11 | say 3.12 |
+
+**Why it was judged safe.** The old pin existed because of `pywincalc` trouble on 3.12. `pywincalc` 3.0.0–3.2.0 have no Python 3.12 wheels and no source distribution; 3.3.1 (the pinned version) has them for Linux and Windows. In Docker (`python:3.12-slim`), the full lock installed, the app started under gunicorn, and the NFRC and EN calculations gave the same numbers as on Linux 3.11 and Windows 3.12.
+
+**What was not tested.** Railway's own build image, and the page in a real browser. Deploy to the Railway staging environment before production.
+
+### Signs the upgrade is the cause of a problem
+
+- The Railway build fails while installing `pywincalc` ("no matching distribution", or an attempt to build it from source).
+- The app fails at import of `pywincalc`, or crashes inside a calculation callback, on Railway but not on 3.11.
+- The build log shows a Python version other than 3.12. A Python version variable in the Railway dashboard (`RAILPACK_PYTHON_VERSION`, or `NIXPACKS_PYTHON_VERSION` on the older builder) overrides `.python-version`.
+
+### Rollback
+
+1. Revert the commit: `git revert <hash of "Upgrade to Python 3.12">`. That restores all the files above together, including the lock. If later commits have touched `poetry.lock`, revert `.python-version` and `pyproject.toml` by hand to the "Before" values instead and run `poetry lock` (it keeps the locked package versions).
+2. Push and redeploy; check the Railway build log says Python 3.11.
+3. Locally, install Python 3.11, then `poetry env use 3.11` and `poetry install`.
+
+Reverting does not undo anything else: the Dash 4.5 upgrade and the gas-lookup fixes are separate commits and work on 3.11 as well (Dash 4.5 needs Python 3.9 or later).
+
+Do not lower the `pywincalc` pin below 3.3.1 while on Python 3.12.
