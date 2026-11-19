@@ -143,6 +143,7 @@ DEFAULT_GRAPH_GLASS = DF_GLASS_TABLE.loc[CLEAR_6]
 class Buildup:
     SOLID_LAYERS = 'layers'
     GAS_LAYERS = 'gas_layers'
+    COATED_LAYER_INDEX = 'coated_layer_index'  # index into SOLID_LAYERS of the user-selected (coated) lite
 
 
 class SelectedPointProps:

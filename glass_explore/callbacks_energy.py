@@ -198,6 +198,8 @@ def glass_to_store(pt_data, coated_side_inside, coated_layer_flipped, gas, gap_t
         a=0
         b=1
 
+    buildup[Buildup.COATED_LAYER_INDEX] = a
+
     buildup[Buildup.SOLID_LAYERS][a]['color'] = DF_GLASS_TABLE.loc[int(id)]['CssColor']
     buildup[Buildup.SOLID_LAYERS][a]['flipped'] = coated_layer_flipped
     utils.populate_buildup_with_glass_props(buildup,props_coated,a)
@@ -236,7 +238,9 @@ def update_coated_lite_productdata(timestamp, buildup):
         raise PreventUpdate
     
     buildup = json.loads(buildup)
-    props = buildup[Buildup.SOLID_LAYERS][0]['props']
+    # The coated lite is layers[1] when the outside/inside switch is on. Older session data has no index; assume outer.
+    coated_idx = buildup.get(Buildup.COATED_LAYER_INDEX, 0)
+    props = buildup[Buildup.SOLID_LAYERS][coated_idx]['props']
 
     if props['Coating_Name'] and props['Coating_Name'] != "N/A" and props['Coating_Name'] != "Unknowen":
         product = html.Strong(f"{props['ProductName']}, {props['Coating_Name']}")

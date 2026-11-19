@@ -13,12 +13,12 @@ The app currently focuses on the `Energy` page:
 
 ## Requirements
 
-- Python 3.11
+- Python 3.12
 - Poetry
-- The data files under `data/`
+- The data files under `data/`, including `data/igdb.sqlite`, which is not in the repository (see [Data Files](#data-files))
 - Microsoft Access Database Engine or Microsoft Access, only when converting a new IGDB `.mdb` file
 
-Python 3.11 is currently used because `pywincalc` has had install/runtime issues with Python 3.12.
+Python 3.12 needs `pywincalc` 3.3.1 or later; earlier `pywincalc` releases have no Python 3.12 builds and will not install. The project used Python 3.11 until November 2026.
 
 ## Local Development
 
@@ -67,6 +67,30 @@ The app expects these local files:
 
 `glass.parquet` is the main preprocessed glass table used for fast app loading. `igdb.sqlite` is used for detailed lookups such as spectral data, gas properties, and glazing properties.
 
+### The IGDB database is not in git
+
+`data/igdb.sqlite` is about 250 MB, which is over GitHub's 100 MB file limit, and this project does not use Git LFS. The file is listed in `.gitignore` and exists only:
+
+- on the development machine, at `data/igdb.sqlite`
+- in production, on the Railway volume (see [Railway Deployment](#railway-deployment))
+
+Git holds no copy, so keep a backup of the file somewhere outside the repository.
+
+The two parquet files and `data/standards/` are small and are committed as normal.
+
+### Setting up a new clone
+
+A fresh clone has no `data/igdb.sqlite`, and the app will not start without it (`FileNotFoundError: IGDB SQLite file not found`). Use one of these:
+
+1. **Copy the file** from another machine or a backup into `data/igdb.sqlite`. This is the quickest route.
+2. **Rebuild it** from LBNL WINDOW, following [Updating IGDB Data](#updating-igdb-data). The update script imports `glass_explore`, which refuses to load when `data/igdb.sqlite` is missing, so create an empty placeholder first:
+
+   ```powershell
+   New-Item data/igdb.sqlite -ItemType File
+   ```
+
+To check the file is good, start the app and open the About modal: it shows the IGDB version read from the data. If lookups fail with `sqlite3.DatabaseError: file is not a database`, the file is damaged or is not the real database (it should be roughly 250 MB).
+
 ## Updating IGDB Data
 
 The IGDB is updated periodically by LBNL:
@@ -96,13 +120,18 @@ To convert/update the local app data, use:
 poetry run python scripts/update_igdb.py
 ```
 
-By default, the script currently creates the parquet glass table from the existing SQLite database. To convert a fresh Access database to SQLite, edit `scripts/update_igdb.py` and set:
+As currently set, the script does both steps: it converts the Access database at `C:\Users\Public\LBNL\WINDOW7.8\w7.mdb` into `data/igdb.sqlite`, replacing the tables already there, and then rebuilds `data/glass.parquet` from it. To rebuild only the parquet file from the existing SQLite database, edit `scripts/update_igdb.py` and set:
 
 ```python
-convert_access_file = True
+convert_access_file = False
 ```
 
-When the update is working, the app's About modal should show the updated IGDB version.
+After an update:
+
+1. Run the app locally. The About modal should show the new IGDB version.
+2. Commit the updated `data/glass.parquet`. `data/igdb.sqlite` is ignored by git and stays local.
+3. Back up the new `data/igdb.sqlite`.
+4. Upload the data files to the Railway volume (see [Web volume data on Railway](#web-volume-data-on-railway)). Production does not pick up new data from a deploy.
 
 ## Railway Deployment
 
@@ -110,25 +139,22 @@ Railway is the current deployment target.
 
 Deployment assumptions:
 
-- Python 3.11
+- Python 3.12, taken from `.python-version` (a Python version variable set in the Railway dashboard would override that file)
 - Poetry dependencies from `pyproject.toml` and `poetry.lock`
 - parquet files for fast app startup
-- bundled parquet/SQLite data in `data/`
-- optional SQLite/parquet data stored on a Railway volume
+- all three data files (`igdb.sqlite`, `glass.parquet`, `readable_glass.parquet`) stored on a Railway volume
 
-By default, Railway uses the bundled data deployed with the app. This keeps production in sync with repository updates. To force Railway to read from the mounted volume instead, set:
+`data/igdb.sqlite` is not in the repository, so a deploy never contains it. Production reads its data from the Railway volume, and the volume must hold all three files.
 
-```text
-GLASS_EXPLORE_DATA_SOURCE=volume
-```
+The data source is controlled by `GLASS_EXPLORE_DATA_SOURCE`:
 
-To prefer the volume when it is complete and fall back to bundled data otherwise, set:
+| Value | Behaviour |
+| --- | --- |
+| `auto` (default when unset) | Uses the volume when all three files are there. Otherwise falls back to the deployed `data/` directory, which has no database, so the app fails at startup. |
+| `volume` | Always uses the volume. |
+| `bundled` | Always uses the deployed `data/` directory. This no longer works, because the database is not deployed. |
 
-```text
-GLASS_EXPLORE_DATA_SOURCE=auto
-```
-
-When volume data is enabled, the app expects the mounted volume at:
+The app expects the mounted volume at:
 
 ```text
 /igdb
@@ -142,11 +168,17 @@ The current production paths are built from:
 /igdb/storage/data/readable_glass.parquet
 ```
 
-The diskcache keys include the `glass.parquet` file timestamp and size, so deploying updated bundled data will bypass stale cached graph/search data.
+All three files are read from the volume, including the parquet files. A change to `data/glass.parquet` in the repository does not reach production until it is uploaded to the volume too.
 
 ### Web volume data on Railway
 
-To update the data files on Railway web-volume diconnent the Railway web-volume from main web service and connect to FileBrowser service. Go to FileBrowser remote URL and upload whole `data` directory as sub-directory in the remote root directory. 
+To update the data files on the Railway web-volume:
+
+1. Disconnect the web-volume from the main web service and connect it to the FileBrowser service.
+2. Go to the FileBrowser remote URL and upload the whole local `data` directory as a sub-directory of the remote root directory.
+3. Reconnect the web-volume to the main web service and make sure the service restarts. The app loads the data once at startup, so it keeps serving the old data until it restarts.
+
+The diskcache keys include the `glass.parquet` file timestamp and size, so the new files bypass stale cached graph/search data.
 
 ![alt text](image.png)
 
