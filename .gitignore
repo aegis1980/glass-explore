@@ -4,6 +4,9 @@ references/
 *.ldb
 *.mdb
 
+# IGDB database (~250 MB): too big for GitHub, kept locally and on the Railway volume
+data/igdb.sqlite
+
 temp/
 cache/
 .vscode/
