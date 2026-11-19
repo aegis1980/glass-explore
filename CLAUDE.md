@@ -13,10 +13,12 @@ poetry install
 poetry run python glass_explore/app.py   # dev server, debug + reloader, http://127.0.0.1:8050
 poetry run python production.py          # production-style, 0.0.0.0:8050
 poetry run gunicorn production:server    # Linux only
+poetry run python -m unittest discover -s tests -t . -v   # tests
 ```
 
 - Target Python is 3.12 (`.python-version`, and `python = "^3.12"` in `pyproject.toml`). See [Python 3.12 upgrade and rollback](#python-312-upgrade-and-rollback) if anything Python-version-related goes wrong.
-- There are no tests, no linter config and no CI. Verify changes by running the app and exercising the page. `en673.py`, `en410.py` and `glass_model/` are pure Python and are the easiest places to add tests.
+- Tests are stdlib `unittest` in [tests/](tests/); pytest is not a dependency. They cover `en410.py` only so far, need the local `data/` files and skip themselves without them. `EN410_SWEEP=1` adds a check of every coated product (about 30 s). `en673.py` and `glass_model/` are pure Python and are the next easiest places to add tests.
+- There is no linter config and no CI. For anything the tests do not cover, verify by running the app and exercising the page.
 - Run everything from the repo root so `glass_explore` is importable and `data/` resolves.
 
 ## Data — read before running anything
@@ -71,6 +73,8 @@ The coated lite is `layers[0]` unless the outside/inside switch is on, in which 
 
 - **NFRC** (`standard == "nfrc"`): everything from `pywincalc` with `W5_NFRC_2003.std` (ISO 15099 thermal).
 - **EN**: `pywincalc` with `prEN_410.std` for visible and colour results only. U-value comes from `en673.u_value` and solar factor from `en410.solar_factor`; the `_trial = True` flag in `run_analysis_and_update_results` selects the pure-Python U-value over pywincalc's.
+- `en410.solar_factor` follows EN 410:2011 clause 5.4: panes are combined at each Table 2 wavelength and weighted afterwards, `h_e` = 25, `h_i` = 3.6 + 4.1·ε/0.837 from the room-side emissivity (the same rule as `en673._h_i`, so U and g agree), and Λ is the EN 673 total conductance at declared conditions, panes included. It always uses the declared EN 673 calculation, whatever mode the displayed U-value uses.
+- Do not take the EN solar transmittance from `pywincalc`: its `SOLAR` method with `prEN_410.std` integrates the pre-weighted Table 2 a second time (6 mm Clearlite gives 0.835 instead of 0.846).
 - Glass layers reach `pywincalc` by writing a temporary Optics-format file and parsing it (`optics.product_from_tempfile`). This is a deliberate workaround; `mywincalc.glass_layer_from_props` is the unused direct approach.
 
 ### Share links
@@ -84,6 +88,7 @@ The coated lite is `layers[0]` unless the outside/inside switch is on, in which 
 - **Gas names are string keys used in three places** that must stay in step: `GASES_NFRC_LOOKUP` / `GASES_EN673_LOOKUP` in `igdb.py` (values are `Gap.ID`s; the EN 673 variants are 100–107), the mixture parser in `en673._parse_gas`, and gstr encoding/decoding in `glass_model_helpers.py`. The percentages in the names must match the IGDB `Gap` names, because `en673` parses them.
 - **Gas mixtures live in `GapMixtures`**, as `(ParentID, GapID, Percentage)` component rows. A mixture's own `Gap` row (`nGasses > 0`) carries placeholder coefficients copied from air or SF6; `igdb.lookup_gas_props` must build mixtures from their components, never from the parent row. `GapMixtures` also has two zero-percentage rows under Air (ID 1), so filter on `Percentage > 0`.
 - **The current `igdb.sqlite` stores the text `'NULL'` where Access had empty values** (e.g. `Gap.SpecificHeatRatio` for ID 9, `Glass.Comment`, `GlazingProperties.Appearance`). The converter in `scripts/update_igdb.py` now writes real NULLs, but that only takes effect on the next rebuild; until then, don't assume a column is numeric or `None` without checking.
+- **`SpectralData` rows are not stored in wavelength order** for about 5% of products. `igdb.lookup_wavelength_data` sorts them; anything that reads the table directly must `order by Wavelength` before interpolating, because `np.interp` returns nonsense without raising.
 - **Front/back and flipping.** `emis1`/`Rf` are the front (outside-facing) surface, `emis2`/`Rb` the back. A flipped layer swaps them; this logic is repeated in `optics.py`, `en673.py`, `en410.py` and `svg_glass.py`.
 - The "generic" uncoated lite is a specific product per thickness (`CLEAR_LOOKUP`, `ULTRACLEAR_LOOKUP`); those IDs are also how a share link works out which lite is the coated one.
 

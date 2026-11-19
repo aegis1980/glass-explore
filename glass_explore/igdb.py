@@ -82,7 +82,10 @@ def _single_record(raw_df: pd.DataFrame, table_name: str, id_value) -> Dict:
 
 @cache
 def lookup_wavelength_data(glazing_id : int) -> pd.DataFrame:
-    """_summary_
+    """Spectral data for one glazing, in ascending wavelength order.
+
+    The rows of about 5% of products are stored out of wavelength order, and
+    np.interp silently returns nonsense for those, so the ordering is done here.
 
     Args:
         glazing_id (int): Glazing id (note this is not the same as the NFRC id)
@@ -91,7 +94,7 @@ def lookup_wavelength_data(glazing_id : int) -> pd.DataFrame:
         pd.DataFrame: spectral data
     """
 
-    sql = 'select * from SpectralData where GlazingID = ?'
+    sql = 'select * from SpectralData where GlazingID = ? order by Wavelength'
     return _read_sql(sql, (glazing_id,))
 
 

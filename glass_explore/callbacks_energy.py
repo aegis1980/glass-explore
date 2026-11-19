@@ -319,7 +319,7 @@ def run_analysis_and_update_results(ts, standard, buildup):
             u_en673 = glazing_system_u_environment.u()
             
         uvalue = f'{u_en673:.1f}'
-        en410result = en410.solar_factor(buildup, u_en673, detailed_analysis=True) # currently only returns solar factor, but also computes intermediate values that could be added to results display in future if desired
+        en410result = en410.solar_factor(buildup) # currently only returns solar factor, but also computes intermediate values that could be added to results display in future if desired
         shgc = f'{en410result.g:.2f}'
 
         color_results = glazing_system_optical_environment.color(tristimulus_x_method="CRI_X",
