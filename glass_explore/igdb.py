@@ -34,16 +34,18 @@ ULTRACLEAR_LOOKUP = {
 }
 
 
-# integers are ID in igdb table
+# Keys are the gas names shown in the UI and stored in the buildup dict; they are
+# also parsed by en673._parse_gas, so the percentages must match the IGDB Gap table.
+# Values are IDs in the IGDB Gap table (1-9 NFRC gases, 100-107 their EN 673 variants).
 GASES_NFRC_LOOKUP = {
     "air" : 1,
     "argon" : 2,
     "krypton" : 3,
     "xenon" : 4,
-    "air(5%), ar(95%)" : 5,
+    "air(5%), ar(95%)" : 6,
     "air(10%), ar(90%)" : 9,
     "air(5%), kr(95%)" : 8,
-    "air(12%), ar(22%), kr(90%)" : 7,
+    "air(12%), ar(22%), kr(66%)" : 7,
 }
 
 GASES_EN673_LOOKUP = {
@@ -54,7 +56,7 @@ GASES_EN673_LOOKUP = {
     "air(5%), ar(95%)" : 104,
     "air(10%), ar(90%)" : 107,
     "air(5%), kr(95%)" : 106,
-    "air(12%), ar(22%), kr(90%)" : 105,
+    "air(12%), ar(22%), kr(66%)" : 105,
 }
 
 @cache
@@ -181,20 +183,15 @@ def lookup_glass_props(nfrc_id : int) -> Dict:
 
     return _single_record(raw_df, "Glass", nfrc_id)
 
-@cache
-def lookup_gas_props(igdb_id : float) -> pywincalc.Gas:
-
-    sql = 'select * from Gap where ID = ?'
-    raw_df = _read_sql(sql, (igdb_id,))
-    props = _single_record(raw_df, "Gap", igdb_id)
-
+def _gas_data_from_gap_row(props: Dict) -> pywincalc.GasData:
+    """Build pywincalc GasData from a pure-gas row of the IGDB Gap table."""
     conductivity_coefficients = pywincalc.GasCoefficients(props['ConductivityA'], props['ConductivityB'], props['ConductivityC'])
 
     viscosity_coefficients = pywincalc.GasCoefficients(props['ViscosityA'], props['ViscosityB'], props['ViscosityC'])
 
     Cp_coefficients = pywincalc.GasCoefficients(props['CpA'], props['CpB'], props['CpC'])
 
-    gas_data = pywincalc.GasData(
+    return pywincalc.GasData(
         name=props['Name'],
         molecular_weight=props['MolecularWeight'],
         specific_heat_ratio=props['SpecificHeatRatio'],
@@ -203,7 +200,45 @@ def lookup_gas_props(igdb_id : float) -> pywincalc.Gas:
         viscosity=viscosity_coefficients,
     )
 
-    return pywincalc.create_gas([[1.0, gas_data]])
+
+@cache
+def lookup_gas_props(igdb_id : int) -> pywincalc.Gas:
+    """
+    Builds a pywincalc Gas from the IGDB Gap table.
+
+    Pure gases (nGasses == 0) use the coefficients on their own Gap row. Mixtures
+    (nGasses > 0) are defined in the GapMixtures table as (component Gap ID, mole
+    fraction) pairs; the coefficients on the mixture's own Gap row are placeholders
+    (copies of air or SF6) and must not be used.
+
+    Args:
+        igdb_id (int): ID in the Gap table
+
+    Returns:
+        pywincalc.Gas: pure gas or mixture
+    """
+    sql = 'select * from Gap where ID = ?'
+    props = _single_record(_read_sql(sql, (igdb_id,)), "Gap", igdb_id)
+
+    n_gasses = props.get('nGasses')
+    is_mixture = isinstance(n_gasses, (int, float)) and n_gasses > 0
+    if not is_mixture:
+        return pywincalc.create_gas([[1.0, _gas_data_from_gap_row(props)]])
+
+    components = _read_sql(
+        'select GapID, Percentage from GapMixtures where ParentID = ? and Percentage > 0 order by "Index"',
+        (igdb_id,),
+    )
+    if components.empty:
+        raise LookupError(f"Gap {igdb_id} ({props['Name']}) is flagged as a mixture but has no GapMixtures components")
+
+    total = float(components['Percentage'].sum())  # stored as float32 fractions, e.g. 0.05 + 0.95 = 0.99999999
+    parts = []
+    for row in components.itertuples(index=False):
+        component = _single_record(_read_sql(sql, (int(row.GapID),)), "Gap", row.GapID)
+        parts.append([float(row.Percentage) / total, _gas_data_from_gap_row(component)])
+
+    return pywincalc.create_gas(parts)
 
 
 
