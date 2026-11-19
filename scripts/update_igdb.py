@@ -155,7 +155,7 @@ def convert_mdb_to_sqlite(filename_in : str,filename_out:str):
             values = []
             for value in row:
                 if value is None:
-                    values.append(u'NULL')
+                    values.append(None)  # real SQL NULL; the text 'NULL' used to be inserted here and leaked into numeric columns
                 else:
                     if isinstance(value, bytearray):
                         value = sqlite3.Binary(value)
