@@ -273,7 +273,12 @@ def populate_graph_colorspace(selected_id,df, manufacturer, thickness, colorspac
 
         )
 
-    return fig, msg, msg_color  
+    # Keep the user's camera (rotation, zoom) when the figure is updated, for example when
+    # the highlight moves on a click; without a uirevision plotly resets the view each time.
+    # One value per colour space, so each still opens in the default view.
+    fig.update_layout(uirevision=f'colorspace-{colorspace}')
+
+    return fig, msg, msg_color
 
 
 def populate_datatable(df : pd.DataFrame, manufacturer : str,thickness : float) -> pd.DataFrame:

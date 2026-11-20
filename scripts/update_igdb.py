@@ -167,6 +167,10 @@ def convert_mdb_to_sqlite(filename_in : str,filename_out:str):
             c.execute(sql.format(t_name), values)
         logging.info(Fore.GREEN + "done" + Style.RESET_ALL)
 
+    # Without this index every spectral lookup (igdb.lookup_wavelength_data) scans all of
+    # SpectralData, about 3 million rows. Dropping the table above drops the index too,
+    # so it is recreated on every conversion.
+    c.execute('CREATE INDEX IF NOT EXISTS idx_spectraldata_glazingid_wavelength ON SpectralData (GlazingID, Wavelength)')
 
     conn.commit()
     print ("Conversion complete")
