@@ -7,7 +7,7 @@ import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
 import numpy as np
 
-from glass_explore import EnergyLayoutID,  igdb, OG_DESCRIPTION, ALL_MANUFACTURERS, DF_GLASS_TABLE
+from glass_explore import EnergyLayoutID,  igdb, utils, OG_DESCRIPTION, ALL_MANUFACTURERS, DF_GLASS_TABLE
 
 FITC_LOGO = 'balloon_white_h30px.png'
 COFFEE = 'coffee.svg'
@@ -392,32 +392,42 @@ def card_coated_layer():
     return dbc.Card([
         dbc.CardHeader("Coated outer glass layer", id = EnergyLayoutID.CARD_HEADER_COATED),
         dbc.CardBody([
-            dbc.Form(
+            dbc.Form([
+                html.A([],
+                    id = EnergyLayoutID.LINK_COATED_LITE_ID,
+                    style={
+                        "color": "blue",
+                        "textDecoration": "underline",
+                        "cursor": "pointer"
+                    }
+                ),
+                html.Br(),
+                html.Div(id=EnergyLayoutID.DIV_COATED_LITE_PRODUCT, className="mb-2"),
+                # Which lite the selected glass is and which way round, as the surface its
+                # coating is on. The label, option labels and help text follow the product
+                # (callback_helpers.coating_surface_control); the values are always 1-4.
                 dbc.Row(
                     [
-                        dbc.Col([
-                            html.A([], 
-                                id = EnergyLayoutID.LINK_COATED_LITE_ID,
-                                style={
-                                    "color": "blue", 
-                                    "textDecoration": "underline", 
-                                    "cursor": "pointer"
-                                }
-                            ),
-                            html.Br(),
-                            html.Div(id=EnergyLayoutID.DIV_COATED_LITE_PRODUCT)
-                        ],width=8),
+                        dbc.Label("Coating on surface", id=EnergyLayoutID.LABEL_COATING_SURFACE, width="auto"),
                         dbc.Col(
-                            dbc.Checkbox(
-                                id=EnergyLayoutID.CHECKBOX_FLIP_COATEDLAYER,
-                                label="Flip layer",
-                                value=False,
+                            html.Div(
+                                dbc.RadioItems(
+                                    id=EnergyLayoutID.RADIO_COATING_SURFACE,
+                                    options=[{"label": str(s), "value": s} for s in utils.COATING_SURFACES],
+                                    value=utils.DEFAULT_COATING_SURFACE,
+                                    class_name="btn-group",
+                                    input_class_name="btn-check",
+                                    label_class_name="btn btn-sm btn-outline-secondary",
+                                    label_checked_class_name="active",
+                                ),
+                                className="radio-group",
                             ),
-                            width=4,
-                        )
-                    ]
-                )
-            )
+                        ),
+                    ],
+                    className="g-2 align-items-center",
+                ),
+                dbc.FormText(id=EnergyLayoutID.FORMTEXT_COATING_SURFACE),
+            ])
         ])],
         className="mb-2",
     )

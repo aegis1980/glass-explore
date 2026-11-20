@@ -31,7 +31,9 @@ from glass_explore import IGDB_SQLITE_PATH,PARQUET_GLASS_PATH,PARQUET_READABLE_G
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 
-DEFAULT_LBNL_WINDOWS_MDB_FILE_PATH = "c:/Users/Public/LBNL/WINDOW7.8/w7.mdb"
+#DEFAULT_LBNL_WINDOWS_MDB_FILE_PATH = "c:/Users/Public/LBNL/WINDOW7.8/w7.mdb"
+DEFAULT_LBNL_WINDOWS_MDB_FILE_PATH = "c:/Users/Public/LBNL/WINDOW8.1/w8.mdb"
+
 
 def decode_sketchy_utf16(raw_bytes):
     s = raw_bytes.decode("utf-16le", "ignore")

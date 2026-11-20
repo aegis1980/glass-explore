@@ -183,30 +183,27 @@ def store_in_hidden_div(pt_data):
     return id
 
     
-@callback(
-    Output(EnergyLayoutID.STORE_BUILDUP_IN_SESSION, 'data'),  
-    Input(EnergyLayoutID.GRAPH_IGDB, "clickData"),
-    Input(EnergyLayoutID.SWITCH_COATED_GLASS_SIDE,"value"),
-    Input(EnergyLayoutID.CHECKBOX_FLIP_COATEDLAYER, "value"),
-    Input(EnergyLayoutID.SELECT_GAS,"value"),
-    Input(EnergyLayoutID.INPUT_GAP,"value"),
-    Input(EnergyLayoutID.SELECT_UNCOATED_SUBSTRATE,"value"), # clear or ultraclear
-    Input(EnergyLayoutID.SELECT_UNCOATED_THICKNESS,"value"),
-)
-def glass_to_store(pt_data, coated_side_inside, coated_layer_flipped, gas, gap_thickness, uncoated_substrate, uncoated_thickness):
+def buildup_from_inputs(pt_data, coating_surface, gas, gap_thickness, uncoated_substrate, uncoated_thickness):
     """
-    Stores current user selected buildup in session storage.
+    Current user selected buildup as a dict, or None if no glass is selected.
+
+    coating_surface is the surface (1-4, numbered from outside) that the selected lite's
+    coating is on. It sets both which lite the selected glass is and whether it is flipped,
+    whichever face the IGDB measured the coating on (utils.lite_placement_from_surface).
     """
     buildup = {}
     buildup[Buildup.SOLID_LAYERS] = [{},{}]
     buildup[Buildup.GAS_LAYERS] = [{}]
     id = _selected_id_from_clickdata(pt_data)
     if id is None:
-        return dash.no_update
+        return None
 
     props_coated = igdb.lookup_glass_props(id)
     props_uncoated = mywincalc.generic_uncoated_glass_props(int(uncoated_thickness),uncoated_substrate == 'ultraclear') # note inntersubstrate taking a bool!
-    
+
+    coated_side_inside, coated_layer_flipped = utils.lite_placement_from_surface(
+        coating_surface or utils.DEFAULT_COATING_SURFACE, props_coated['Coated_Side'])
+
     if coated_side_inside:
         a=1
         b=0
@@ -227,33 +224,13 @@ def glass_to_store(pt_data, coated_side_inside, coated_layer_flipped, gas, gap_t
     buildup[Buildup.GAS_LAYERS][0]['gas'] = gas
     buildup[Buildup.GAS_LAYERS][0]['thickness'] = gap_thickness
 
-    return json.dumps(buildup)
+    return buildup
 
 
-@callback(
-    Output(EnergyLayoutID.DIV_BUILDUP_SVG_CONTAINER,"children"),
-    Input(EnergyLayoutID.STORE_BUILDUP_IN_SESSION,"modified_timestamp"),
-    State(EnergyLayoutID.STORE_BUILDUP_IN_SESSION,"data")
-)
-def update_buildup_svg(ts, buildup):
-    if ts is None or buildup is None:
-        raise PreventUpdate
-
-    return svg_glass.generate_buildup(json.loads(buildup))
-
-
-@callback(
-    Output(EnergyLayoutID.LINK_COATED_LITE_ID,"children"),
-    Output(EnergyLayoutID.LINK_COATED_LITE_ID,"value"),
-    Output(EnergyLayoutID.DIV_COATED_LITE_PRODUCT,"children"),
-    Input(EnergyLayoutID.STORE_BUILDUP_IN_SESSION,"modified_timestamp"),
-    State(EnergyLayoutID.STORE_BUILDUP_IN_SESSION,"data")
-)
-def update_coated_lite_productdata(timestamp, buildup):
-    if timestamp is None or buildup is None:
-        raise PreventUpdate
-    
-    buildup = json.loads(buildup)
+def coated_lite_productdata(buildup):
+    """
+    Link text, link value and product description for the coated lite.
+    """
     # The coated lite is layers[1] when the outside/inside switch is on. Older session data has no index; assume outer.
     coated_idx = buildup.get(Buildup.COATED_LAYER_INDEX, 0)
     props = buildup[Buildup.SOLID_LAYERS][coated_idx]['props']
@@ -296,24 +273,12 @@ def update_results_labels(standard):
     
 
 
-@callback(
-    Output(EnergyLayoutID.TABLE_CELL_UVALUE, "children"),
-    Output(EnergyLayoutID.TABLE_CELL_SHGC,"children"),
-    Output(EnergyLayoutID.TABLE_CELL_TVIS,"children"),
-    Output(EnergyLayoutID.TABLE_CELL_ROUT,"children"),
-    Output(EnergyLayoutID.TABLE_CELL_RIN,"children"),
-    Output(EnergyLayoutID.TABLE_CELL_COLOR_TRANS,"style"),
-    Output(EnergyLayoutID.TABLE_CELL_COLOR_REFL,"style"),
-    Input(EnergyLayoutID.STORE_BUILDUP_IN_SESSION,"modified_timestamp"),
-    Input(EnergyLayoutID.SELECT_STANDARD,"value"),
-    State(EnergyLayoutID.STORE_BUILDUP_IN_SESSION,"data")
-)
-def run_analysis_and_update_results(ts, standard, buildup):
-    if ts is None or buildup is None:
-        raise PreventUpdate
-    buildup = json.loads(buildup)
-
-    if standard == "nfrc":   
+def run_analysis_and_update_results(standard, buildup):
+    """
+    Runs the analysis for the buildup and returns the values for the results table:
+    U-value, SHGC / solar factor, Tvis, Rout, Rin, and the transmitted and reflected colour styles.
+    """
+    if standard == "nfrc":
         glazing_system_u_environment, glazing_system_solar_environment = mywincalc.run_nfrc_analysis(buildup)
         uvalue = f'{glazing_system_u_environment.u():.1f}'
         shgc = f'{glazing_system_solar_environment.shgc():.2f}'
@@ -359,11 +324,67 @@ def run_analysis_and_update_results(ts, standard, buildup):
 
 
 @callback(
+    Output(EnergyLayoutID.STORE_BUILDUP_IN_SESSION, 'data'),
+    Output(EnergyLayoutID.DIV_BUILDUP_SVG_CONTAINER,"children"),
+    Output(EnergyLayoutID.LINK_COATED_LITE_ID,"children"),
+    Output(EnergyLayoutID.LINK_COATED_LITE_ID,"value"),
+    Output(EnergyLayoutID.DIV_COATED_LITE_PRODUCT,"children"),
+    Output(EnergyLayoutID.LABEL_COATING_SURFACE,"children"),
+    Output(EnergyLayoutID.RADIO_COATING_SURFACE,"options"),
+    Output(EnergyLayoutID.FORMTEXT_COATING_SURFACE,"children"),
+    Output(EnergyLayoutID.TABLE_CELL_UVALUE, "children"),
+    Output(EnergyLayoutID.TABLE_CELL_SHGC,"children"),
+    Output(EnergyLayoutID.TABLE_CELL_TVIS,"children"),
+    Output(EnergyLayoutID.TABLE_CELL_ROUT,"children"),
+    Output(EnergyLayoutID.TABLE_CELL_RIN,"children"),
+    Output(EnergyLayoutID.TABLE_CELL_COLOR_TRANS,"style"),
+    Output(EnergyLayoutID.TABLE_CELL_COLOR_REFL,"style"),
+    Input(EnergyLayoutID.GRAPH_IGDB, "clickData"),
+    Input(EnergyLayoutID.RADIO_COATING_SURFACE,"value"),
+    Input(EnergyLayoutID.SELECT_GAS,"value"),
+    Input(EnergyLayoutID.INPUT_GAP,"value"),
+    Input(EnergyLayoutID.SELECT_UNCOATED_SUBSTRATE,"value"), # clear or ultraclear
+    Input(EnergyLayoutID.SELECT_UNCOATED_THICKNESS,"value"),
+    Input(EnergyLayoutID.SELECT_STANDARD,"value"),
+)
+def update_buildup_and_results(pt_data, coating_surface, gas, gap_thickness, uncoated_substrate, uncoated_thickness, standard):
+    """
+    Everything that follows from a selection, in one round trip to the server: stores the
+    buildup in session storage (the share link reads it from there) and returns the buildup
+    thumbnail, the coated lite product text, the wording of the coating surface picker and
+    the analysis results.
+
+    These used to be four callbacks chained through the store's modified_timestamp, which
+    cost a second round trip on every click.
+    """
+    buildup = buildup_from_inputs(pt_data, coating_surface, gas, gap_thickness, uncoated_substrate, uncoated_thickness)
+    if buildup is None:
+        raise PreventUpdate
+
+    # The store holds the buildup as JSON. Everything below works from the decoded copy, not
+    # from the dict built above: that one holds the cached igdb props dicts by reference.
+    buildup_json = json.dumps(buildup)
+    buildup = json.loads(buildup_json)
+
+    coated_layer = buildup[Buildup.SOLID_LAYERS][buildup[Buildup.COATED_LAYER_INDEX]]
+
+    return (
+        buildup_json,
+        svg_glass.generate_buildup(buildup),
+        *coated_lite_productdata(buildup),
+        *callback_helpers.coating_surface_control(coated_layer['coating']),
+        *run_analysis_and_update_results(standard, buildup),
+    )
+
+
+@callback(
     Output(EnergyLayoutID.CARD_HEADER_COATED,"children"),
     Output(EnergyLayoutID.CARD_HEADER_NONCOATED,"children"),
-    Input(EnergyLayoutID.SWITCH_COATED_GLASS_SIDE,"value")
+    Input(EnergyLayoutID.RADIO_COATING_SURFACE,"value")
 )
-def update_card_headers_on_igu_flip(coated_side_in):
+def update_card_headers_on_igu_flip(coating_surface):
+    # Surfaces 3 and 4 are the inner lite
+    coated_side_in = int(coating_surface or utils.DEFAULT_COATING_SURFACE) >= 3
     if not coated_side_in:
         return "Coated outer glass layer", "Non-coated inner glass layer"
     else:
@@ -418,8 +439,7 @@ def toggle_navbar_collapse(n, is_open):
     Output(EnergyLayoutID.GRAPH_IGDB, "clickData"),
     Output(EnergyLayoutID.SELECT_COATED_MANUFACTURER,"value"),
     Output(EnergyLayoutID.SELECT_COATED_THICKNESS,"value"),
-    Output(EnergyLayoutID.SWITCH_COATED_GLASS_SIDE, "value"),
-    Output(EnergyLayoutID.CHECKBOX_FLIP_COATEDLAYER, "value"),
+    Output(EnergyLayoutID.RADIO_COATING_SURFACE, "value"),
     Output(EnergyLayoutID.SELECT_GAS,"value"),
     Output(EnergyLayoutID.INPUT_GAP,"value"),
     Output(EnergyLayoutID.SELECT_UNCOATED_SUBSTRATE,"value"), # clear or ultraclear
@@ -473,8 +493,7 @@ def onload_parse_url_and_search_table_ok(
             callback_helpers.clickdata_for_glass_id(DEFAULT_GRAPH_GLASS["ID"]), \
             ALL_MANUFACTURERS, \
             6, \
-            False, \
-            False, \
+            utils.DEFAULT_COATING_SURFACE, \
             'air', \
             12, \
             'clear', \
@@ -497,7 +516,6 @@ def onload_parse_url_and_search_table_ok(
         callback_helpers.clickdata_for_glass_id(id), \
         DF_GLASS_TABLE.loc[id]['Manufacturer'], \
         callback_helpers.round_to_nearest_even(DF_GLASS_TABLE.loc[id]['Thickness']), \
-        no_update, \
         no_update, \
         no_update, \
         no_update, \

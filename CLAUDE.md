@@ -17,7 +17,7 @@ poetry run python -m unittest discover -s tests -t . -v   # tests
 ```
 
 - Target Python is 3.12 (`.python-version`, and `python = "^3.12"` in `pyproject.toml`). See [Python 3.12 upgrade and rollback](#python-312-upgrade-and-rollback) if anything Python-version-related goes wrong.
-- Tests are stdlib `unittest` in [tests/](tests/); pytest is not a dependency. They cover `en410.py` only so far, need the local `data/` files and skip themselves without them. `EN410_SWEEP=1` adds a check of every coated product (about 30 s). `en673.py` and `glass_model/` are pure Python and are the next easiest places to add tests.
+- Tests are stdlib `unittest` in [tests/](tests/); pytest is not a dependency. They cover `en410.py` and the coating surface picker (`test_coating_surface.py`) so far, need the local `data/` files and skip themselves without them. `EN410_SWEEP=1` adds a check of every coated product (about 30 s). `en673.py` and `glass_model/` are pure Python and are the next easiest places to add tests.
 - There is no linter config and no CI. For anything the tests do not cover, verify by running the app and exercising the page.
 - Run everything from the repo root so `glass_explore` is importable and `data/` resolves.
 
@@ -51,10 +51,10 @@ poetry run python -m unittest discover -s tests -t . -v   # tests
 ### Callback flow
 
 1. A graph click sets `GRAPH_IGDB.clickData`. Programmatic selection (page load, search modal OK, share URL, product link) works by *writing a fake `clickData`* via `callback_helpers.clickdata_for_glass_id`.
-2. `glass_to_store` turns `clickData` plus the form controls into the buildup dict and writes it as JSON to the session `dcc.Store` `STORE_BUILDUP_IN_SESSION`.
-3. That store's `modified_timestamp` triggers the SVG thumbnail, the product text and `run_analysis_and_update_results`.
+2. `update_buildup_and_results` turns `clickData`, the form controls and the standard into the buildup dict (`buildup_from_inputs`). In the same response it writes the buildup as JSON to the session `dcc.Store` `STORE_BUILDUP_IN_SESSION` and returns the SVG thumbnail, the product text and the analysis results (`run_analysis_and_update_results`).
+3. Nothing is triggered by that store; the share modal reads it as `State`. Keep step 2 as one callback: chaining the outputs through the store's `modified_timestamp`, as it used to be, costs a second round trip on every click.
 
-`fast_highlight` patches `figure.data[-1]`, so the selected-point trace must stay the last trace in every figure.
+The clientside highlight callback patches `figure.data[-1]`, so the selected-point trace must stay the last trace in every figure.
 
 ### Buildup dict
 
@@ -68,7 +68,7 @@ poetry run python -m unittest discover -s tests -t . -v   # tests
 }
 ```
 
-The coated lite is `layers[0]` unless the outside/inside switch is on, in which case it is `layers[1]`.
+The selected lite's position and `flipped` come from the coating surface picker (`RADIO_COATING_SURFACE`), which holds the surface its coating is on: 1–4, numbered from outside. Surfaces 1–2 make it `layers[0]`, 3–4 `layers[1]`; `utils.lite_placement_from_surface` works out `flipped` from the product's `Coated_Side`, and `utils.surface_from_lite_placement` is the inverse used when a share link is opened. For a lite coated on both faces or on neither, the number refers to the IGDB back face, so 2 and 4 are "not flipped". The default is surface 2. Do not go back to a bare flip control: about 900 low-e products are measured with the coating on the front face, and unflipped they put it on surface 1.
 
 ### Calculation paths
 

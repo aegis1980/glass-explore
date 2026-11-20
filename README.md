@@ -105,6 +105,12 @@ The downloaded `Glazing.mdb` file is password protected, so this project does no
 4. WINDOW writes an unprotected Access database, usually at:
 
 ```text
+C:\Users\Public\LBNL\WINDOW8.1\w8.wrb
+```
+
+or
+
+```text
 C:\Users\Public\LBNL\WINDOW7.8\w7.mdb
 ```
 
@@ -119,6 +125,8 @@ To convert/update the local app data, use:
 ```powershell
 poetry run python scripts/update_igdb.py
 ```
+
+NOTE: This needs Microsoft office installed or the Microsoft Access Database Engine 2016 Redistributable
 
 As currently set, the script does both steps: it converts the Access database at `C:\Users\Public\LBNL\WINDOW7.8\w7.mdb` into `data/igdb.sqlite`, replacing the tables already there, and then rebuilds `data/glass.parquet` from it. To rebuild only the parquet file from the existing SQLite database, edit `scripts/update_igdb.py` and set:
 

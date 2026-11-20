@@ -9,7 +9,7 @@ import plotly.graph_objects as go
 
 
 import glass_explore
-from glass_explore import ALL_MANUFACTURERS, COLORSPACE_RGB,SelectedPointProps
+from glass_explore import ALL_MANUFACTURERS, COLORSPACE_RGB,SelectedPointProps, utils
 
 GRAPH_CUSTOMDATA_COLUMNS = ['ID', 'Manufacturer', 'ProductName']
 
@@ -20,6 +20,33 @@ def graph_customdata(df: pd.DataFrame):
 
 def clickdata_for_glass_id(glass_id):
     return {'points': [{'customdata': [int(glass_id)]}]}
+
+
+def coating_surface_control(coated_side):
+    """
+    Label, options and help text of the coating surface picker for a product.
+
+    The option values are always the surface numbers 1-4 (utils.lite_placement_from_surface),
+    so the selection carries over from one product to the next. Only the wording changes: a
+    lite coated on both faces or on neither has no single coated surface to name, so its four
+    placements are described as position and flip instead.
+    """
+    if utils.has_single_coated_face(coated_side):
+        return (
+            "Coating on surface",
+            [{"label": str(s), "value": s} for s in utils.COATING_SURFACES],
+            "Numbered from outside: 1 and 2 are the outer lite, 3 and 4 the inner lite.",
+        )
+
+    options = [
+        {"label": "Outer", "value": 2},
+        {"label": "Outer, flipped", "value": 1},
+        {"label": "Inner", "value": 4},
+        {"label": "Inner, flipped", "value": 3},
+    ]
+    if str(coated_side).upper() == 'BOTH':
+        return "Position", options, "This glass is coated on both faces; flipping swaps them."
+    return "Position", options, "This glass has no surface coating."
 
 
 def number_of_glasses_message(df, manufacturer, thickness):

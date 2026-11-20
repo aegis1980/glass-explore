@@ -64,18 +64,6 @@ def layout(g = None):
                     dbc.Row([   
                         dbc.Col([
                             html.Div(id=EnergyLayoutID.DIV_BUILDUP_SVG_CONTAINER),
-                            dbc.Switch(
-                                id=EnergyLayoutID.SWITCH_COATED_GLASS_SIDE,
-                                value=False,
-                                className="static-switch",
-                            ),
-                            dbc.Popover(
-                                "Swap position of coated layer in IGU outside <-> inside",
-                                target=EnergyLayoutID.SWITCH_COATED_GLASS_SIDE,
-                                body=True,
-                                trigger="hover",
-                                placement="bottom"
-                            ),
                         ],width=10,className="d-flex flex-column align-items-center"),
                         dbc.Col([
                              dbc.Button("", color="light", className="me-1 bi bi-share-fill", id=EnergyLayoutID.BUTTON_SHARE, size="sm"),

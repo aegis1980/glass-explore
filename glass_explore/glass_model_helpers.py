@@ -4,7 +4,7 @@ import logging
 import re
 from typing import Dict, List, Tuple
 
-from glass_explore import DF_GLASS_TABLE, igdb
+from glass_explore import DF_GLASS_TABLE, igdb, utils
 
 from glass_explore import callback_helpers
 from glass_explore.glass_model import InsulatedGlass,MonoGlass,HeatTreatment,GlassBuildup,GasCavity
@@ -119,12 +119,18 @@ def callback_return_from_igu(igu : InsulatedGlass) -> Tuple:
     uncoated_igdb_id = igu.lites[uncoated_idx].igdbcode
     logging.info(f"Coated IGDB ID: {coated_igdb_id}, Uncoated IGDB ID: {uncoated_igdb_id}")
 
+    # The link holds the lite order and each lite's flip; the page holds them as the surface
+    # the coating is on.
+    coating_surface = utils.surface_from_lite_placement(
+        bool(coated_idx),
+        bool(igu.lites[coated_idx].igdbflip),
+        DF_GLASS_TABLE.loc[coated_igdb_id]['Coated_Side'])
+
     result= \
         callback_helpers.clickdata_for_glass_id(coated_igdb_id), \
         DF_GLASS_TABLE.loc[coated_igdb_id]['Manufacturer'], \
         callback_helpers.round_to_nearest_even(DF_GLASS_TABLE.loc[coated_igdb_id]['Thickness']),\
-        bool(coated_idx), \
-        igu.lites[coated_idx].igdbflip, \
+        coating_surface, \
         gas, \
         igu.gases[0].t_actual, \
         'clear' if uncoated_igdb_id in igdb.CLEAR_LOOKUP.values() else 'ultraclear', \

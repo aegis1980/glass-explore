@@ -202,9 +202,12 @@ class EnergyLayoutID:
     SELECT_GAS = "select-gas"
     INPUT_GAP = "input-gap"
 
-    SWITCH_COATED_GLASS_SIDE = "switch-lowe-side"
+    # Position and facing of the selected lite, as the surface (1-4) its coating is on
+    RADIO_COATING_SURFACE = "radio-coating-surface"
+    LABEL_COATING_SURFACE = "label-coating-surface"
+    FORMTEXT_COATING_SURFACE = "formtext-coating-surface"
 
-    CHECKBOX_FLIP_COATEDLAYER = "checkbox-flip-outerlayer"
+    CHECKBOX_FLIP_COATEDLAYER = "checkbox-flip-outerlayer"  # only the svg_glass.py demo uses this
     CHECKBOX_ADVANCED_OPTICAL_STANDARD = "checkbox-advance-standard"
 
     DIV_COATED_LITE_PRODUCT = "div-outerlite-product"
