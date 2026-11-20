@@ -549,13 +549,16 @@ def toggle_igdb_search_modal(n1, open_search_modal_button, n3,is_open,manufactur
     Output(EnergyLayoutID.MODAL_SEARCH_DATATABLE, "data"), # Target the 'data' property
     Output(EnergyLayoutID.MODAL_SEARCH_FORMTEXT_SELECT_COATED_MANUFACTURER, "children"),
     Output(EnergyLayoutID.MODAL_SEARCH_FORMTEXT_SELECT_COATED_MANUFACTURER, "color"),
+    Output(EnergyLayoutID.MODAL_SEARCH_DATATABLE, "active_cell", allow_duplicate=True),
+    Output(EnergyLayoutID.MODAL_SEARCH_DATATABLE, "selected_cells"),
     Input(EnergyLayoutID.MODAL_SEARCH_IGDB, "is_open"),
     Input(EnergyLayoutID.MODAL_SEARCH_INPUT_GLASS_SEARCH, "value"),
     Input(EnergyLayoutID.MODAL_SEARCH_SELECT_COATED_MANUFACTURER,"value"),
     Input(EnergyLayoutID.MODAL_SEARCH_SELECT_COATED_THICKNESS,"value"),
+    State(EnergyLayoutID.MODAL_SEARCH_DATATABLE, "active_cell"),
     prevent_initial_call=True
 )
-def update_table_from_user_input(modal_open,search_value, manufacturer, thickness):
+def update_table_from_user_input(modal_open,search_value, manufacturer, thickness, active_cell):
 
     if not modal_open:
         raise PreventUpdate
@@ -609,9 +612,20 @@ def update_table_from_user_input(modal_open,search_value, manufacturer, thicknes
         results = df.loc[:,cols_to_return]
 
     results['Thickness'] = results['Thickness'].round(1)
-        
+
+    # An 'id' key on each row makes DataTable report the clicked row's glass ID as
+    # active_cell['row_id']. The table sorts natively, so a row's position on screen
+    # is not its position in 'data'.
+    results['id'] = results['ID']
+
+    # The table keeps its active and selected cells at the same screen position when the rows
+    # are replaced, which would leave the highlight on a different glass from the one the OK
+    # button holds. Clearing the active cell resets the OK button as well, through
+    # handle_search_result_row_click; selected_cells is what draws the highlight.
+    deselect = None if active_cell else no_update
+
     # 5. Return as a list of dictionaries (records format)
-    return results.to_dict('records'),msg,msg_color
+    return results.to_dict('records'),msg,msg_color,deselect,[]
 
 
 @callback(
@@ -620,42 +634,37 @@ def update_table_from_user_input(modal_open,search_value, manufacturer, thicknes
     Output(EnergyLayoutID.MODAL_SEARCH_IGDB_OK, "disabled"), # Store id for the selected row data
     Output(EnergyLayoutID.MODAL_SEARCH_IGDB_OK, "children"), # Store id for the selected row data
     Input(EnergyLayoutID.MODAL_SEARCH_DATATABLE, "active_cell"),
-    State(EnergyLayoutID.MODAL_SEARCH_DATATABLE, "data"),
     prevent_initial_call=True
 )
-def handle_search_result_row_click(active_cell, table_data):
-    # 1. Check if a cell was actually clicked
-    if not active_cell:
-        return  no_update, True, True, "No glass selected" # No row selected, return default value and no update for outline
+def handle_search_result_row_click(active_cell):
+    # row_id is the glass ID, taken from the row's 'id' key. Do not use active_cell['row']
+    # to index the table data: it is the row's position in the sorted view.
+    id = active_cell.get('row_id') if active_cell else None
 
-    # 2. Extract the row index from the click event
-    # 'row' is the relative index (0 to 14 if you limited to 15 results)
-    row_index = active_cell['row']
+    if id is None:
+        return no_update, True, True, "No glass selected" # No row selected, return default value and no update for outline
 
-    # 3. Retrieve the full row dictionary from the table data
-    if row_index < len(table_data):
-        selected_row = table_data[row_index]
-        
-        # Example: Print the ID or Name of the clicked glass
-        id = selected_row.get('ID')
-        
-        return id, False, False, f"Glass selected [ID: {id}]" # Return the selected row data and set outline to True
-
-    return no_update, True, True, "No glass selected"
+    return id, False, False, f"Glass selected [ID: {id}]" # Return the selected glass id and set outline to True
 
 
 @callback(
     Output(EnergyLayoutID.MODAL_SEARCH_DATATABLE, "selected_rows"),
     Input(EnergyLayoutID.MODAL_SEARCH_DATATABLE, "active_cell"),
     Input(EnergyLayoutID.MODAL_SEARCH_IGDB, "is_open"),
+    State(EnergyLayoutID.MODAL_SEARCH_DATATABLE, "derived_viewport_indices"),
     prevent_initial_call=True
 )
-def sync_row_selection(active_cell, is_open):
+def sync_row_selection(active_cell, is_open, viewport_indices):
     if not active_cell:
         return []
-    
-    # Return the index of the row
-    return [active_cell['row']]
+
+    # selected_rows are indices into 'data', but active_cell['row'] is the row's position
+    # in the sorted view; derived_viewport_indices maps one to the other.
+    row = active_cell['row']
+    if not viewport_indices or row >= len(viewport_indices):
+        return []
+
+    return [viewport_indices[row]]
 
 
 
