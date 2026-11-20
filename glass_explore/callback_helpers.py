@@ -9,7 +9,7 @@ import plotly.graph_objects as go
 
 
 import glass_explore
-from glass_explore import ALL_MANUFACTURERS, COLORSPACE_RGB,SelectedPointProps, utils
+from glass_explore import ALL_MANUFACTURERS, COLORSPACE_LAB, COLORSPACE_RGB,SelectedPointProps, utils
 
 GRAPH_CUSTOMDATA_COLUMNS = ['ID', 'Manufacturer', 'ProductName']
 
@@ -236,7 +236,34 @@ def populate_graph_ts_tv(selected_id : int, df: pd.DataFrame, manufacturer, thic
     return fig, msg, msg_color 
 
 
+# The colour space graphs: the glass table columns plotted on x, y and z, the axis titles and
+# the number format of the values in the hover text.
+_COLORSPACE_AXES = {
+    COLORSPACE_RGB: (("RColor", "GColor", "BColor"), ("R", "G", "B"), ".0f"),
+    COLORSPACE_LAB: (("lColor", "aColor", "bColor"), ("L*", "a*", "b*"), ".1f"),
+}
+
+
 def populate_graph_colorspace(selected_id,df, manufacturer, thickness, colorspace : int):
+    """
+    Generates the 3D graph of the glasses' colours, in RGB or CIE L*a*b* coordinates
+
+    Args:
+        selected_id (int) : id of selected glass
+        df (pd.DataFrame): glass table, already filtered to the thickness
+        manufacturer (str): manufacturer to pick out, or ALL_MANUFACTURERS
+        thickness (int): thickness in mm, for the message
+        colorspace (int): COLORSPACE_RGB or COLORSPACE_LAB
+    """
+    (x_col, y_col, z_col), (x_title, y_title, z_title), fmt = _COLORSPACE_AXES.get(colorspace, _COLORSPACE_AXES[COLORSPACE_LAB])
+
+    hovertemplate = (
+        '<b>id</b>: %{customdata[0]}' +
+        f'<br>(<b>{x_title}</b>: %{{x:{fmt}}} <b>{y_title}</b>: %{{y:{fmt}}} <b>{z_title}</b>: %{{z:{fmt}}})' +
+        '<br>%{customdata[1]}' +
+        '<br>%{customdata[2]}' +
+        '<extra></extra>'  # no box with the trace name beside the label
+    )
 
     fig = go.Figure()
     if manufacturer == ALL_MANUFACTURERS:
@@ -246,9 +273,9 @@ def populate_graph_colorspace(selected_id,df, manufacturer, thickness, colorspac
         fig.add_trace(
             go.Scatter3d(
                 mode='markers',
-                x=df["RColor"] if colorspace == COLORSPACE_RGB else df["lColor"],
-                y=df["GColor"] if colorspace == COLORSPACE_RGB else df["aColor"],
-                z=df['BColor'] if colorspace == COLORSPACE_RGB else df["bColor"],
+                x=df[x_col],
+                y=df[y_col],
+                z=df[z_col],
                 customdata=graph_customdata(df),
                 marker=dict(
                     color=df['CssColor'],
@@ -256,14 +283,10 @@ def populate_graph_colorspace(selected_id,df, manufacturer, thickness, colorspac
                 ),
 
                 showlegend=False,
-                hovertemplate = 
-                    '<b>id</b>: %{customdata[0]}' + 
-                    '<br>(<b>T_v</b>: %{y:.2f}' + ' <b>T_s</b>: %{x:.2f})'+
-                    '<br>%{customdata[1]}' +
-                    '<br>%{customdata[2]}'
+                hovertemplate=hovertemplate
             )
         )
-        
+
     else:
         mask_na = (df['Manufacturer'] != manufacturer)
         mask = (df['Manufacturer'] == manufacturer)
@@ -273,9 +296,9 @@ def populate_graph_colorspace(selected_id,df, manufacturer, thickness, colorspac
         fig.add_trace(
             go.Scatter3d(
                 mode='markers',
-                x=df[mask_na]["RColor"] if colorspace == COLORSPACE_RGB else df[mask_na]["lColor"],
-                y=df[mask_na]["GColor"] if colorspace == COLORSPACE_RGB else df[mask_na]["aColor"],
-                z=df[mask_na]['BColor'] if colorspace == COLORSPACE_RGB else df[mask_na]["bColor"],
+                x=df[mask_na][x_col],
+                y=df[mask_na][y_col],
+                z=df[mask_na][z_col],
                 marker=dict(
                     color=df[mask_na]['CssColor'],
                     opacity = 0.4,
@@ -288,9 +311,9 @@ def populate_graph_colorspace(selected_id,df, manufacturer, thickness, colorspac
         fig.add_trace(
             go.Scatter3d(
                 mode='markers',
-                x=df[mask]["RColor"] if colorspace == COLORSPACE_RGB else df[mask]["lColor"],
-                y=df[mask]["GColor"] if colorspace == COLORSPACE_RGB else df[mask]["aColor"],
-                z=df[mask]['BColor'] if colorspace == COLORSPACE_RGB else df[mask]["bColor"],
+                x=df[mask][x_col],
+                y=df[mask][y_col],
+                z=df[mask][z_col],
                 customdata=graph_customdata(df[mask]),
                 marker=dict(
                     color=df[mask]['CssColor'],
@@ -301,11 +324,7 @@ def populate_graph_colorspace(selected_id,df, manufacturer, thickness, colorspac
                     )
                 ),
                 showlegend=False,
-                hovertemplate = 
-                    '<b>nfrc_id</b>: %{customdata[0]}' + 
-                    '<br>(<b>T_v</b>: %{y:.2f}' + ' <b>T_s</b>: %{x:.2f})'+
-                    '<br>%{customdata[1]}' +
-                    '<br>%{customdata[2]}'
+                hovertemplate=hovertemplate
             )
         )
 
@@ -315,9 +334,9 @@ def populate_graph_colorspace(selected_id,df, manufacturer, thickness, colorspac
         fig.add_trace(
             go.Scatter3d(
                 mode='markers',
-                x=df[mask]["RColor"] if colorspace == COLORSPACE_RGB else df[mask]["lColor"],
-                y=df[mask]["GColor"] if colorspace == COLORSPACE_RGB else df[mask]["aColor"],
-                z=df[mask]['BColor'] if colorspace == COLORSPACE_RGB else df[mask]["bColor"],
+                x=df[mask][x_col],
+                y=df[mask][y_col],
+                z=df[mask][z_col],
                 customdata=graph_customdata(df[mask]),
                 marker=dict(
                     color=df[mask]['CssColor'],
@@ -332,6 +351,9 @@ def populate_graph_colorspace(selected_id,df, manufacturer, thickness, colorspac
             )
 
         )
+
+    # Without these the axes are titled x, y and z
+    fig.update_scenes(xaxis_title_text=x_title, yaxis_title_text=y_title, zaxis_title_text=z_title)
 
     # Keep the user's camera (rotation, zoom) when the figure is updated, for example when
     # the highlight moves on a click; without a uirevision plotly resets the view each time.
