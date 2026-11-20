@@ -96,38 +96,54 @@ def _selected_id_from_clickdata(pt_data):
 
 
 # CALLBACK 2: Handles the snappy highlight (Patch Only)
-@callback(
+# Runs in the browser, so the highlight moves on the click itself instead of after a round
+# trip to the server.
+clientside_callback(
+    """
+    function(clickData, figure) {
+        const no_update = window.dash_clientside.no_update;
+
+        // Programmatic selection writes a clickData with no coordinates; the figure
+        // callback draws the highlight for those.
+        const point = clickData && clickData.points && clickData.points[0];
+        if (!point || !("x" in point) || !("y" in point)) {
+            return no_update;
+        }
+
+        // The last trace is the dedicated highlight trace
+        const traces = (figure && figure.data) || [];
+        const highlight = traces[traces.length - 1];
+        if (!highlight) {
+            return no_update;
+        }
+
+        const color = point["marker.color"] || (point.marker || {}).color;
+
+        // A 3D scene fires a click on every frame drawn while the mouse button is down:
+        // skip the repeats, where the highlight is already on this point.
+        const is = (value, expected) => Array.isArray(value) && value.length === 1 && value[0] === expected;
+        if (is(highlight.x, point.x) && is(highlight.y, point.y)
+                && (!("z" in point) || is(highlight.z, point.z))
+                && is((highlight.marker || {}).color, color)) {
+            return no_update;
+        }
+
+        // Target the last trace directly via index -1
+        const patch = new window.dash_clientside.Patch();
+        patch.assign(["data", -1, "x"], [point.x]);
+        patch.assign(["data", -1, "y"], [point.y]);
+        if ("z" in point) {
+            patch.assign(["data", -1, "z"], [point.z]);
+        }
+        patch.assign(["data", -1, "marker", "color"], [color]);
+        return patch.build();
+    }
+    """,
     Output(EnergyLayoutID.GRAPH_IGDB, "figure", allow_duplicate=True),
     Input(EnergyLayoutID.GRAPH_IGDB, "clickData"),
+    State(EnergyLayoutID.GRAPH_IGDB, "figure"),
     prevent_initial_call=True
 )
-def fast_highlight(click_data):
-    if not click_data or not click_data.get("points"):
-        raise PreventUpdate
-
-    point = click_data['points'][0]
-    if "x" not in point or "y" not in point:
-        raise PreventUpdate
-
-    new_x = [point.get("x")]
-    new_y = [point.get("y")]
-    new_z = [point.get("z")] if "z" in point else None
-
-    new_color = point.get("marker.color") or point.get("marker", {}).get("color")
-    
-    p = dash.Patch()
-
-    # Target the last trace directly via index -1 which is the dedicated highlight trace
-    # Update coordinates
-    p["data"][-1]["x"] = new_x
-    p["data"][-1]["y"] = new_y
-    if new_z is not None:
-        p["data"][-1]["z"] = new_z
-    
-    # Ensure marker dictionary exists before assignment to avoid potential UI errors
-    p["data"][-1]["marker"]["color"] = [new_color]
-    
-    return p
 
 
 @callback(
