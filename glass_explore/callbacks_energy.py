@@ -302,8 +302,9 @@ def run_analysis_and_update_results(ts, standard, buildup):
         uvalue = f'{glazing_system_u_environment.u():.1f}'
         shgc = f'{glazing_system_solar_environment.shgc():.2f}'
 
-        color_t = glazing_system_solar_environment.color().system_results.front.transmittance.direct_direct.rgb
-        color_r = glazing_system_solar_environment.color().system_results.front.reflectance.direct_direct.rgb
+        color_results = glazing_system_solar_environment.color() # one call: pywincalc recomputes the colour results every time
+        color_t = color_results.system_results.front.transmittance.direct_direct.rgb
+        color_r = color_results.system_results.front.reflectance.direct_direct.rgb
 
         optical = glazing_system_solar_environment.optical_method_results("PHOTOPIC").system_results
 
@@ -647,24 +648,25 @@ def handle_search_result_row_click(active_cell):
     return id, False, False, f"Glass selected [ID: {id}]" # Return the selected glass id and set outline to True
 
 
-@callback(
+# Sync row selection with the active cell.
+# selected_rows are indices into 'data', but active_cell.row is the row's position in the
+# sorted view; derived_viewport_indices maps one to the other. Clientside, so that list
+# (one entry per table row) is not uploaded on every row click.
+clientside_callback(
+    """
+    function(active_cell, is_open, viewport_indices) {
+        if (!active_cell || !viewport_indices || active_cell.row >= viewport_indices.length) {
+            return [];
+        }
+        return [viewport_indices[active_cell.row]];
+    }
+    """,
     Output(EnergyLayoutID.MODAL_SEARCH_DATATABLE, "selected_rows"),
     Input(EnergyLayoutID.MODAL_SEARCH_DATATABLE, "active_cell"),
     Input(EnergyLayoutID.MODAL_SEARCH_IGDB, "is_open"),
     State(EnergyLayoutID.MODAL_SEARCH_DATATABLE, "derived_viewport_indices"),
     prevent_initial_call=True
 )
-def sync_row_selection(active_cell, is_open, viewport_indices):
-    if not active_cell:
-        return []
-
-    # selected_rows are indices into 'data', but active_cell['row'] is the row's position
-    # in the sorted view; derived_viewport_indices maps one to the other.
-    row = active_cell['row']
-    if not viewport_indices or row >= len(viewport_indices):
-        return []
-
-    return [viewport_indices[row]]
 
 
 
