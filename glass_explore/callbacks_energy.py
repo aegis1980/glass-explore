@@ -1,7 +1,6 @@
 #(c)2026 Jon Robinson. All Rights Reserved.
 
 import json
-import re
 import urllib.parse
 
 import dash
@@ -9,12 +8,10 @@ import dash
 from dash import Input, Output, State, clientside_callback, callback, no_update, html,ctx,Patch
 from dash.exceptions import PreventUpdate
 
-from thefuzz import process, fuzz
 
-
-from glass_explore import (ALL_MANUFACTURERS, OG_DESCRIPTION, URL, DF_GLASS_TABLE, DEFAULT_GRAPH_GLASS,Buildup, EnergyLayoutID, WebPaths,
+from glass_explore import (ALL_MANUFACTURERS, ANY_THICKNESS, OG_DESCRIPTION, URL, DF_GLASS_TABLE, DEFAULT_GRAPH_GLASS,Buildup, EnergyLayoutID, WebPaths,
                            caching, callback_helpers, en410, en673, igdb,COLORSPACE_RGB,COLORSPACE_LAB,
-                           mywincalc, svg_glass, utils, glass_model_helpers)
+                           mywincalc, search, svg_glass, utils, glass_model_helpers)
 
 from glass_explore.glass_model import (GlassBuildup, InsulatedGlass)
 
@@ -561,22 +558,21 @@ clientside_callback(
 
 @callback(
     Output(EnergyLayoutID.MODAL_SEARCH_IGDB, "is_open"),
-    Output(EnergyLayoutID.MODAL_SEARCH_SELECT_COATED_MANUFACTURER,"value"),
-    Output(EnergyLayoutID.MODAL_SEARCH_SELECT_COATED_THICKNESS,"value"),
     Input(EnergyLayoutID.MODAL_SEARCH_IGDB_CLOSE, "n_clicks"),
     Input(EnergyLayoutID.BUTTON_IGDB_SEARCH, "n_clicks"),
     Input(EnergyLayoutID.MODAL_SEARCH_IGDB_OK, "n_clicks"),
     State(EnergyLayoutID.MODAL_SEARCH_IGDB, "is_open"),
-    State(EnergyLayoutID.SELECT_COATED_MANUFACTURER,"value"),
-    State(EnergyLayoutID.SELECT_COATED_THICKNESS,"value"),
 )
-def toggle_igdb_search_modal(n1, open_search_modal_button, n3,is_open,manufacturer, thickness):
-    if n1 or n3:
-        #close modal
-        return not is_open,no_update,no_update
-    if open_search_modal_button:
-        return not is_open,manufacturer, int(thickness)
-    return is_open,no_update,no_update
+def toggle_igdb_search_modal(_close_clicks, _open_clicks, _ok_clicks, is_open):
+    # The modal's manufacturer and thickness filters are not set from the page: they start
+    # at all manufacturers / any thickness, so a search covers every glass, and afterwards
+    # stay as the user leaves them.
+    trigger = ctx.triggered_id
+    if trigger == EnergyLayoutID.BUTTON_IGDB_SEARCH:
+        return True
+    if trigger in (EnergyLayoutID.MODAL_SEARCH_IGDB_CLOSE, EnergyLayoutID.MODAL_SEARCH_IGDB_OK):
+        return False
+    return is_open
 
 
 
@@ -598,54 +594,21 @@ def update_table_from_user_input(modal_open,search_value, manufacturer, thicknes
     if not modal_open:
         raise PreventUpdate
 
-    if thickness:
-        thickness = int(thickness)
+    # 1. The glasses left by the manufacturer and thickness filters
+    any_thickness = thickness in (None, "", ANY_THICKNESS)
+    thickness = None if any_thickness else int(thickness)
+    df = DF_GLASS_TABLE if any_thickness else caching.thickness_cached_df(thickness)
+    df, _, _ = callback_helpers.populate_datatable(df, manufacturer, thickness)
 
-    df = caching.thickness_cached_df(thickness)
-    df,msg,msg_color = callback_helpers.populate_datatable(df, manufacturer, thickness)
+    # 2. Search within them. The matching is done on the whole table and the filters applied
+    # afterwards, so the message can say when it is the filters that are hiding the matches.
+    found = search.search(search_value, allowed_ids=df.index, limit=search.MAX_ROWS)
+    filtered = manufacturer != ALL_MANUFACTURERS or not any_thickness
+    msg, msg_color = callback_helpers.search_message(found, filtered, manufacturer, thickness)
 
-    # 1. Guard Clause
-  #  if not search_value or len(search_value) < 2:
-  #      return [] # Returns an empty list to clear the table
-
-    # 2. Define search and display columns
-    cols_to_search = ['ID', 'Name', 'ProductName']
+    # 3. The rows, best match first (table order when nothing is typed)
     cols_to_return  = ['ID', 'Name', 'ProductName', 'Manufacturer', 'Thickness']
-
-
-    if search_value and re.match(r'^\d+', search_value):
-        # 3a. Dynamic Masking
-        # Ensure all columns are treated as strings to avoid errors with numeric IDs/Thickness
-        mask = df[cols_to_search].astype(str).apply(
-            lambda col: col.str.contains(search_value, case=False, na=False)
-        ).any(axis=1)
-
-        # 4a. Filter and Format
-        # Select only the specific columns you want the table to show
-        results = df.loc[mask, cols_to_return].head(30)
-
-    elif search_value:
-
-        # 3b. Execute Fuzzy Match
-        # Extract matches based on the 'Token Set Ratio' (handles out-of-order words)
-        matches = process.extract(
-            search_value.lower(),
-            df['_search_blob'],
-            scorer=fuzz.token_set_ratio,
-            limit=30
-        )
-
-        # 4b. Filter DataFrame by resulting indices
-        # 'matches' returns a list of tuples: (string, score, index)
-        match_indices = [m[2] for m in matches] #if m[1] > 50] # Only keep scores > 50%
-
-        results = df.loc[match_indices,cols_to_return]
-
-    else:
-
-        # no search value, return default top results based on manufacturer/thickness filter
-        results = df.loc[:,cols_to_return]
-
+    results = DF_GLASS_TABLE.loc[found.ids, cols_to_return].copy()
     results['Thickness'] = results['Thickness'].round(1)
 
     # An 'id' key on each row makes DataTable report the clicked row's glass ID as

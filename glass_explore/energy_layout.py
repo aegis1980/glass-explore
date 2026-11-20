@@ -7,7 +7,7 @@ import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
 import numpy as np
 
-from glass_explore import EnergyLayoutID,  igdb, utils, OG_DESCRIPTION, ALL_MANUFACTURERS, DF_GLASS_TABLE
+from glass_explore import EnergyLayoutID,  igdb, utils, OG_DESCRIPTION, ALL_MANUFACTURERS, ANY_THICKNESS, DF_GLASS_TABLE
 
 FITC_LOGO = 'balloon_white_h30px.png'
 COFFEE = 'coffee.svg'
@@ -123,20 +123,28 @@ def select_manufacturer(
 
 
 def select_thickness(
-    select_id:str = EnergyLayoutID.SELECT_COATED_THICKNESS
+    select_id:str = EnergyLayoutID.SELECT_COATED_THICKNESS,
+    include_any:bool = False
 ):
+    """
+    Thickness selector. include_any adds an "Any thickness" option and starts on it: the
+    search modal uses that, the graph needs one thickness band.
+    """
+    options = [
+        {"label": "4mm", "value": 4},
+        {"label": "6mm", "value": 6},
+        {"label": "8mm", "value": 8},
+        {"label": "10mm", "value": 10},
+        {"label": "12mm", "value": 12}
+    ]
+    if include_any:
+        options.insert(0, {"label": "Any thickness", "value": ANY_THICKNESS})
 
     return html.Div([
         dbc.Label("Substrate thickness:"),
         dbc.Select(
-            options=[
-                {"label": "4mm", "value": 4},
-                {"label": "6mm", "value": 6},
-                {"label": "8mm", "value": 8},
-                {"label": "10mm", "value": 10},
-                {"label": "12mm", "value": 12}
-            ],
-            value=6,
+            options=options,
+            value=ANY_THICKNESS if include_any else 6,
             id=select_id,
         ),
     ]
@@ -200,7 +208,7 @@ def modal_glass_search():
     [
         dbc.ModalHeader(dbc.ModalTitle("GLASS EXPLORE | Energy")),
         dbc.ModalBody([
-            html.P(["Search by LBNL ID or product name."]),
+            html.P(["Search all glasses by LBNL ID, product name, manufacturer or coating."]),
             dbc.Row([
                 dbc.Col([
                   dbc.Input(
@@ -219,7 +227,7 @@ def modal_glass_search():
                     )
                 ],width=6),
                 dbc.Col([
-                    select_thickness(EnergyLayoutID.MODAL_SEARCH_SELECT_COATED_THICKNESS)
+                    select_thickness(EnergyLayoutID.MODAL_SEARCH_SELECT_COATED_THICKNESS, include_any=True)
                 ],width=6)
             ],className="mb-3"),
             dbc.Row([

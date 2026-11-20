@@ -17,7 +17,7 @@ poetry run python -m unittest discover -s tests -t . -v   # tests
 ```
 
 - Target Python is 3.12 (`.python-version`, and `python = "^3.12"` in `pyproject.toml`). See [Python 3.12 upgrade and rollback](#python-312-upgrade-and-rollback) if anything Python-version-related goes wrong.
-- Tests are stdlib `unittest` in [tests/](tests/); pytest is not a dependency. They cover `en410.py` and the coating surface picker (`test_coating_surface.py`) so far, need the local `data/` files and skip themselves without them. `EN410_SWEEP=1` adds a check of every coated product (about 30 s). `en673.py` and `glass_model/` are pure Python and are the next easiest places to add tests.
+- Tests are stdlib `unittest` in [tests/](tests/); pytest is not a dependency. They cover `en410.py`, the coating surface picker (`test_coating_surface.py`) and the search (`test_search.py`) so far, need the local `data/` files and skip themselves without them. `EN410_SWEEP=1` adds a check of every coated product (about 30 s). `en673.py` and `glass_model/` are pure Python and are the next easiest places to add tests.
 - There is no linter config and no CI. For anything the tests do not cover, verify by running the app and exercising the page.
 - Run everything from the repo root so `glass_explore` is importable and `data/` resolves.
 
@@ -47,6 +47,7 @@ poetry run python -m unittest discover -s tests -t . -v   # tests
 | [glass_explore/en673.py](glass_explore/en673.py), [en410.py](glass_explore/en410.py) | Pure-Python EN 673 U-value and EN 410 solar factor |
 | [glass_explore/glass_model/](glass_explore/glass_model/) | Buildup object model and the `gstr` share-string protocol (also published separately as `aegis1980/glass-model`) |
 | [glass_explore/caching.py](glass_explore/caching.py) | diskcache of the thickness-filtered glass table |
+| [glass_explore/search.py](glass_explore/search.py) | Text search over the glass table for the search modal (index built from `DF_GLASS_TABLE` at import) |
 
 ### Callback flow
 
@@ -55,6 +56,10 @@ poetry run python -m unittest discover -s tests -t . -v   # tests
 3. Nothing is triggered by that store; the share modal reads it as `State`. Keep step 2 as one callback: chaining the outputs through the store's `modified_timestamp`, as it used to be, costs a second round trip on every click.
 
 The clientside highlight callback patches `figure.data[-1]`, so the selected-point trace must stay the last trace in every figure.
+
+### Search modal
+
+`search.search` matches every word of the query against normalised text (no case, accents, punctuation or ®/™), so "solarban 60" finds "Solarban® 60". With no match it tries letters split from digits, then spelling correction, and otherwise returns nothing: do not bring back a "closest N" fallback, which filled the table with unrelated products. The modal's manufacturer and thickness filters start at all / any and are deliberately not copied from the page; they are applied after matching, so the message can say when the filters are what hides the matches. A product outside the page's thickness bands can be selected from search; the results are right but the graph cannot show it until the page offers that thickness.
 
 ### Buildup dict
 

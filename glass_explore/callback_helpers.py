@@ -59,6 +59,39 @@ def number_of_glasses_message(df, manufacturer, thickness):
         msg_color = 'darkgrey'
     return msg, msg_color
 
+def search_message(found, filtered, manufacturer, thickness):
+    """
+    Text and colour of the line under the search modal's filters.
+
+    Args:
+        found: search.SearchResult
+        filtered: True when a manufacturer or a thickness is selected in the modal
+        manufacturer, thickness: the modal's filters (thickness None for any), for the wording
+    """
+    shown = len(found.ids)
+
+    if not found.has_query:
+        if found.total == 0:
+            where = manufacturer if thickness is None else f'{manufacturer} with thickness, {thickness}mm'
+            return f'No glasses from {where}', 'red'
+        if shown < found.total:
+            return f'Showing the first {shown} of {found.total} glasses; type to search', 'darkgrey'
+        return ('1 glass' if found.total == 1 else f'{found.total} glasses'), 'darkgrey'
+
+    if found.total == 0:
+        if filtered and found.total_unfiltered:
+            return f'No match with these filters; {found.total_unfiltered} without them', 'red'
+        return 'No match', 'red'
+
+    if found.similar:
+        msg = f'No exact match; {found.total} with similar spelling'
+    else:
+        msg = '1 match' if found.total == 1 else f'{found.total} matches'
+    if shown < found.total:
+        msg += f' (first {shown} shown)'
+    return msg, 'darkgrey'
+
+
 def populate_standards(include_interesting):
     standards = glass_explore.standards()
     if include_interesting:

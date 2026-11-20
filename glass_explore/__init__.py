@@ -103,6 +103,7 @@ PATH_PRODUCTS = os.path.join(LOCAL_DATA_PATH,'products')
 DEVTEMP = os.path.join(os.getcwd(),'temp') 
 
 ALL_MANUFACTURERS = '[ALL]'
+ANY_THICKNESS = 'any'   # thickness option of the search modal: no thickness filter
 
 GRAPHTYPE_TS_TV = 1
 COLORSPACE_LAB = 2 
@@ -128,12 +129,6 @@ IGDB_SQLITE_PATH = _require_file(
 )
 
 DF_GLASS_TABLE = pd.read_parquet(PARQUET_GLASS_PATH, engine='pyarrow',)
-
-DF_GLASS_TABLE['_search_blob'] = (
-        DF_GLASS_TABLE.index.astype(str) + " " +
-        DF_GLASS_TABLE['Name'].fillna('') + " " +
-        DF_GLASS_TABLE['ProductName'].fillna('')
-    ).str.lower()
 
 
 CLEAR_6 = 103
