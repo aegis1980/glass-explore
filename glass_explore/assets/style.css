@@ -43,9 +43,18 @@ td:has(~ .dash-cell.cell--selected.focused), .dash-cell.cell--selected.focused ~
 
 
 /* dbc.RadioItems drawn as a Bootstrap button group (the coating surface picker) */
+.radio-group {
+    max-width: 100%;
+    overflow-x: auto;   /* last resort on a very narrow screen */
+}
+
 .radio-group .form-check {
     padding-left: 0;
     margin-bottom: 0;
+}
+
+.radio-group .btn {
+    white-space: nowrap;
 }
 
 .radio-group .btn-group > .form-check:not(:last-child) > .btn {
@@ -68,6 +77,113 @@ td:has(~ .dash-cell.cell--selected.focused), .dash-cell.cell--selected.focused ~
 #graph-ts-tv .svg-container {
     min-height: calc(100vh - 185px);
     height: calc(100vh - 185px) !important;
+}
+
+/* Two columns from 1200 px (Bootstrap xl): the graph column fills the window height, with
+   the graph sized above to what is left under the search button, selects and tabs. */
+@media (min-width: 1200px) {
+    .graph-column {
+        height: 100vh;
+        border-right: 1px solid #dee2e6;
+    }
+}
+
+/* One column below 1200 px. The graph column is as tall as its content, so the graph cannot
+   run over the buildup thumbnail under it, and the graph is about square and never taller
+   than three quarters of the window: there is always some page beside it to scroll by, which
+   the 3D graphs need because they keep touch drags for rotating. */
+@media (max-width: 1199.98px) {
+    #tab-content,
+    #div-graph-igdb,
+    #div-graph-igdb .dash-spinner,
+    #graph-ts-tv,
+    #graph-ts-tv .js-plotly-plot,
+    #graph-ts-tv .plot-container,
+    #graph-ts-tv .svg-container {
+        min-height: 0;
+        height: max(320px, min(75vh, 100vw)) !important;
+    }
+
+    /* Room for the summary bar under the last card */
+    #column-rhs {
+        padding-bottom: 88px;
+    }
+}
+
+/* The selected glass and its headline results, fixed to the bottom of the window while the
+   page is one column (the element has d-xl-none). Under modals and their backdrop. */
+.summary-bar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1030;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    column-gap: 1rem;
+    padding: 8px 16px calc(8px + env(safe-area-inset-bottom, 0px));
+    background-color: #212529;
+    color: #fff;
+    box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.25);
+    cursor: pointer;
+}
+
+.summary-bar:empty {
+    display: none;
+}
+
+/* The name gives way first: it shares the line with the results when there is room and
+   takes a line of its own, cut short with an ellipsis, on a phone */
+.summary-bar-product {
+    flex: 1 1 14rem;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 600;
+}
+
+.summary-bar-values {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+}
+
+@media (max-width: 575.98px) {
+    /* Three tabs do not fit a phone's width: keep them on one line, scrolling sideways if
+       they still do not fit, rather than wrapping the third under the first */
+    .graph-column .nav-tabs {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        overflow-y: hidden;
+    }
+
+    .graph-column .nav-tabs .nav-link {
+        white-space: nowrap;
+        padding: 0.5rem 0.55rem;
+    }
+
+    /* The collapsed navbar has its own side padding (below); the logo's 30 px margin on top
+       of that leaves too little room for the title and the menu button */
+    nav img {
+        margin-left: 0;
+    }
+
+    .radio-group .btn {
+        padding-left: 0.4rem;
+        padding-right: 0.4rem;
+    }
+}
+
+/* The collapsed navbar (below Bootstrap md). Bootstrap gives .navbar no side padding, which
+   put the logo, the menu button and the menu links hard against the window edges. */
+@media (max-width: 767.98px) {
+    .navbar {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
 }
 
 

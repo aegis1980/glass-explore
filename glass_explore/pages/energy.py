@@ -41,6 +41,7 @@ def layout(g = None):
         dcc.Store(EnergyLayoutID.STORE_BUILDUP_IN_SESSION,  storage_type = "session"),
         dcc.Store(EnergyLayoutID.STORE_SETTINGS_IN_LOCAL,  storage_type = "local"),
         energy_layout.navbar(),
+        energy_layout.summary_bar(),
         dbc.Container([
             dbc.Row([
                 # Left column - search, manufacturer, thickness and graph tabs
@@ -53,11 +54,11 @@ def layout(g = None):
                     dbc.Row([
                         dbc.Col([
                             energy_layout.select_manufacturer()
-                        ], xl=6),
-                        dbc.Col(energy_layout.select_thickness(), xl = 6)
+                        ], xs=7, xl=6),
+                        dbc.Col(energy_layout.select_thickness(), xs=5, xl = 6)
                     ],className="mb-2"),
                     energy_layout.graph_tabs()
-                ], xl = 8, className="d-flex flex-column vh-100 border-end"),
+                ], xl = 8, className="d-flex flex-column graph-column"),
 
                 # Right column - buildup svg and layer cards including results
                 dbc.Col([

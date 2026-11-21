@@ -154,6 +154,7 @@ class EnergyLayoutID:
     BUTTON_IGDB_SEARCH = "button-igdb-search"
 
     CARD_HEADER_COATED = "card-coated"
+    CARD_HEADER_RESULTS = "card-results"
     CARD_HEADER_NONCOATED = "card-non-coated"
 
     COLUMN_LHS = "column-lhs"
@@ -230,6 +231,8 @@ class EnergyLayoutID:
     STORE_BUILDUP_IN_SESSION = "store-buildup-session"
     STORE_GSTR_FROM_URL = "store-gstr-from-url"
     STORE_SETTINGS_IN_LOCAL = "store-settings-local"
+
+    SUMMARY_BAR = "summary-bar"  # selected glass and headline results, shown while the page is one column
 
     TABLE_CELL_UVALUE = "table-cell-uvalue"
     TABLE_CELL_SHGC_LABEL = "table-cell-shgc-label"

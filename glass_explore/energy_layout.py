@@ -339,7 +339,8 @@ def modal_share():
                     '',
                     id = EnergyLayoutID.LINK_GSTR,
                     target='_blank',
-                    href = ''
+                    href = '',
+                    style={"overflowWrap": "anywhere"}  # the URL has no spaces to wrap at
                 ),
                 dcc.Clipboard(
                     target_id=EnergyLayoutID.LINK_GSTR,
@@ -363,32 +364,41 @@ def modal_share():
     is_open=False,
 )
 
+def _labelled(label: str, control):
+    """
+    A label and its control side by side, as half of a card row. Two of them share a row
+    from 576 px wide and take a row each below that, where half a phone's width is not
+    enough for a label and a select.
+    """
+    return dbc.Col(
+        dbc.Row(
+            [
+                dbc.Label(label, width="auto"),
+                dbc.Col(control),
+            ],
+            className="g-2",
+        ),
+        xs=12, sm=6,
+    )
+
+
 def card_gas_layer():
     return dbc.Card([
         dbc.CardHeader("Gas cavity"),
-        dbc.CardBody(   
+        dbc.CardBody(
             dbc.Form(
                 dbc.Row(
                     [
-                        dbc.Label("Gas", width="auto"),
-                        dbc.Col(
-                            dbc.Select(
-                                id=EnergyLayoutID.SELECT_GAS, 
-                                value = 'air',
-                                options=[{"label": k, "value": k} for k in igdb.GASES_NFRC_LOOKUP],
-                            ),
-                            className="me-3",
-                        ),
-                        dbc.Label("Gap width (mm)", width="auto"),
-                        dbc.Col(
-                            dbc.Input(
-                                id=EnergyLayoutID.INPUT_GAP,
-                                type="number", 
-                                value="12"
-                            ),
-                            
-                            className="me-3",
-                        )
+                        _labelled("Gas", dbc.Select(
+                            id=EnergyLayoutID.SELECT_GAS,
+                            value = 'air',
+                            options=[{"label": k, "value": k} for k in igdb.GASES_NFRC_LOOKUP],
+                        )),
+                        _labelled("Gap width (mm)", dbc.Input(
+                            id=EnergyLayoutID.INPUT_GAP,
+                            type="number",
+                            value="12"
+                        )),
                     ],
                     className="g-2"
                 )
@@ -417,6 +427,8 @@ def card_coated_layer():
                 dbc.Row(
                     [
                         dbc.Label("Coating on surface", id=EnergyLayoutID.LABEL_COATING_SURFACE, width="auto"),
+                        # width="auto" as well: when the label and the buttons do not fit on
+                        # one line (the position wording on a phone) the buttons go under it
                         dbc.Col(
                             html.Div(
                                 dbc.RadioItems(
@@ -430,6 +442,8 @@ def card_coated_layer():
                                 ),
                                 className="radio-group",
                             ),
+                            width="auto",
+                            style={"maxWidth": "100%"},
                         ),
                     ],
                     className="g-2 align-items-center",
@@ -443,7 +457,7 @@ def card_coated_layer():
 
 def card_results():
     return dbc.Card([
-        dbc.CardHeader("Glass properties"),
+        dbc.CardHeader("Glass properties", id=EnergyLayoutID.CARD_HEADER_RESULTS),
                 dbc.CardBody(   
                     dbc.Form(
                         [dbc.Row([
@@ -471,35 +485,44 @@ def card_results():
 def card_noncoated_layer():
     return dbc.Card([
         dbc.CardHeader(["Non-coated inner glass layer"],id = EnergyLayoutID.CARD_HEADER_NONCOATED),
-        dbc.CardBody(   
+        dbc.CardBody(
             dbc.Form(
                 dbc.Row(
                     [
-                        dbc.Label("Thickness", width="auto"),
-                        dbc.Col(
-                            dbc.Select(
-                                id=EnergyLayoutID.SELECT_UNCOATED_THICKNESS, 
-                                value = 6,
-                                options=[{"label" : f"{t}mm", "value" : t} for t in igdb.CLEAR_LOOKUP]
-                            )
-                        ),
-                        dbc.Label("Substrate", width="auto"),
-                        dbc.Col(
-                            dbc.Select(
-                                id=EnergyLayoutID.SELECT_UNCOATED_SUBSTRATE, 
-                                value = 'clear',
-                                options=[
-                                    {"label": "clear", "value": 'clear'},
-                                    {"label": "ultraclear (low iron)", "value": 'ultraclear'},
-                                ],
-                            ),
-                            className="me-3",
-                        )
-                    ]
+                        _labelled("Thickness", dbc.Select(
+                            id=EnergyLayoutID.SELECT_UNCOATED_THICKNESS,
+                            value = 6,
+                            options=[{"label" : f"{t}mm", "value" : t} for t in igdb.CLEAR_LOOKUP]
+                        )),
+                        _labelled("Substrate", dbc.Select(
+                            id=EnergyLayoutID.SELECT_UNCOATED_SUBSTRATE,
+                            value = 'clear',
+                            options=[
+                                {"label": "clear", "value": 'clear'},
+                                {"label": "ultraclear (low iron)", "value": 'ultraclear'},
+                            ],
+                        )),
+                    ],
+                    className="g-2"
                 )
             )
         )],
         className="mb-2",
+    )
+
+
+def summary_bar():
+    """
+    The selected glass and its headline results, fixed to the bottom of the window while the
+    page is one column (below 1200 px wide), where the results are a long way under the
+    graph. Filled by callbacks_energy.update_buildup_and_results; a tap scrolls to the results.
+    """
+    return html.Div(
+        id=EnergyLayoutID.SUMMARY_BAR,
+        className="summary-bar d-xl-none",
+        role="button",
+        title="Show the results",
+        n_clicks=0,
     )
 
 
@@ -520,8 +543,11 @@ def init_graph():
     return html.Div(
         dbc.Spinner(
             dcc.Graph(
-                id = EnergyLayoutID.GRAPH_IGDB, 
+                id = EnergyLayoutID.GRAPH_IGDB,
                 figure = fig,
+                # Box and lasso select do nothing in this app, and on a touch screen they
+                # would take the drags that the 2D graph leaves to scrolling the page.
+                config={"modeBarButtonsToRemove": ["select2d", "lasso2d"]},
                 #style={'width': '100%', 'height': '90vh'}
             ), color="secondary", type="grow",spinner_style={"width": "10rem", "height": "10rem"}),
         id= EnergyLayoutID.DIV_GRAPH_IGDB

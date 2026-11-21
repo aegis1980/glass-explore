@@ -61,6 +61,16 @@ The clientside highlight callback patches `figure.data[-1]`, so the selected-poi
 
 `search.search` matches every word of the query against normalised text (no case, accents, punctuation or ®/™), so "solarban 60" finds "Solarban® 60". With no match it tries letters split from digits, then spelling correction, and otherwise returns nothing: do not bring back a "closest N" fallback, which filled the table with unrelated products. The modal's manufacturer and thickness filters start at all / any and are deliberately not copied from the page; they are applied after matching, so the message can say when the filters are what hides the matches. A product outside the page's thickness bands can be selected from search; the results are right but the graph cannot show it until the page offers that thickness.
 
+### Narrow screens
+
+The page is two columns from 1200 px (Bootstrap `xl`) and one column below that, where the graph is about square (`style.css`) and the results are far under it. Three things exist only for that case:
+
+- `SUMMARY_BAR`: a bar fixed to the bottom of the window with the selected glass and U, g and τv, filled by `update_buildup_and_results`. A tap scrolls to the results.
+- The 2D figure has `dragmode=False`, so a finger on it scrolls the page. Leave it off; the axes are fixed-range, so there is nothing to drag, and box / lasso select are removed from the mode bar for the same reason. The 3D graphs still take touch drags to rotate, which is why the graph must never fill the window.
+- [assets/touch.js](glass_explore/assets/touch.js) stops a scroll that starts on the 2D graph from being read as a tap on a point. It sets plotly's internal `_dragged` flag, so re-test it on a phone-sized touch emulation after a plotly upgrade.
+
+Check layout changes at phone width with touch emulation, not just a narrow desktop window: headless Edge will not go below about 500 px without `mobileEmulation`.
+
 ### Buildup dict
 
 ```python

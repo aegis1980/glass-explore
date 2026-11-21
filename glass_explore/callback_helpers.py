@@ -6,6 +6,7 @@ from urllib.parse import urlparse
 import pandas as pd
 from icecream import ic
 import plotly.graph_objects as go
+from dash import html
 
 
 import glass_explore
@@ -90,6 +91,26 @@ def search_message(found, filtered, manufacturer, thickness):
     if shown < found.total:
         msg += f' (first {shown} shown)'
     return msg, 'darkgrey'
+
+
+def results_summary(props, standard, uvalue, shgc, tvis):
+    """
+    Children of the summary bar (energy_layout.summary_bar): the selected glass and the
+    headline results, labelled as in the results table for the standard.
+    """
+    solar_label, visible_label = ("SHGC", "Tvis") if standard == "nfrc" else ("g", "τᵥ")
+    return [
+        html.Div(props['ProductName'], className="summary-bar-product"),
+        html.Div(
+            [
+                html.Span(["U ", html.Strong(uvalue)]),
+                html.Span([f"{solar_label} ", html.Strong(shgc)]),
+                html.Span([f"{visible_label} ", html.Strong(tvis)]),
+                html.I(className="bi bi-chevron-down"),
+            ],
+            className="summary-bar-values",
+        ),
+    ]
 
 
 def populate_standards(include_interesting):
@@ -209,7 +230,12 @@ def populate_graph_ts_tv(selected_id : int, df: pd.DataFrame, manufacturer, thic
         yaxis_title="T<sub>visible</sub>",
         plot_bgcolor = "white",
         hovermode = 'closest',
-        uirevision='constant-id-to-preserve-zoom-and-pan'
+        uirevision='constant-id-to-preserve-zoom-and-pan',
+        # Both axes have a fixed range, so there is nothing to drag. With no drag mode a
+        # finger on the graph scrolls the page instead of being swallowed by the plot.
+        dragmode=False,
+        # Plotly's default margins (80-100 px) leave little of a phone's width for the plot
+        margin=dict(l=60, r=20, t=40, b=60),
     )
 
     fig.update_xaxes(
@@ -355,10 +381,16 @@ def populate_graph_colorspace(selected_id,df, manufacturer, thickness, colorspac
     # Without these the axes are titled x, y and z
     fig.update_scenes(xaxis_title_text=x_title, yaxis_title_text=y_title, zaxis_title_text=z_title)
 
+    # A little further back than plotly's default eye (1.25 on each axis) and aimed slightly
+    # below the middle of the box, which lifts it in the frame. The default view crops the
+    # axis labels at the bottom of the scene, most of all in the square graph of a phone.
+    fig.update_scenes(camera_eye=dict(x=1.5, y=1.5, z=1.3), camera_center=dict(x=0, y=0, z=-0.12))
+
     # Keep the user's camera (rotation, zoom) when the figure is updated, for example when
     # the highlight moves on a click; without a uirevision plotly resets the view each time.
     # One value per colour space, so each still opens in the default view.
-    fig.update_layout(uirevision=f'colorspace-{colorspace}')
+    # No margins beyond room for the mode bar: the scene keeps its own space around the axes.
+    fig.update_layout(uirevision=f'colorspace-{colorspace}', margin=dict(l=0, r=0, t=40, b=0))
 
     return fig, msg, msg_color
 

@@ -336,6 +336,7 @@ def run_analysis_and_update_results(standard, buildup):
     Output(EnergyLayoutID.TABLE_CELL_RIN,"children"),
     Output(EnergyLayoutID.TABLE_CELL_COLOR_TRANS,"style"),
     Output(EnergyLayoutID.TABLE_CELL_COLOR_REFL,"style"),
+    Output(EnergyLayoutID.SUMMARY_BAR,"children"),
     Input(EnergyLayoutID.GRAPH_IGDB, "clickData"),
     Input(EnergyLayoutID.RADIO_COATING_SURFACE,"value"),
     Input(EnergyLayoutID.SELECT_GAS,"value"),
@@ -348,8 +349,8 @@ def update_buildup_and_results(pt_data, coating_surface, gas, gap_thickness, unc
     """
     Everything that follows from a selection, in one round trip to the server: stores the
     buildup in session storage (the share link reads it from there) and returns the buildup
-    thumbnail, the coated lite product text, the wording of the coating surface picker and
-    the analysis results.
+    thumbnail, the coated lite product text, the wording of the coating surface picker, the
+    analysis results and the summary bar that repeats the headline results on a narrow screen.
 
     These used to be four callbacks chained through the store's modified_timestamp, which
     cost a second round trip on every click.
@@ -364,14 +365,32 @@ def update_buildup_and_results(pt_data, coating_surface, gas, gap_thickness, unc
     buildup = json.loads(buildup_json)
 
     coated_layer = buildup[Buildup.SOLID_LAYERS][buildup[Buildup.COATED_LAYER_INDEX]]
+    results = run_analysis_and_update_results(standard, buildup)
+    uvalue, shgc, tvis = results[:3]
 
     return (
         buildup_json,
         svg_glass.generate_buildup(buildup),
         *coated_lite_productdata(buildup),
         *callback_helpers.coating_surface_control(coated_layer['coating']),
-        *run_analysis_and_update_results(standard, buildup),
+        *results,
+        callback_helpers.results_summary(coated_layer['props'], standard, uvalue, shgc, tvis),
     )
+
+
+# A tap on the summary bar brings the results into view. No output: it only scrolls.
+clientside_callback(
+    """
+    function(n_clicks) {
+        const results = document.getElementById("%s");
+        if (n_clicks && results) {
+            results.scrollIntoView({behavior: "smooth", block: "start"});
+        }
+    }
+    """ % EnergyLayoutID.CARD_HEADER_RESULTS,
+    Input(EnergyLayoutID.SUMMARY_BAR, "n_clicks"),
+    prevent_initial_call=True
+)
 
 
 @callback(
